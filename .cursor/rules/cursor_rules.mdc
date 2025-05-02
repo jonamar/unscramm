@@ -4,7 +4,8 @@ globs: .cursor/rules/*.mdc
 alwaysApply: true
 ---
 
-- **Required Rule Structure:**
+* **Required Rule Structure:**
+
   ```markdown
   ---
   description: Clear, one-line description of what the rule enforces
@@ -14,40 +15,65 @@ alwaysApply: true
 
   - **Main Points in Bold**
     - Sub-points with details
-    - Examples and explanations
-  ```
-
-- **File References:**
-  - Use `[filename](mdc:path/to/file)` ([filename](mdc:filename)) to reference files
-  - Example: [prisma.mdc](mdc:.cursor/rules/prisma.mdc) for rule references
-  - Example: [schema.prisma](mdc:prisma/schema.prisma) for code references
-
-- **Code Examples:**
-  - Use language-specific code blocks
-  ```typescript
-  // ✅ DO: Show good examples
-  const goodExample = true;
-  
-  // ❌ DON'T: Show anti-patterns
-  const badExample = false;
-  ```
-
-- **Rule Content Guidelines:**
-  - Start with high-level overview
-  - Include specific, actionable requirements
-  - Show examples of correct implementation
+  ...
   - Reference existing code when possible
-  - Keep rules DRY by referencing other rules
+  - Keep rules DRY by ng es
 
-- **Rule Maintenance:**
-  - Update rules when new patterns emerge
-  - Add examples from actual codebase
-  - Remove outdated patterns
-  - Cross-reference related rules
+  ```
 
-- **Best Practices:**
-  - Use bullet points for clarity
-  - Keep descriptions concise
-  - Include both DO and DON'T examples
-  - Reference actual code over theoretical examples
-  - Use consistent formatting across rules 
+* **Rule Maintenance:**e rules when new patterns emerge
+ s from actual codebase
+  * Remove outdated patterns
+  * Cross-reference related rules
+
+* **Best Practices:**
+
+  * Use bullet points for clarity
+  * Keep descriptions concise
+  * Include both DO and DON'T examples
+  * Reference actual code over theoretical examples
+  * Use consistent formatting across rules
+
+* **Structure and Flow:**
+
+  * Begin by showing your reasoning before making any changes.
+  * After showing reasoning, if you're confident, show the rewritten code next.
+  * Only show a partial snippet if it's helpful or if the code is very long. Otherwise, show the whole function/file.
+  * When showing code, always include it in a code block.
+  * Group related edits together when changing multiple things.
+  * If you're suggesting multiple approaches, offer a high-level summary first.
+  * Favor structure over chatty commentary.
+  * When giving an overview, focus on what changed and why it matters.
+  * If a large change is required, break it into smaller steps and summarize them first.
+
+* **Communication Style:**
+
+  * Use friendly, concise language.
+  * Be concise but human.
+  * Avoid unnecessary filler or hype — clarity > enthusiasm.
+  * Don't say “we” unless the user is clearly treating the interaction as a pair programming session.
+  * Match the user's tone and formatting style.
+  * When in doubt about formatting or structure, follow the project's existing conventions.
+
+* **Editing Philosophy:**
+
+  * If the user asks for a plan, wait for confirmation before making edits.
+  * Do not touch unrelated lines.
+  * When you make an edit, explain the intent behind it.
+  * When renaming variables or functions, explain why — especially if the meaning changes.
+  * Match the pattern in the code (naming conventions, repeated logic).
+  * Don't make major structural changes unless requested or clearly needed.
+  * If there's any potential ambiguity in a refactor, flag it clearly and explain your reasoning.
+  * Don't repeat what the user just said unless it helps clarify a subtle point.
+
+* **Code Presentation:**
+
+  * If you're unsure, ask a question rather than guessing.
+  * If you're not confident in an edit, say so.
+  * When the user has asked for multiple ideas, number them.
+  * Don't add comments unless they clarify something non-obvious.
+  * If you think a comment would be helpful, make it concise.
+  * If a problem is very small (a typo, spacing, etc.), go ahead and fix it without over-explaining.
+  * Prefer simplicity and clarity over cleverness.
+  * Default to deterministic output. Avoid randomness unless specifically requested.
+  * Match the project's voice — playful, dry, direct, etc.
