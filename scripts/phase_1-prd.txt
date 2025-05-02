@@ -1,0 +1,136 @@
+<context>
+
+# Overview
+
+Unscrambler is an interactive web application that helps users immediately visualize and correct their own spelling errors by animating a misspelled word into its correct form. By starting from each person's unique mistakes, learners—whether casual adult users, ESL students, or individuals with dyslexia—can build intuition for correct spelling rather than rote memorization.
+
+**Who it's for:**
+- General adult audience with basic consumer-tech skills (copy/paste, standard UI patterns).
+
+**Why it matters:**
+- Empowers users to learn from their own errors in real time, increasing engagement and retention.
+
+**Value proposition:**
+- A more visual, experiential approach to spelling improvement that adapts to each user's starting point.
+
+# Core Features
+
+## Animated Spell-Correction
+
+- **What:** Users enter a misspelled word and the correct target; the app computes an edit plan (deletions, insertions, moves) and animates each phase with color and motion.  
+- **Why:** Visual feedback makes the correction process intuitive and memorable.  
+- **How (high level):** Algorithm in /utils (LCS + edit plan) drives a Framer Motion sequence. See detailed pseudocode in spec.md.
+
+## Controls Panel
+
+- **What:** Text inputs for "misspelling" and "correct," plus Play/Reset and Shuffle buttons.  
+- **Why:** Gives users full control over the learning exercise.  
+- **How:** `<Controls>` component wired to a WordPairService (initially LocalWordPairService) per spec.md.
+
+## Performance & Responsiveness
+
+- **What:** Animations must start within 50 ms of user action, work smoothly on desktop and mobile.  
+- **Why:** Instant feedback maintains engagement.  
+- **How:** Next.js PWA with code-splitting and optimized Framer Motion sequences.
+
+## Progressive Web App (PWA)
+
+- **What:** Installable, offline-capable version.  
+- **Why:** Ensures access anywhere, anytime, even with intermittent connectivity.  
+- **How:** Service worker + manifest in Next.js config.
+
+## Design & Accessibility
+
+- **What:** Mature, dark-themed UI that feels approachable—not childish.  
+- **Why:** Appeals to a wide age range (7 years and up) while meeting WCAG standards.  
+- **How:** Guided by styleguide.md (colors, typography, responsive breakpoints).
+
+# User Experience
+
+**Personas:**
+- Casual adult learner wanting to refine everyday spelling
+- ESL users seeking intuitive feedback
+- Individuals with dyslexia looking for multisensory correction cues
+
+**Key Flows:**
+1. User pastes or types their misspelling.
+2. User enters the correct spelling (or taps "Shuffle" for a random pair).
+3. Press "Play" to see red deletions, green insertions, and yellow moves in sequence.
+4. User repeats or adjusts speed via slider (0.5×–2×).
+
+**UX Considerations:**
+- Inputs clearly labeled with placeholders.
+- Buttons sized for both click and tap (per styleguide.md).
+- Color-blind and screen-reader support to meet accessibility guidelines.
+
+</context>
+
+<PRD>
+
+# Technical Architecture
+- Framework: Next.js 14, React 18, TypeScript (ESM).
+- Animation: Framer Motion for sequenced phases.
+- Algorithm Modules:
+  - /utils/lcs.ts → findLCSPositions(...)
+  - /utils/editPlan.ts → computeEditPlan(...) & identifyTrueMovers(...)
+  - /utils/flipUtils.ts → FLIP helpers for smooth reordering.
+- Services:
+  - WordPairService interface in /services/wordService.ts
+  - LocalWordPairService reads from in-app JSON dictionary.
+- PWA: Built-in Next.js service worker + manifest.
+- Styling: CSS Modules guided by styleguide.md.
+- Testing:
+  - Unit: Jest + React Testing Library for core algorithm and component variants.
+  - E2E: Cypress spec at /tests/e2e/spellcheck.spec.ts.
+
+# Development Roadmap
+- Phase 1 (MVP – In Scope):
+  - Core animated transformation (deletions, insertions, moves)
+  - Manual word entry + shuffle from local dictionary
+  - Dark-themed UI with responsive layout and PWA support
+  - Performance tuning (≤ 50 ms animation start)
+  - Basic accessibility (keyboard navigation, color-blind palettes)
+- Out of Scope for Phase 1:
+  - API-driven word bank
+  - Gamification (points, levels, badges)
+  - Teacher/administrator dashboards
+  - Multi-language support (beyond foundation for RTL)
+
+# Logical Dependency Chain
+1. Foundation
+   - Next.js project setup with TypeScript & PWA enabled
+   - Global styles and styleguide.md integration
+2. Algorithm & Utils
+   - Implement findLCSPositions, computeEditPlan, identifyTrueMovers
+   - Unit tests for edge cases (anagrams, long words)
+3. UI Components
+   - <Letter> and <WordTransform> for phased animations
+   - <Controls> and speed slider wiring
+4. Styling & Accessibility
+   - Apply CSS Modules per styleguide.md
+   - Ensure WCAG compliance
+5. Performance & PWA
+   - Hook up service worker, manifest, and optimize bundle
+   - Benchmark animation start latency
+6. Testing & Polishing
+   - Write component tests (React Testing Library)
+   - End-to-end test in Cypress
+   - Responsive QA on common viewports
+
+# Risks and Mitigations
+- Latency > 50 ms
+  - Mitigation: Code-split, debounce inputs, memoize computations.
+- Accessibility gaps
+  - Mitigation: Early audit with axe-core, user testing.
+- PWA complexity
+  - Mitigation: Leverage Next.js built-in PWA plugin and sample configs.
+- Cross-device responsiveness
+  - Mitigation: Follow responsive breakpoints in styleguide.md, manual QA across breakpoints.
+
+# Appendix
+- Full technical spec & pseudocode: spec.md
+- Design guidelines & style: styleguide.md
+- Example PRD template: scripts/example_prd.txt
+- Mockups & icons: design_guidelines/ui/ directory
+
+</PRD>
