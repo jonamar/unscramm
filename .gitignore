@@ -11,6 +11,25 @@ node_modules/
 
 # Environment variables
 .env
+.env*.local
+
+# Next.js specific
+.next/
+out/
+build/
+dist/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+
+# Service worker files
+**/public/sw.js
+**/public/workbox-*.js
+**/public/worker-*.js
+**/public/fallback-*.js
+**/public/sw.js.map
+**/public/workbox-*.js.map
+**/public/worker-*.js.map
 
 # Editor directories and files
 .idea

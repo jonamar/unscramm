@@ -1,46 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { InstallPrompt } from "../components/InstallPrompt";
+import Image from "next/image";
 
 export default function Home() {
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    // Set initial offline status
-    setIsOffline(!navigator.onLine);
-
-    // Add event listeners for online/offline status
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Clean up event listeners
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6">
-      {isOffline && (
-        <div className="fixed top-0 left-0 right-0 bg-yellow-600 text-white p-2 text-center text-sm z-50">
-          You are currently offline. Some features may be limited.
-        </div>
-      )}
       <InstallPrompt />
       <div className="max-w-3xl w-full">
         <header className="text-center mb-10">
-          <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Unscramm
-          </h1>
+          <Image 
+            src="/unscramm-logo.svg" 
+            alt="Unscramm Logo" 
+            width={200} 
+            height={60} 
+            priority
+            className="mx-auto mb-2"
+          />
           <p className="text-xl text-gray-400">
             Visualize and correct spelling errors
           </p>
         </header>
+
+        <div className="p-6 rounded-lg border border-gray-800 bg-gray-900 mb-8 min-h-28 flex items-center justify-center">
+          <p className="text-gray-400 text-center">Animation will appear here</p>
+        </div>
 
         <div className="p-6 rounded-lg border border-gray-800 bg-gray-900 mb-8">
           <div className="space-y-4">
@@ -77,10 +61,6 @@ export default function Home() {
               </button>
             </div>
           </div>
-        </div>
-
-        <div className="p-6 rounded-lg border border-gray-800 bg-gray-900 mb-6 min-h-28 flex items-center justify-center">
-          <p className="text-gray-400 text-center">Animation will appear here</p>
         </div>
 
         <div className="text-center text-sm text-gray-500">

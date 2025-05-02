@@ -8,7 +8,7 @@ const withPWA = NextPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  // @ts-ignore - Types are incomplete but these options are supported
+  // @ts-expect-error - NextPWA types are incomplete but these options are supported
   fallbacks: {
     document: '/',  // Always fallback to index for document requests
     image: '/icon-512x512.png',
@@ -119,4 +119,5 @@ const nextConfig = {
   },
 };
 
+// @ts-expect-error - Type compatibility issue between different versions of Next.js types
 export default withPWA(nextConfig); 
