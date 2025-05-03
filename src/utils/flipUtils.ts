@@ -48,6 +48,39 @@ export interface ElementTransform {
 }
 
 /**
+ * Records the current position and returns a function that calculates transforms.
+ * 
+ * This is the original implementation, renamed to avoid conflict with the spec-compliant version.
+ * 
+ * @param elements - Array of HTML elements to capture
+ * @returns A function that when called, calculates the transforms needed to return elements to their captured positions
+ * @deprecated Use the new recordPositions function that returns position data directly
+ */
+export function capturePositionAndGetTransformer(elements: HTMLElement[]): () => ElementTransform[] {
+  const initialStates = captureElementState(elements);
+  
+  // Return a function that will calculate the transforms when called
+  return () => calculateElementTransform(initialStates);
+}
+
+/**
+ * Position data structure as specified in the project requirements
+ * Contains element reference and positional information
+ */
+export interface PositionData {
+  /** The HTML element reference */
+  elm: HTMLElement;
+  /** Left position relative to viewport */
+  left: number;
+  /** Top position relative to viewport */
+  top: number;
+  /** Element width */
+  width: number;
+  /** Element height */
+  height: number;
+}
+
+/**
  * Captures the current state of DOM elements for later comparison.
  * 
  * This is the "First" step in the FLIP technique, recording the initial position
@@ -138,16 +171,113 @@ export function applyTransform(
 }
 
 /**
- * Records the current position, captures a snapshot of DOM element positions.
+ * Records the current position of all elements
+ * Implements the function signature specified in the project requirements
  * 
- * @param elements - Array of HTML elements to capture
- * @returns A function that when called, calculates the transforms needed to return elements to their captured positions
+ * @param elements - Array of HTML elements to capture position data for
+ * @returns Array of position data objects with element references and their positions
  */
-export function recordPositions(elements: HTMLElement[]): () => ElementTransform[] {
-  const initialStates = captureElementState(elements);
+export function recordPositions(elements: HTMLElement[]): PositionData[] {
+  return elements.map(elm => {
+    const rect = elm.getBoundingClientRect();
+    return {
+      elm,
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height
+    };
+  });
+}
+
+/**
+ * Apply inverted transforms to move elements back to their initial positions
+ * Implements the function signature specified in the project requirements
+ * 
+ * @param positions - Array of position data captured before DOM changes
+ * @param exaggerationFactor - Optional factor to exaggerate movement for visual effect (default: 1.0)
+ */
+export function applyInvertedTransforms(
+  positions: PositionData[],
+  exaggerationFactor: number = 1.0
+): void {
+  for (const position of positions) {
+    const elm = position.elm;
+    const newRect = elm.getBoundingClientRect();
+    
+    // Calculate the difference between old and new positions
+    const deltaX = position.left - newRect.left;
+    const deltaY = position.top - newRect.top;
+    
+    // Apply transform with optional exaggeration for horizontal movement
+    if (deltaX !== 0) {
+      const exaggeratedX = deltaX * exaggerationFactor;
+      elm.style.transform = `translateX(${exaggeratedX}px)${deltaY !== 0 ? ` translateY(${deltaY}px)` : ''}`;
+    } else if (deltaY !== 0) {
+      elm.style.transform = `translateY(${deltaY}px)`;
+    }
+    
+    // Ensure no transition is applied initially
+    elm.style.transition = 'none';
+    
+    // Force reflow to ensure transforms are applied immediately
+    // eslint-disable-next-line no-unused-expressions
+    elm.offsetHeight;
+  }
+}
+
+/**
+ * Clear transforms after a reflow to allow animation to final positions
+ * Implements the function signature specified in the project requirements
+ * 
+ * @param elements - Elements to clear transforms from
+ * @param duration - Animation duration in seconds (default: 1.0)
+ * @param easing - CSS easing function (default: cubic-bezier(0.25, 1, 0.5, 1))
+ */
+export function clearTransformsAfterReflow(
+  elements: HTMLElement[],
+  duration: number = 1.0,
+  easing: string = 'cubic-bezier(0.25, 1, 0.5, 1)'
+): void {
+  // Force a reflow to ensure transforms are applied before animating them away
+  // eslint-disable-next-line no-unused-expressions
+  document.body.offsetHeight;
   
-  // Return a function that will calculate the transforms when called
-  return () => calculateElementTransform(initialStates);
+  // Apply transition and clear transforms
+  elements.forEach(elm => {
+    elm.style.transition = `transform ${duration}s ${easing}`;
+    elm.style.transform = '';
+  });
+}
+
+/**
+ * Complete FLIP animation in one function call
+ * This utility combines all FLIP steps into a single, easy-to-use function
+ * 
+ * @param elements - Elements to animate
+ * @param reorderCallback - Function that performs the DOM reordering
+ * @param exaggerationFactor - Factor to exaggerate movement (default: 1.5)
+ * @param duration - Animation duration in seconds (default: 1.0)
+ * @param easing - CSS easing function (default: cubic-bezier(0.25, 1, 0.5, 1))
+ */
+export function performFlipAnimation(
+  elements: HTMLElement[],
+  reorderCallback: () => void,
+  exaggerationFactor: number = 1.5,
+  duration: number = 1.0,
+  easing: string = 'cubic-bezier(0.25, 1, 0.5, 1)'
+): void {
+  // First - record positions
+  const initialPositions = recordPositions(elements);
+  
+  // Last - perform the reordering
+  reorderCallback();
+  
+  // Invert - apply transforms to make it appear unchanged
+  applyInvertedTransforms(initialPositions, exaggerationFactor);
+  
+  // Play - remove transforms to animate to final positions
+  clearTransformsAfterReflow(elements, duration, easing);
 }
 
 /**
