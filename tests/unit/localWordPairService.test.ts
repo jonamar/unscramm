@@ -3,13 +3,50 @@ import { WordPair } from '../../src/services/wordPairService';
 
 // Import jest explicitly
 import * as jestImport from '@jest/globals';
-const { jest, describe, it, expect, beforeEach } = jestImport;
+const { jest, describe, it, expect, beforeEach, afterEach } = jestImport;
+
+// Sample word pairs for testing
+const sampleWordPairs = {
+  metadata: {
+    description: "Test dictionary",
+    version: "1.0.0",
+    updated: "2023-06-01"
+  },
+  wordPairs: [
+    { misspelling: "recieve", correct: "receive" },
+    { misspelling: "definately", correct: "definitely" },
+    { misspelling: "occured", correct: "occurred" },
+    { misspelling: "beleive", correct: "believe" },
+    { misspelling: "goverment", correct: "government" }
+  ]
+};
 
 describe('LocalWordPairService', () => {
   let service: LocalWordPairService;
-
+  
+  // Mock global fetch
+  const originalFetch = global.fetch;
+  
+  // Setup mocks before each test
   beforeEach(() => {
-    service = new LocalWordPairService();
+    // Restore fetch to a jest mock before each test
+    global.fetch = jest.fn() as any;
+    
+    // Default mock implementation returns successful response with sample data
+    (global.fetch as jest.Mock).mockImplementation(() => 
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(sampleWordPairs)
+      })
+    );
+    
+    service = new LocalWordPairService('/test-dictionary-path.json');
+  });
+  
+  // Clean up mocks after each test
+  afterEach(() => {
+    jest.resetAllMocks();
+    global.fetch = originalFetch;
   });
 
   describe('Constructor', () => {
@@ -23,12 +60,103 @@ describe('LocalWordPairService', () => {
     });
   });
 
+  describe('Dictionary Loading', () => {
+    it('should load the dictionary from the specified path', async () => {
+      await service.getRandomPair(); // This will trigger dictionary loading
+      
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('/test-dictionary-path.json');
+    });
+    
+    it('should handle loading errors with fallback dictionary', async () => {
+      // Mock fetch to fail
+      (global.fetch as jest.Mock).mockImplementation(() => 
+        Promise.resolve({
+          ok: false,
+          statusText: 'Not Found'
+        })
+      );
+      
+      // Expect the service to throw but use fallback
+      await expect(service.getRandomPair()).resolves.toBeDefined();
+      
+      // Should still have some fallback pairs
+      const recentPairs = await service.getRecentPairs();
+      expect(recentPairs).toHaveLength(1);
+    });
+    
+    it('should validate dictionary entries', async () => {
+      // Mock a dictionary with some invalid entries
+      const invalidEntries = {
+        metadata: { description: "Test", version: "1.0", updated: "2023" },
+        wordPairs: [
+          { misspelling: "", correct: "valid" }, // Invalid: empty misspelling
+          { misspelling: "valid", correct: "" }, // Invalid: empty correct
+          { misspelling: "valid", correct: "valid" } // Valid
+        ]
+      };
+      
+      (global.fetch as jest.Mock).mockImplementation(() => 
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(invalidEntries)
+        })
+      );
+      
+      // Warning should be logged about invalid entries
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      
+      await service.getRandomPair();
+      
+      // Should warn about invalid entries
+      expect(consoleSpy).toHaveBeenCalledTimes(2);
+      
+      consoleSpy.mockRestore();
+    });
+  });
+
   describe('API Implementation', () => {
-    it('should implement getRandomPair method', async () => {
+    it('should get a random word pair', async () => {
       const pair = await service.getRandomPair();
-      expect(pair).toBeDefined();
-      expect(pair).toHaveProperty('misspelling');
-      expect(pair).toHaveProperty('correct');
+      
+      // Verify it's one of our sample pairs
+      expect(sampleWordPairs.wordPairs.some(p => 
+        p.misspelling === pair.misspelling && p.correct === pair.correct
+      )).toBe(true);
+      
+      // Verify it has an ID
+      expect(pair.id).toBeDefined();
+    });
+    
+    it('should avoid returning the same pair consecutively', async () => {
+      // With small dictionary, we need multiple attempts to test this
+      const firstPair = await service.getRandomPair();
+      
+      // Force the mock to always return the first pair
+      const mockedRandom = jest.spyOn(Math, 'random');
+      mockedRandom.mockReturnValue(0);
+      
+      // Even with random always 0, it should not return the same pair
+      const secondPair = await service.getRandomPair();
+      expect(secondPair.id).not.toBe(firstPair.id);
+      
+      mockedRandom.mockRestore();
+    });
+    
+    it('should add returned pairs to recent pairs', async () => {
+      // Get three random pairs
+      const pair1 = await service.getRandomPair();
+      const pair2 = await service.getRandomPair();
+      const pair3 = await service.getRandomPair();
+      
+      // Check recent pairs
+      const recent = await service.getRecentPairs();
+      expect(recent).toHaveLength(3);
+      
+      // Should be in reverse order (newest first)
+      expect(recent[0].id).toBe(pair3.id);
+      expect(recent[1].id).toBe(pair2.id);
+      expect(recent[2].id).toBe(pair1.id);
     });
 
     it('should implement validateWordPair method', async () => {
@@ -58,7 +186,26 @@ describe('LocalWordPairService', () => {
       await service.storeRecentPair(pair);
       const recentPairs = await service.getRecentPairs();
       expect(recentPairs).toHaveLength(1);
-      expect(recentPairs[0]).toEqual(pair);
+      expect(recentPairs[0].misspelling).toBe(pair.misspelling);
+      expect(recentPairs[0].correct).toBe(pair.correct);
+      // Should have added an ID
+      expect(recentPairs[0].id).toBeDefined();
+    });
+
+    it('should prevent duplicate entries in recent pairs', async () => {
+      const pair: WordPair = {
+        misspelling: 'teh',
+        correct: 'the',
+        id: 'test-id'
+      };
+      
+      // Add the same pair twice
+      await service.storeRecentPair(pair);
+      await service.storeRecentPair(pair);
+      
+      // Should only have one entry
+      const recentPairs = await service.getRecentPairs();
+      expect(recentPairs).toHaveLength(1);
     });
 
     it('should implement getRecentPairs method', async () => {
@@ -95,7 +242,7 @@ describe('LocalWordPairService', () => {
 
     it('should limit the number of recent pairs', async () => {
       // Create service with max 3 recent pairs
-      const limitedService = new LocalWordPairService('/data/wordPairs.json', 3);
+      const limitedService = new LocalWordPairService('/test-path.json', 3);
 
       // Add more pairs than the limit
       await limitedService.storeRecentPair({ misspelling: 'pair1', correct: 'corrected1' });
