@@ -1,95 +1,73 @@
 {
   "metadata": {
-    "description": "Common English misspellings and their corrections, including dyslexic spelling patterns",
+    "description": "Common English misspellings and their corrections",
     "version": "1.0.0",
-    "updated": "2023-06-01",
-    "categories": {
-      "extra_letter": "Words with extra letters not in the final word",
-      "missing_letter": "Words missing letters that should be in the final word",
-      "letter_order": "Words with correct letters in incorrect order",
-      "dyslexic": "Common dyslexic spelling patterns"
-    }
+    "updated": "2023-06-01"
   },
   "wordPairs": [
     {
       "misspelling": "recieve",
-      "correct": "receive",
-      "category": "letter_order"
+      "correct": "receive"
     },
     {
       "misspelling": "definately",
-      "correct": "definitely",
-      "category": "extra_letter"
+      "correct": "definitely"
     },
     {
       "misspelling": "occured",
-      "correct": "occurred",
-      "category": "missing_letter"
+      "correct": "occurred"
     },
     {
       "misspelling": "beleive",
-      "correct": "believe",
-      "category": "letter_order"
+      "correct": "believe"
     },
     {
       "misspelling": "goverment",
-      "correct": "government",
-      "category": "missing_letter"
+      "correct": "government"
     },
     {
       "misspelling": "neccessary",
-      "correct": "necessary",
-      "category": "extra_letter"
+      "correct": "necessary"
     },
     {
       "misspelling": "wierd",
-      "correct": "weird",
-      "category": "letter_order"
+      "correct": "weird"
     },
     {
       "misspelling": "suprise",
-      "correct": "surprise",
-      "category": "missing_letter"
+      "correct": "surprise"
     },
     {
       "misspelling": "wrod",
-      "correct": "word",
-      "category": "dyslexic"
+      "correct": "word"
     },
     {
       "misspelling": "teh",
-      "correct": "the",
-      "category": "dyslexic"
+      "correct": "the"
     },
     {
       "misspelling": "frist",
-      "correct": "first",
-      "category": "dyslexic"
+      "correct": "first"
     },
     {
       "misspelling": "atractive",
-      "correct": "attractive",
-      "category": "missing_letter"
+      "correct": "attractive"
     },
     {
       "misspelling": "tommorow",
-      "correct": "tomorrow",
-      "category": "extra_letter"
+      "correct": "tomorrow"
     },
     {
       "misspelling": "mountian",
-      "correct": "mountain",
-      "category": "letter_order"
+      "correct": "mountain"
     },
     {
       "misspelling": "freind",
-      "correct": "friend",
-      "category": "letter_order"
+      "correct": "friend"
     },
     {
       "misspelling": "vacinate",
-      "correct": "vaccinate",
-      "category": "missing_letter"
+      "correct": "vaccinate"
     }
   ]
 } 
