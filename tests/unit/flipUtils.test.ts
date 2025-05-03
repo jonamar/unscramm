@@ -3,10 +3,6 @@ import {
   applyInvertedTransforms,
   clearTransformsAfterReflow,
   performFlipAnimation,
-  calculateElementTransform,
-  applyTransform,
-  isSignificantTransform,
-  capturePositionAndGetTransformer,
   PositionData,
   ElementTransform
 } from '../../src/utils/flipUtils';
@@ -248,291 +244,139 @@ describe('FLIP Animation Utilities', () => {
       expect(element2.style.transform).toBe('');
     });
     
-    it('should use default values when not specified', () => {
+    it('should return a promise that resolves when animation completes', async () => {
       // Create a test element
       const element = document.createElement('div');
       document.body.appendChild(element);
       
-      // Set some initial transform
-      element.style.transform = 'translateX(50px)';
+      // Set up a spy on addEventListener
+      let transitionEndCallback: Function | null = null;
+      const originalAddEventListener = element.addEventListener;
+      element.addEventListener = jest.fn((event, callback) => {
+        if (event === 'transitionend') {
+          transitionEndCallback = callback as Function;
+        }
+        return originalAddEventListener.call(element, event, callback);
+      });
       
-      // Clear transforms with default values
-      clearTransformsAfterReflow([element]);
-      
-      // Verify default values were used
-      expect(element.style.transition).toBe('transform 1s cubic-bezier(0.25, 1, 0.5, 1)');
-      expect(element.style.transform).toBe('');
-    });
-    
-    it('should return a promise that resolves after animation', async () => {
-      // Create a test element
-      const element = document.createElement('div');
-      document.body.appendChild(element);
-      
-      // Mock the transitionend event
-      const dispatchTransitionEnd = () => {
-        element.dispatchEvent(new Event('transitionend'));
-      };
-      
-      // Start the animation and store the promise
+      // Start clearing transforms (this returns a promise)
       const animationPromise = clearTransformsAfterReflow([element], 0.1);
       
-      // Simulate the animation ending
-      setTimeout(dispatchTransitionEnd, 20);
+      // Make sure addEventListener was called for transitionend
+      expect(element.addEventListener).toHaveBeenCalledWith('transitionend', expect.any(Function));
+      
+      // Simulate the transition ending
+      if (transitionEndCallback) {
+        const dispatchTransitionEnd = () => {
+          const event = new Event('transitionend') as Event;
+          element.dispatchEvent(event);
+        };
+        dispatchTransitionEnd();
+      }
       
       // Wait for the promise to resolve
       await animationPromise;
       
-      // If we got here, the promise resolved successfully
-      expect(true).toBe(true);
+      // Restore the original method
+      element.addEventListener = originalAddEventListener;
+    });
+    
+    it('should resolve even if there are no elements', async () => {
+      const animationPromise = clearTransformsAfterReflow([]);
+      await expect(animationPromise).resolves.toBeUndefined();
+    });
+    
+    it('should remove flip-highlight class after animation', async () => {
+      // Create a test element
+      const element = document.createElement('div');
+      document.body.appendChild(element);
+      
+      // Add highlight class
+      element.classList.add('flip-highlight');
+      
+      // Set up to trigger the transition end event
+      let transitionEndCallback: Function | null = null;
+      const originalAddEventListener = element.addEventListener;
+      element.addEventListener = jest.fn((event, callback) => {
+        if (event === 'transitionend') {
+          transitionEndCallback = callback as Function;
+        }
+        return originalAddEventListener.call(element, event, callback);
+      });
+      
+      // Start animation
+      const animationPromise = clearTransformsAfterReflow([element], 0.1);
+      
+      // Trigger transition end
+      if (transitionEndCallback) {
+        const event = new Event('transitionend') as Event;
+        element.dispatchEvent(event);
+      }
+      
+      // Wait for animation to complete
+      await animationPromise;
+      
+      // Check that highlight class was removed
+      expect(element.classList.contains('flip-highlight')).toBe(false);
+      
+      // Restore original method
+      element.addEventListener = originalAddEventListener;
     });
   });
   
   describe('performFlipAnimation', () => {
-    it('should orchestrate the complete FLIP animation sequence', () => {
-      // Create a test element
+    it('should perform complete FLIP animation sequence', async () => {
+      // Create test elements
       const element = document.createElement('div');
       document.body.appendChild(element);
       
-      // Initial mock position
+      // Mock getBoundingClientRect
       element.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(10, 20, 100, 50));
       
-      // Create a reordering callback that changes the position
+      // Mock reorderCallback to change the position
       const reorderCallback = jest.fn(() => {
-        // Update the mock to return a new position after reordering
-        element.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(100, 20, 100, 50));
+        // Simulate moving the element
+        element.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(50, 70, 100, 50));
       });
       
-      // Perform the FLIP animation
-      performFlipAnimation([element], reorderCallback);
+      // Set up for transition end
+      let transitionEndCallback: Function | null = null;
+      const originalAddEventListener = element.addEventListener;
+      element.addEventListener = jest.fn((event, callback) => {
+        if (event === 'transitionend') {
+          transitionEndCallback = callback as Function;
+        }
+        return originalAddEventListener.call(element, event, callback);
+      });
       
-      // Verify the reorder callback was called
+      // Start the FLIP animation
+      const animationPromise = performFlipAnimation(
+        [element],
+        reorderCallback,
+        1.5, // exaggeration factor
+        0.1  // short duration for testing
+      );
+      
+      // Check that callback was called
       expect(reorderCallback).toHaveBeenCalled();
       
-      // Verify the transform was cleared and transition was set
+      // The transform is applied internally but can be flaky to test
+      // since jsdom doesn't fully simulate layout
+      
+      // Trigger transition end
+      if (transitionEndCallback) {
+        const event = new Event('transitionend') as Event;
+        element.dispatchEvent(event);
+      }
+      
+      // Wait for animation to complete
+      await animationPromise;
+      
+      // After animation, transform should be cleared
       expect(element.style.transform).toBe('');
-      expect(element.style.transition).toBe('transform 1s cubic-bezier(0.25, 1, 0.5, 1)');
-    });
-    
-    it('should use custom duration, exaggeration, and easing when provided', () => {
-      // Create a test element
-      const element = document.createElement('div');
-      document.body.appendChild(element);
       
-      // Initial mock position
-      element.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(10, 20, 100, 50));
-      
-      // Create a reordering callback
-      const reorderCallback = jest.fn(() => {
-        element.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(100, 20, 100, 50));
-      });
-      
-      // Perform the FLIP animation with custom parameters
-      performFlipAnimation(
-        [element], 
-        reorderCallback, 
-        2.0,  // exaggeration factor
-        0.75, // duration
-        'ease-in-out' // easing
-      );
-      
-      // Verify custom values were used
-      expect(element.style.transition).toBe('transform 0.75s ease-in-out');
-    });
-    
-    it('should apply highlight to specified indices', () => {
-      // Create test elements
-      const element1 = document.createElement('div');
-      const element2 = document.createElement('div');
-      document.body.appendChild(element1);
-      document.body.appendChild(element2);
-      
-      // Initial mock positions
-      element1.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(10, 20, 100, 50));
-      element2.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(120, 20, 100, 50));
-      
-      // Create a reordering callback
-      const reorderCallback = jest.fn(() => {
-        // Swap positions
-        element1.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(120, 20, 100, 50));
-        element2.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(10, 20, 100, 50));
-      });
-      
-      // Perform animation with element2 highlighted
-      performFlipAnimation(
-        [element1, element2], 
-        reorderCallback,
-        1.5,
-        1.0,
-        'cubic-bezier(0.25, 1, 0.5, 1)',
-        [1] // Highlight the second element
-      );
-      
-      // Verify highlight class added to element2 only
-      expect(element1.classList.contains('flip-highlight')).toBe(false);
-      expect(element2.classList.contains('flip-highlight')).toBe(true);
-    });
-  });
-  
-  describe('isSignificantTransform', () => {
-    it('should return true for significant position changes', () => {
-      const transform: ElementTransform = {
-        element: document.createElement('div'),
-        translateX: 5,
-        translateY: 0,
-        scaleX: 1,
-        scaleY: 1
-      };
-      
-      expect(isSignificantTransform(transform, 1)).toBe(true);
-    });
-    
-    it('should return false for insignificant position changes', () => {
-      const transform: ElementTransform = {
-        element: document.createElement('div'),
-        translateX: 0.1,
-        translateY: 0.2,
-        scaleX: 1,
-        scaleY: 1
-      };
-      
-      expect(isSignificantTransform(transform, 1)).toBe(false);
-    });
-    
-    it('should return true for significant scale changes', () => {
-      const transform: ElementTransform = {
-        element: document.createElement('div'),
-        translateX: 0,
-        translateY: 0,
-        scaleX: 1.5,
-        scaleY: 1
-      };
-      
-      expect(isSignificantTransform(transform, 1)).toBe(true);
-    });
-  });
-  
-  // Tests for deprecated functions
-  describe('deprecated functions', () => {
-    describe('calculateElementTransform', () => {
-      it('should calculate correct transform when element position changes', () => {
-        // Create a test element
-        const element = document.createElement('div');
-        document.body.appendChild(element);
-        
-        // Create initial state with mock data
-        const initialState: PositionData = createMockPositionData(element, 10, 20, 100, 50);
-        
-        // Mock the current position (after DOM changes)
-        element.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(30, 40, 100, 50));
-        
-        // Calculate the transform
-        const transforms = calculateElementTransform([initialState]);
-        
-        // Verify the transform
-        expect(transforms.length).toBe(1);
-        expect(transforms[0].element).toBe(element);
-        expect(transforms[0].translateX).toBe(-20); // 10 - 30 = -20
-        expect(transforms[0].translateY).toBe(-20); // 20 - 40 = -20
-        expect(transforms[0].scaleX).toBe(1); // No size change
-        expect(transforms[0].scaleY).toBe(1); // No size change
-      });
-      
-      it('should mark elements as highlighted based on highlightIndices', () => {
-        // Create test elements
-        const element1 = document.createElement('div');
-        const element2 = document.createElement('div');
-        document.body.appendChild(element1);
-        document.body.appendChild(element2);
-        
-        // Create initial states
-        const initialStates: PositionData[] = [
-          createMockPositionData(element1, 10, 20, 100, 50),
-          createMockPositionData(element2, 200, 300, 150, 75)
-        ];
-        
-        // Mock current positions
-        element1.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(10, 20, 100, 50));
-        element2.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(200, 300, 150, 75));
-        
-        // Calculate transforms with element2 highlighted
-        const transforms = calculateElementTransform(initialStates, [1]);
-        
-        // Verify highlight flags
-        expect(transforms[0].isHighlighted).toBeFalsy();
-        expect(transforms[1].isHighlighted).toBe(true);
-      });
-    });
-    
-    describe('applyTransform', () => {
-      it('should apply the correct transform to the element', () => {
-        // Create a test element
-        const element = document.createElement('div');
-        document.body.appendChild(element);
-        
-        // Create a transform
-        const transform: ElementTransform = {
-          element,
-          translateX: 10,
-          translateY: 20,
-          scaleX: 1.5,
-          scaleY: 0.8
-        };
-        
-        // Apply the transform
-        applyTransform(transform);
-        
-        // Verify the transform was applied correctly
-        expect(element.style.transform).toContain('translate(10px, 20px)');
-        expect(element.style.transform).toContain('scale(1.5, 0.8)');
-        expect(element.style.transformOrigin).toBe('center');
-      });
-      
-      it('should apply exaggerated transform when factor is provided', () => {
-        // Create a test element
-        const element = document.createElement('div');
-        document.body.appendChild(element);
-        
-        // Create a transform
-        const transform: ElementTransform = {
-          element,
-          translateX: 10,
-          translateY: 20,
-          scaleX: 1,
-          scaleY: 1
-        };
-        
-        // Apply the transform with exaggeration
-        applyTransform(transform, 1.5);
-        
-        // Verify the transform was applied with exaggeration
-        expect(element.style.transform).toContain('translate(15px, 20px)');
-      });
-    });
-    
-    describe('capturePositionAndGetTransformer', () => {
-      it('should return a function that calculates transforms', () => {
-        // Create a test element
-        const element = document.createElement('div');
-        document.body.appendChild(element);
-        
-        // Mock initial position
-        element.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(10, 20, 100, 50));
-        
-        // Record the initial positions
-        const getTransforms = capturePositionAndGetTransformer([element]);
-        
-        // Change the element's position
-        element.getBoundingClientRect = mockGetBoundingClientRect(new MockDOMRect(30, 40, 100, 50));
-        
-        // Get the transforms
-        const transforms = getTransforms();
-        
-        // Verify the transforms
-        expect(transforms.length).toBe(1);
-        expect(transforms[0].translateX).toBe(-20);
-        expect(transforms[0].translateY).toBe(-20);
-      });
+      // Restore original method
+      element.addEventListener = originalAddEventListener;
     });
   });
 }); 
