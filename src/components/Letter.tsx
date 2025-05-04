@@ -23,6 +23,10 @@ export interface LetterProps {
   className?: string;
 }
 
+// Animation durations - use 0 in test environment to speed up tests
+const getDuration = (baseValue: number) => 
+  process.env.NODE_ENV === 'test' ? 0 : baseValue;
+
 /**
  * Animation variants for different letter states
  */
@@ -32,7 +36,7 @@ const letterVariants: Variants = {
     scale: 1,
     y: 0,
     transition: {
-      duration: 0.3,
+      duration: getDuration(0.3),
       ease: "easeInOut"
     }
   },
@@ -41,7 +45,7 @@ const letterVariants: Variants = {
     scale: 0.8,
     y: 10,
     transition: {
-      duration: 0.4,
+      duration: getDuration(0.4),
       ease: "easeOut"
     }
   },
@@ -50,7 +54,7 @@ const letterVariants: Variants = {
     scale: [1.3, 1.1, 1],
     y: [0, -5, 0],
     transition: {
-      duration: 0.5,
+      duration: getDuration(0.5),
       ease: "easeOut",
       times: [0, 0.6, 1]
     }
@@ -58,7 +62,7 @@ const letterVariants: Variants = {
   movement: {
     scale: [1, 1.1, 1],
     transition: {
-      duration: 0.8,
+      duration: getDuration(0.8),
       ease: [0.1, 2, 0.3, 1], // Matches the exaggerated cubic-bezier in CSS
       times: [0, 0.3, 1]
     }
