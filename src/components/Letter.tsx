@@ -21,6 +21,8 @@ export interface LetterProps {
   initialIndex?: number;
   /** Optional CSS class name to add to the component */
   className?: string;
+  /** Optional tabIndex for keyboard navigation */
+  tabIndex?: number;
 }
 
 // Animation durations - use 0 in test environment to speed up tests
@@ -70,8 +72,33 @@ const letterVariants: Variants = {
 };
 
 /**
+ * Get the appropriate ARIA label for the current animation state
+ */
+const getAriaLabel = (character: string, state: LetterAnimationState): string => {
+  switch (state) {
+    case 'deletion':
+      return `Letter ${character} being deleted`;
+    case 'insertion':
+      return `Letter ${character} being inserted`;
+    case 'movement':
+      return `Letter ${character} moving to new position`;
+    default:
+      return `Letter ${character}`;
+  }
+};
+
+/**
+ * Get ARIA live property based on animation state
+ */
+const getAriaLive = (state: LetterAnimationState): 'off' | 'polite' => {
+  // Use polite for state changes, off for normal state
+  return state !== 'normal' ? 'polite' : 'off';
+};
+
+/**
  * Letter component renders a single character with appropriate styling and animation
  * based on its current animation state (normal, deletion, insertion, movement).
+ * Enhanced with accessibility features for screen readers and keyboard navigation.
  */
 const Letter: React.FC<LetterProps> = ({
   character,
@@ -79,7 +106,16 @@ const Letter: React.FC<LetterProps> = ({
   onAnimationComplete,
   initialIndex,
   className = '',
+  tabIndex = 0,
 }) => {
+  // Get accessibility attributes based on current state
+  const ariaLabel = getAriaLabel(character, animationState);
+  const ariaLive = getAriaLive(animationState);
+
+  // Determine if the component should be focusable based on state
+  // Deleted letters shouldn't remain in focus order once they're gone
+  const effectiveTabIndex = animationState === 'deletion' ? -1 : tabIndex;
+
   return (
     <motion.span 
       className={`${styles.letter} ${styles[animationState]} ${className}`}
@@ -91,6 +127,22 @@ const Letter: React.FC<LetterProps> = ({
       variants={letterVariants}
       onAnimationComplete={onAnimationComplete}
       layout
+      
+      // Accessibility attributes
+      role="text"
+      aria-label={ariaLabel}
+      aria-live={ariaLive}
+      aria-atomic="true"
+      aria-relevant="text"
+      tabIndex={effectiveTabIndex}
+      aria-hidden={animationState === 'deletion'}
+      // Add focus/blur handlers that match the state color to outline color for keyboard users
+      style={{
+        // Ensure focus outline matches the current state color
+        outlineColor: animationState === 'deletion' ? '#ff5252' : 
+                       animationState === 'insertion' ? '#4caf50' : 
+                       animationState === 'movement' ? '#ffeb3b' : '#fff'
+      }}
     >
       {character}
     </motion.span>

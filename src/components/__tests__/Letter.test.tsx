@@ -126,4 +126,99 @@ describe('Letter Component', () => {
       expect(mockCallback).toHaveBeenCalledTimes(1);
     });
   });
+
+  // Accessibility tests
+  describe('Accessibility Features', () => {
+    it('has the correct ARIA role and attributes', () => {
+      render(<Letter character="h" animationState="normal" />);
+      const letterElement = screen.getByTestId('letter');
+      
+      expect(letterElement).toHaveAttribute('role', 'text');
+      expect(letterElement).toHaveAttribute('aria-label', 'Letter h');
+      expect(letterElement).toHaveAttribute('aria-live', 'off');
+      expect(letterElement).toHaveAttribute('aria-atomic', 'true');
+      expect(letterElement).not.toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('updates ARIA attributes based on animation state', () => {
+      const { rerender } = render(<Letter character="i" animationState="normal" />);
+      let letterElement = screen.getByTestId('letter');
+      
+      // Check normal state
+      expect(letterElement).toHaveAttribute('aria-label', 'Letter i');
+      expect(letterElement).toHaveAttribute('aria-live', 'off');
+      
+      // Check deletion state
+      rerender(<Letter character="i" animationState="deletion" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveAttribute('aria-label', 'Letter i being deleted');
+      expect(letterElement).toHaveAttribute('aria-live', 'polite');
+      expect(letterElement).toHaveAttribute('aria-hidden', 'true');
+      
+      // Check insertion state
+      rerender(<Letter character="i" animationState="insertion" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveAttribute('aria-label', 'Letter i being inserted');
+      expect(letterElement).toHaveAttribute('aria-live', 'polite');
+      expect(letterElement).not.toHaveAttribute('aria-hidden', 'true');
+      
+      // Check movement state
+      rerender(<Letter character="i" animationState="movement" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveAttribute('aria-label', 'Letter i moving to new position');
+      expect(letterElement).toHaveAttribute('aria-live', 'polite');
+      expect(letterElement).not.toHaveAttribute('aria-hidden', 'true');
+    });
+
+    it('applies proper tabIndex based on animation state', () => {
+      const { rerender } = render(<Letter character="j" animationState="normal" />);
+      let letterElement = screen.getByTestId('letter');
+      
+      // Default tabIndex should be 0
+      expect(letterElement).toHaveAttribute('tabIndex', '0');
+      
+      // When in deletion state, remove from tab order
+      rerender(<Letter character="j" animationState="deletion" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveAttribute('tabIndex', '-1');
+      
+      // Return to tab order for other states
+      rerender(<Letter character="j" animationState="insertion" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveAttribute('tabIndex', '0');
+      
+      // Custom tabIndex should be respected
+      rerender(<Letter character="j" animationState="normal" tabIndex={3} />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveAttribute('tabIndex', '3');
+      
+      // But still removed from tab order during deletion
+      rerender(<Letter character="j" animationState="deletion" tabIndex={3} />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveAttribute('tabIndex', '-1');
+    });
+
+    it('applies styles with the correct focus outline colors', () => {
+      const { rerender } = render(<Letter character="k" animationState="normal" />);
+      let letterElement = screen.getByTestId('letter');
+      
+      // Check the default outline color
+      expect(letterElement).toHaveStyle('outline-color: #fff');
+      
+      // Check deletion state outline color
+      rerender(<Letter character="k" animationState="deletion" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveStyle('outline-color: #ff5252');
+      
+      // Check insertion state outline color
+      rerender(<Letter character="k" animationState="insertion" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveStyle('outline-color: #4caf50');
+      
+      // Check movement state outline color
+      rerender(<Letter character="k" animationState="movement" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveStyle('outline-color: #ffeb3b');
+    });
+  });
 }); 

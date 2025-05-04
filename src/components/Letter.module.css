@@ -13,6 +13,10 @@
   border-radius: 2px;
   transform-origin: center;
   will-change: transform, opacity, color;
+  /* Add default focus styling */
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color 0.2s ease-in-out;
 }
 
 /* Animation state styling */
@@ -87,11 +91,39 @@
   opacity: 0.25;
 }
 
-/* Ensure proper focus styling for accessibility */
+/* Enhanced focus states for accessibility */
 .letter:focus-visible {
   outline: 2px solid #fff;
-  outline-offset: 2px;
-  border-radius: 2px;
+  outline-offset: 3px;
+  z-index: 1; /* Ensure focused items appear above others */
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2); /* Outer glow for better visibility */
+}
+
+/* State-specific focus styles */
+.deletion:focus-visible {
+  outline-color: #ff5252; /* Red focus for deletion state */
+}
+
+.insertion:focus-visible {
+  outline-color: #4caf50; /* Green focus for insertion state */
+}
+
+.movement:focus-visible {
+  outline-color: #ffeb3b; /* Yellow focus for movement state */
+}
+
+/* Support for users with reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .letter {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  
+  /* Still show state changes visually but without animation */
+  .deletion, .insertion, .movement {
+    transition: none !important;
+  }
 }
 
 /* Responsive font sizes */
