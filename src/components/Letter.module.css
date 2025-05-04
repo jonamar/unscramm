@@ -1,0 +1,56 @@
+/* Base Letter styling */
+.letter {
+  display: inline-block;
+  font-size: 2rem;
+  font-weight: bold;
+  font-family: 'Istok Web', sans-serif;
+  margin: 0 0.025em;
+  transition: color 0.2s ease;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+  color: #fff; /* Default letter color */
+}
+
+/* Animation state styling placeholders */
+.normal {
+  /* Default state, no special styling needed */
+}
+
+.deletion {
+  color: red; /* Red for deletions as specified in the PRD */
+}
+
+.insertion {
+  color: green; /* Green for insertions as specified in the PRD */
+}
+
+.movement {
+  color: yellow; /* Yellow for moves as specified in the PRD */
+}
+
+/* Ensure proper focus styling for accessibility */
+.letter:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Responsive font sizes */
+@media (max-width: 500px) {
+  .letter {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .letter {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 320px) {
+  .letter {
+    font-size: 1.1rem;
+  }
+} 
