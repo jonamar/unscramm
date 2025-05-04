@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { motion, Variants, usePresence } from 'framer-motion';
+import { motion, Variants, usePresence, useReducedMotion } from 'framer-motion';
 import styles from './Letter.module.css';
 
 /**
@@ -31,51 +31,56 @@ export interface LetterProps {
   disableLayoutAnimation?: boolean;
 }
 
-// Animation durations - use 0 in test environment to speed up tests
-const getDuration = (baseValue: number) => 
-  process.env.NODE_ENV === 'test' ? 0 : baseValue;
-
 /**
- * Animation variants for different letter states
- * Each variant defines the appearance and transition for a specific state
+ * Creates animation variants with appropriate timings, adjusting for test environment
+ * and user's reduced motion preferences
+ * 
+ * @param shouldReduceMotion - Whether animations should be reduced/disabled
+ * @returns Animation variants object for Framer Motion
  */
-const letterVariants: Variants = {
-  normal: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      duration: getDuration(0.3),
-      ease: "easeInOut"
+const createLetterVariants = (shouldReduceMotion: boolean): Variants => {
+  // Use minimal duration when in test environment or when user prefers reduced motion
+  const getDuration = (baseValue: number) => 
+    shouldReduceMotion || process.env.NODE_ENV === 'test' ? 0.001 : baseValue;
+
+  return {
+    normal: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        duration: getDuration(0.3),
+        ease: "easeInOut"
+      }
+    },
+    deletion: {
+      opacity: 0,
+      scale: shouldReduceMotion ? 1 : 0.8,
+      y: shouldReduceMotion ? 0 : 10,
+      transition: {
+        duration: getDuration(0.4),
+        ease: "easeOut"
+      }
+    },
+    insertion: {
+      opacity: shouldReduceMotion ? [0, 1] : [0, 1, 1],
+      scale: shouldReduceMotion ? 1 : [1.3, 1.1, 1],
+      y: shouldReduceMotion ? 0 : [0, -5, 0],
+      transition: {
+        duration: getDuration(0.5),
+        ease: "easeOut",
+        times: shouldReduceMotion ? [0, 1] : [0, 0.6, 1]
+      }
+    },
+    movement: {
+      scale: shouldReduceMotion ? 1 : [1, 1.1, 1],
+      transition: {
+        duration: getDuration(0.8),
+        ease: shouldReduceMotion ? "easeOut" : [0.1, 2, 0.3, 1], // Matches the cubic-bezier in CSS
+        times: shouldReduceMotion ? [0, 1] : [0, 0.3, 1]
+      }
     }
-  },
-  deletion: {
-    opacity: 0,
-    scale: 0.8,
-    y: 10,
-    transition: {
-      duration: getDuration(0.4),
-      ease: "easeOut"
-    }
-  },
-  insertion: {
-    opacity: [0, 1, 1],
-    scale: [1.3, 1.1, 1],
-    y: [0, -5, 0],
-    transition: {
-      duration: getDuration(0.5),
-      ease: "easeOut",
-      times: [0, 0.6, 1]
-    }
-  },
-  movement: {
-    scale: [1, 1.1, 1],
-    transition: {
-      duration: getDuration(0.8),
-      ease: [0.1, 2, 0.3, 1], // Matches the exaggerated cubic-bezier in CSS
-      times: [0, 0.3, 1]
-    }
-  }
+  };
 };
 
 /**
@@ -122,7 +127,7 @@ const getAriaLive = (state: LetterAnimationState): 'off' | 'polite' => {
  * - Full ARIA support for screen readers
  * - Keyboard navigation with appropriate focus states
  * - Color-coding based on animation type (red/green/yellow)
- * - Support for reduced motion preferences
+ * - Support for reduced motion preferences (CSS + JS)
  * - Performance optimizations via memoization and cleanup
  * 
  * @example
@@ -149,6 +154,12 @@ const Letter: React.FC<LetterProps> = ({
   // Track component mount/unmount status for cleanup
   const [isPresent, safeToRemove] = usePresence();
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Check if user prefers reduced motion
+  const shouldReduceMotion = useReducedMotion();
+  
+  // Create variants with motion preference applied
+  const letterVariants = createLetterVariants(!!shouldReduceMotion);
   
   // Get accessibility attributes based on current state
   const ariaLabel = getAriaLabel(character, animationState);
@@ -183,12 +194,17 @@ const Letter: React.FC<LetterProps> = ({
     }
   };
 
+  // Generate dataProp based on initialIndex existence
+  const dataProps = {
+    "data-testid": "letter", 
+    "data-state": animationState,
+    ...(initialIndex !== undefined && { "data-index": initialIndex }),
+  };
+
   return (
     <motion.span 
       className={`${styles.letter} ${styles[animationState]} ${className}`}
-      data-testid="letter"
-      data-state={animationState}
-      data-index={initialIndex}
+      {...dataProps}
       initial="normal"
       animate={animationState}
       variants={letterVariants}
@@ -215,7 +231,7 @@ const Letter: React.FC<LetterProps> = ({
       aria-atomic="true"
       aria-relevant="text"
       tabIndex={effectiveTabIndex}
-      aria-hidden={animationState === 'deletion'}
+      aria-hidden={animationState === 'deletion' ? true : undefined}
       style={{
         // Ensure focus outline matches the current state color
         outlineColor: getOutlineColor()
