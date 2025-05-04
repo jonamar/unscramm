@@ -127,6 +127,47 @@ describe('Letter Component', () => {
     });
   });
 
+  // New test for layout optimization prop
+  it('accepts disableLayoutAnimation prop', () => {
+    // Without layout animation disabled (default)
+    const { rerender } = render(<Letter character="z" animationState="normal" />);
+    let letterElement = screen.getByTestId('letter');
+    
+    // Here we can't directly test the Framer Motion layout prop value,
+    // but we can test that no error is thrown when rendering
+    expect(letterElement).toBeInTheDocument();
+    
+    // With layout animation disabled
+    rerender(<Letter character="z" animationState="normal" disableLayoutAnimation={true} />);
+    letterElement = screen.getByTestId('letter');
+    expect(letterElement).toBeInTheDocument();
+  });
+
+  // Test the memo behavior indirectly by checking if the component updates properly
+  describe('Memoization Behavior', () => {
+    it('should update with new animation state even with memoization', () => {
+      const { rerender } = render(<Letter character="m" animationState="normal" />);
+      let letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveClass('normal');
+      
+      // Should update when animationState changes despite memoization
+      rerender(<Letter character="m" animationState="deletion" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveClass('deletion');
+    });
+    
+    it('should update with new character even with memoization', () => {
+      const { rerender } = render(<Letter character="m" animationState="normal" />);
+      let letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveTextContent('m');
+      
+      // Should update when character changes despite memoization
+      rerender(<Letter character="n" animationState="normal" />);
+      letterElement = screen.getByTestId('letter');
+      expect(letterElement).toHaveTextContent('n');
+    });
+  });
+
   // Accessibility tests
   describe('Accessibility Features', () => {
     it('has the correct ARIA role and attributes', () => {
@@ -219,6 +260,15 @@ describe('Letter Component', () => {
       rerender(<Letter character="k" animationState="movement" />);
       letterElement = screen.getByTestId('letter');
       expect(letterElement).toHaveStyle('outline-color: #ffeb3b');
+    });
+  });
+  
+  // Cleanup tests
+  describe('Component Cleanup', () => {
+    it('properly handles unmounting', () => {
+      // This test simply confirms no errors are thrown when unmounting
+      const { unmount } = render(<Letter character="q" animationState="normal" />);
+      expect(() => unmount()).not.toThrow();
     });
   });
 }); 

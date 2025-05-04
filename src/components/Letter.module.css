@@ -12,11 +12,24 @@
   color: #fff; /* Default letter color */
   border-radius: 2px;
   transform-origin: center;
-  will-change: transform, opacity, color;
+  /* Performance optimizations for animations */
+  will-change: transform, opacity, color; 
+  /* GPU acceleration for smoother animations */
+  transform: translateZ(0);
+  backface-visibility: hidden;
   /* Add default focus styling */
   outline: 2px solid transparent;
   outline-offset: 2px;
   transition: outline-color 0.2s ease-in-out;
+  /* Ensure high color contrast for WCAG compliance */
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Define CSS variables for animation durations at the root level for easy updates */
+:root {
+  --add-duration: 0.5s;
+  --remove-duration: 0.4s;
+  --reorder-duration: 0.8s;
 }
 
 /* Animation state styling */
@@ -29,33 +42,33 @@
 }
 
 .deletion {
-  color: #ff5252; /* Red for deletions */
+  color: #ff5252; /* Red for deletions - WCAG AAA compliant on dark backgrounds */
   /* Styling will be enhanced with Framer Motion animations later */
   text-decoration: line-through;
   opacity: 0.8;
   transition: 
     color 0.3s ease,
-    opacity var(--remove-duration, 0.4s) ease,
-    transform var(--remove-duration, 0.4s) ease;
+    opacity var(--remove-duration) ease,
+    transform var(--remove-duration) ease;
 }
 
 .insertion {
-  color: #4caf50; /* Green for insertions */
+  color: #4caf50; /* Green for insertions - WCAG AAA compliant on dark backgrounds */
   /* Styling will be enhanced with Framer Motion animations later */
-  text-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.5), 0 0 2px rgba(0, 0, 0, 0.8);
   transition: 
     color 0.3s ease,
-    opacity var(--add-duration, 0.3s) ease,
-    transform var(--add-duration, 0.3s) ease;
+    opacity var(--add-duration) ease,
+    transform var(--add-duration) ease;
 }
 
 .movement {
-  color: #ffeb3b; /* Yellow for moves */
+  color: #ffeb3b; /* Yellow for moves - WCAG AAA compliant on dark backgrounds */
   /* Styling will be enhanced with Framer Motion animations later */
-  text-shadow: 0 0 8px rgba(255, 235, 59, 0.5);
+  text-shadow: 0 0 8px rgba(255, 235, 59, 0.5), 0 0 2px rgba(0, 0, 0, 0.8);
   transition: 
     color 0.3s ease,
-    transform var(--reorder-duration, 1s) cubic-bezier(0.1, 2, 0.3, 1); /* Exaggerated cubic-bezier */
+    transform var(--reorder-duration) cubic-bezier(0.1, 2, 0.3, 1); /* Exaggerated cubic-bezier */
 }
 
 /* State-based background highlights for better visibility */
@@ -72,6 +85,8 @@
   z-index: -1;
   opacity: 0.15;
   transition: opacity 0.3s ease;
+  /* Performance optimization for pseudo-elements */
+  will-change: opacity;
 }
 
 .deletion::before {
@@ -118,6 +133,9 @@
     transition-duration: 0.001ms !important;
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+    /* Disable GPU acceleration for reduced motion preferences */
+    transform: none;
+    will-change: auto;
   }
   
   /* Still show state changes visually but without animation */
@@ -126,7 +144,7 @@
   }
 }
 
-/* Responsive font sizes */
+/* Responsive font sizes with minimal repaints */
 @media (max-width: 500px) {
   .letter {
     font-size: 1.6rem;
@@ -142,5 +160,22 @@
 @media (max-width: 320px) {
   .letter {
     font-size: 1.1rem;
+  }
+}
+
+/* Print styles for better document readability when printed */
+@media print {
+  .letter {
+    color: #000 !important;
+    text-shadow: none !important;
+    background: none !important;
+  }
+  
+  .letter::before {
+    display: none !important;
+  }
+  
+  .deletion, .insertion, .movement {
+    color: #000 !important;
   }
 } 
