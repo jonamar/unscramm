@@ -10,6 +10,19 @@ Minor suggestions
 • Add an API route (e.g. /src/pages/api/word-pairs.ts) so swapping to a remote service can be as easy as pointing your client to /api/word-pairs.
 • Verify your tsconfig.json has baseUrl: "src" and any path aliases you need.
 - CI improvements: Later (once you push), we can add a 5.1 GitHub Actions file to run the same scripts on every PR.
+## CI Integration: Code Quality Gates
+
+Add automated code quality checks to our GitHub Actions workflow:
+
+    ### Static Analysis
+    - **Duplication detection**: Add jscpd to catch copy-paste code
+    ```yml
+    - name: Check code duplication
+        run: npx jscpd --min-lines 3 src --threshold 1
+    - Complexity limits: Enforce cyclomatic complexity thresholds via ESLint
+        - name: Check code complexity
+            run: npx eslint src --ext .ts,.tsx --rule 'complexity:["error",10]' --rule 'max-depth:["error",4]'
+
 
 
 notes to self:
