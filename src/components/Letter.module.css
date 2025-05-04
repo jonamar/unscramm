@@ -5,28 +5,86 @@
   font-weight: bold;
   font-family: 'Istok Web', sans-serif;
   margin: 0 0.025em;
-  transition: color 0.2s ease;
+  padding: 0.05em;
   -webkit-user-select: none;
   user-select: none;
   position: relative;
   color: #fff; /* Default letter color */
+  border-radius: 2px;
+  transform-origin: center;
+  will-change: transform, opacity, color;
 }
 
-/* Animation state styling placeholders */
+/* Animation state styling */
 .normal {
-  /* Default state, no special styling needed */
+  /* Default state */
+  transition: 
+    color 0.3s ease,
+    transform 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .deletion {
-  color: red; /* Red for deletions as specified in the PRD */
+  color: #ff5252; /* Red for deletions */
+  /* Styling will be enhanced with Framer Motion animations later */
+  text-decoration: line-through;
+  opacity: 0.8;
+  transition: 
+    color 0.3s ease,
+    opacity var(--remove-duration, 0.4s) ease,
+    transform var(--remove-duration, 0.4s) ease;
 }
 
 .insertion {
-  color: green; /* Green for insertions as specified in the PRD */
+  color: #4caf50; /* Green for insertions */
+  /* Styling will be enhanced with Framer Motion animations later */
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+  transition: 
+    color 0.3s ease,
+    opacity var(--add-duration, 0.3s) ease,
+    transform var(--add-duration, 0.3s) ease;
 }
 
 .movement {
-  color: yellow; /* Yellow for moves as specified in the PRD */
+  color: #ffeb3b; /* Yellow for moves */
+  /* Styling will be enhanced with Framer Motion animations later */
+  text-shadow: 0 0 8px rgba(255, 235, 59, 0.5);
+  transition: 
+    color 0.3s ease,
+    transform var(--reorder-duration, 1s) cubic-bezier(0.1, 2, 0.3, 1); /* Exaggerated cubic-bezier */
+}
+
+/* State-based background highlights for better visibility */
+.deletion::before,
+.insertion::before,
+.movement::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 2px;
+  z-index: -1;
+  opacity: 0.15;
+  transition: opacity 0.3s ease;
+}
+
+.deletion::before {
+  background-color: #ff5252; /* Red background */
+}
+
+.insertion::before {
+  background-color: #4caf50; /* Green background */
+}
+
+.movement::before {
+  background-color: #ffeb3b; /* Yellow background */
+}
+
+/* Hover effects to enhance interactivity */
+.letter:hover::before {
+  opacity: 0.25;
 }
 
 /* Ensure proper focus styling for accessibility */

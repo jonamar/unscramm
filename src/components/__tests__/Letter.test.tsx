@@ -9,7 +9,7 @@ describe('Letter Component', () => {
     expect(letterElement).toHaveTextContent('a');
   });
 
-  it('applies the correct class based on animationState', () => {
+  it('applies the correct data-state attribute based on animationState', () => {
     const { rerender } = render(<Letter character="b" animationState="normal" />);
     let letterElement = screen.getByTestId('letter');
     
