@@ -41,6 +41,29 @@ npm run storybook:test -- -u
 
 For component tests, rely on `data-testid="letter"` and `data-state` attributes for stable selectors.
 
+### Visual Testing Workflow
+
+The project uses Storybook Test Runner for visual testing with the following workflow:
+
+1. **Snapshot Creation**: Initial snapshots are created with:
+   ```bash
+   npm run storybook:visual-test
+   ```
+   This starts the Storybook server and runs the test runner in update mode.
+
+2. **Regular Testing**: Regular visual tests run with:
+   ```bash
+   npm run storybook:test
+   ```
+   This uses parallel test execution (50% of available CPU cores) for up to 40% faster testing on modern machines.
+
+3. **Automated Pre-Push Validation**: Husky pre-push hooks automatically run visual tests before code is pushed to the repository:
+   - Prevents visual regressions from being shared
+   - Uses parallel execution for faster validation
+   - Can be bypassed with `git push --no-verify` when needed
+
+4. **Reduced Motion Tests**: Special test cases verify proper behavior when users have prefers-reduced-motion enabled.
+
 ### Animation Testing
 
 The testing setup includes special utilities for testing animations:
@@ -54,4 +77,6 @@ The testing setup includes special utilities for testing animations:
 - `jest.config.js`: Main Jest configuration
 - `tsconfig.jest.json`: TypeScript configuration for tests
 - `tests/setup.ts`: Global setup for test environment
-- `tests/utils/testHelpers.ts`: Shared testing utilities 
+- `tests/utils/testHelpers.ts`: Shared testing utilities
+- `.husky/pre-push`: Git hook for automated visual testing
+- `.storybook/test-runner.js`: Visual test configuration 

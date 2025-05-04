@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# We're using pre-push hooks instead, to allow frequent commits
+# without interrupting the workflow
