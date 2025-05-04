@@ -2,6 +2,56 @@
 
 An interactive "animated spellcheck" widget that shows the transformation from misspelled to correctly spelled words with animated character transitions.
 
+## Development Workflow
+
+### Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+
+# Start Storybook for component development
+npm run storybook
+```
+
+### Build & Production
+
+```bash
+# Build the application for production
+npm run build
+
+# Start the production server
+npm run start
+
+# Build Storybook as a static site
+npm run build-storybook
+```
+
+### Performance Optimizations
+
+The project uses filesystem caching to significantly improve build times:
+
+- **Webpack5 Filesystem Cache**: Configured in `.storybook/main.ts` with a 14-day expiration
+- **Cache Cleanup**: Run `npm run cache:clean` to manually clear caches
+- **Recommended**: Set up a monthly cron job to automatically clean caches:
+
+```bash
+# Add to crontab (runs at 3am on the 1st of each month)
+0 3 1 * * cd /path/to/unscramm && npm run cache:clean
+```
+
+To add this cron job on macOS/Linux:
+1. Run `crontab -e` to edit crontab
+2. Add the line above (update path to your project)
+3. Save and exit
+
+Benefits:
+- 40-60% faster builds after initial compilation
+- Managed cache growth (~200-300MB)
+
 ## Testing Setup
 
 The project uses Jest for unit and component testing with the following configuration:
@@ -88,6 +138,29 @@ The project uses Storybook Test Runner for visual testing with the following wor
    - Can be bypassed with `git push --no-verify` when needed
 
 4. **Reduced Motion Tests**: Special test cases verify proper behavior when users have prefers-reduced-motion enabled.
+
+### Rebaselining Visual Snapshots
+
+When intentional visual changes are made, snapshots need to be rebaselined:
+
+1. **Make UI Changes**: Implement your visual changes in the component code
+2. **Update the Snapshots**:
+   ```bash
+   npm run storybook:visual-test
+   ```
+3. **Verify New Snapshots**: 
+   ```bash
+   npm run storybook:test
+   ```
+   - All tests should pass with the updated snapshots
+   - If failures persist, check for unintended visual regressions
+4. **Commit the Changes**:
+   ```bash
+   git add __snapshots__/
+   git commit -m "update: rebased visual snapshots for <component>"
+   ```
+
+**Important Note**: Always include snapshot changes in the same commit as the code changes that caused them, to maintain a clear connection between implementation and visual appearance.
 
 ### Animation Testing
 

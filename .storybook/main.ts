@@ -3,7 +3,7 @@ import type { StorybookConfig } from "@storybook/experimental-nextjs-vite";
 const config: StorybookConfig = {
   "stories": [
     "../src/**/*.mdx",
-    "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"
+    "../src/**/*.stories.@(js|jsx|ts|tsx)"
   ],
   "addons": [
     "@storybook/addon-essentials",
@@ -17,6 +17,17 @@ const config: StorybookConfig = {
   },
   "staticDirs": [
     "../public"
-  ]
+  ],
+  "core": {
+    "builder": {
+      "name": "webpack5",
+      "options": {
+        "cache": {
+          "type": "filesystem",
+          "maxAge": 1209600000 // 14 days
+        }
+      }
+    }
+  }
 };
 export default config;

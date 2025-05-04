@@ -16,6 +16,7 @@
     "storybook:test": "test-storybook --maxWorkers=50%",
     "storybook:screenshots": "storybook dev -p 6007 --ci --quiet & wait-on tcp:6007 && storybook-to-image -s http://localhost:6007 -o ./__snapshots__/storybook -p \"^Components/Letter\"",
     "storybook:visual-test": "start-server-and-test 'storybook dev -p 6007 --ci' http://localhost:6007 'test-storybook -u --maxWorkers=50%'",
+    "cache:clean": "rimraf node_modules/.cache .next/cache",
     "prepare": "husky"
   },
   "dependencies": {
@@ -55,6 +56,7 @@
     "jest-image-snapshot": "^6.4.0",
     "lint-staged": "^15.5.1",
     "playwright": "^1.52.0",
+    "rimraf": "^6.0.1",
     "start-server-and-test": "^2.0.11",
     "storybook": "^8.6.12",
     "tailwindcss": "^4",
@@ -68,6 +70,8 @@
     ]
   },
   "lint-staged": {
-    "src/**/*.{ts,tsx,js,jsx}": ["eslint --fix"]
+    "src/**/*.{ts,tsx,js,jsx}": [
+      "eslint --fix"
+    ]
   }
 }
