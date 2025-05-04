@@ -224,3 +224,134 @@ export const AccessibilityFeatures: Story = {
     </div>
   ),
 }; 
+
+/**
+ * REDUCED MOTION STORIES
+ * 
+ * The following stories demonstrate how the Letter component respects users'
+ * prefers-reduced-motion settings, showing simplified animations or no animations
+ * for users who may be sensitive to motion.
+ */
+
+/**
+ * Helper component to simulate reduced motion preference
+ */
+const ReducedMotionWrapper = ({ children }: { children: React.ReactNode }) => (
+  <div>
+    <style>{`
+      /* Force reduced motion for these examples */
+      @media (prefers-reduced-motion: no-preference) {
+        * {
+          transition-duration: 0.001ms !important;
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+        }
+      }
+    `}</style>
+    <div>
+      <p style={{ fontWeight: 'bold', marginBottom: '1rem', color: '#ffa000' }}>
+        ⚠️ Reduced Motion Mode ⚠️
+      </p>
+      {children}
+    </div>
+  </div>
+);
+
+/**
+ * Normal state with reduced motion
+ */
+export const NormalReducedMotion: Story = {
+  args: {
+    character: 'A',
+    animationState: 'normal',
+    tabIndex: 0,
+  },
+  decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
+  parameters: {
+    docs: {
+      description: {
+        story: 'Shows the normal state with reduced motion settings enabled.',
+      },
+    },
+  },
+};
+
+/**
+ * Insertion state with reduced motion
+ */
+export const InsertionReducedMotion: Story = {
+  args: {
+    character: 'B',
+    animationState: 'insertion',
+    tabIndex: 0,
+  },
+  decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
+  parameters: {
+    docs: {
+      description: {
+        story: 'Shows the insertion state with reduced motion settings enabled. Note the simplified animation.',
+      },
+    },
+  },
+};
+
+/**
+ * Deletion state with reduced motion
+ */
+export const DeletionReducedMotion: Story = {
+  args: {
+    character: 'C',
+    animationState: 'deletion',
+    tabIndex: 0,
+  },
+  decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
+  parameters: {
+    docs: {
+      description: {
+        story: 'Shows the deletion state with reduced motion settings enabled. Note the simplified animation.',
+      },
+    },
+  },
+};
+
+/**
+ * Movement state with reduced motion
+ */
+export const MovementReducedMotion: Story = {
+  args: {
+    character: 'D',
+    animationState: 'movement',
+    tabIndex: 0,
+  },
+  decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
+  parameters: {
+    docs: {
+      description: {
+        story: 'Shows the movement state with reduced motion settings enabled. Note the simplified animation.',
+      },
+    },
+  },
+};
+
+/**
+ * All states with reduced motion
+ */
+export const AllStatesReducedMotion: Story = {
+  render: () => (
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <Letter character="N" animationState="normal" />
+      <Letter character="I" animationState="insertion" />
+      <Letter character="D" animationState="deletion" />
+      <Letter character="M" animationState="movement" />
+    </div>
+  ),
+  decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
+  parameters: {
+    docs: {
+      description: {
+        story: 'Shows all animation states with reduced motion settings enabled. Note the simplified animations while still maintaining the visual distinctions between states.',
+      },
+    },
+  },
+}; 
