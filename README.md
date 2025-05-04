@@ -41,6 +41,31 @@ npm run storybook:test -- -u
 
 For component tests, rely on `data-testid="letter"` and `data-state` attributes for stable selectors.
 
+### Git Hooks Workflow
+
+The project uses a two-stage Git hooks workflow to balance fast feedback with thorough validation:
+
+1. **Pre-Commit Hook (Fast Feedback)**:
+   - Uses lint-staged to run ESLint only on changed files
+   - Automatically fixes simple linting issues
+   - Provides immediate quality feedback without disrupting workflow
+   - Fast enough to run on every commit
+
+2. **Pre-Push Hook (Thorough Validation)**:
+   - Runs full Storybook visual test suite
+   - Uses parallel test execution (`--maxWorkers=50%`) for optimal performance
+   - Catches visual regressions before code is shared
+   - Only runs when pushing code
+
+**Bypassing Hooks:**
+- For pre-commit: `git commit --no-verify`
+- For pre-push: `git push --no-verify`
+
+**Configuration Files:**
+- `.husky/pre-commit`: Runs lint-staged
+- `.husky/pre-push`: Runs Storybook tests
+- `package.json`: Contains lint-staged configuration
+
 ### Visual Testing Workflow
 
 The project uses Storybook Test Runner for visual testing with the following workflow:
@@ -78,5 +103,6 @@ The testing setup includes special utilities for testing animations:
 - `tsconfig.jest.json`: TypeScript configuration for tests
 - `tests/setup.ts`: Global setup for test environment
 - `tests/utils/testHelpers.ts`: Shared testing utilities
+- `.husky/pre-commit`: Git hook for linting on commit
 - `.husky/pre-push`: Git hook for automated visual testing
 - `.storybook/test-runner.js`: Visual test configuration 

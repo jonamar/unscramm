@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# We're using pre-push hooks instead, to allow frequent commits
-# without interrupting the workflow
+# Run lint-staged to lint only changed files
+# This provides fast feedback without slowing down your workflow
+npx lint-staged
