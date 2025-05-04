@@ -1,4 +1,4 @@
-import { findLCSPositions, findLCSPositionsFromStrings } from './lcs';
+import { findLCSPositions } from './lcs';
 
 /**
  * Represents an insertion operation in the edit plan

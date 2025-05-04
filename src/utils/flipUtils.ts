@@ -220,8 +220,7 @@ export function applyInvertedTransforms(
     }
     
     // Force reflow to ensure transforms are applied immediately
-    // eslint-disable-next-line no-unused-expressions
-    element.offsetHeight;
+    void element.offsetHeight;
   });
 }
 
@@ -242,8 +241,7 @@ export function clearTransformsAfterReflow(
   easing: string = 'cubic-bezier(0.25, 1, 0.5, 1)'
 ): Promise<void> {
   // Force a reflow to ensure transforms are applied before animating them away
-  // eslint-disable-next-line no-unused-expressions
-  document.body.offsetHeight;
+  void document.body.offsetHeight;
   
   // Apply transition and clear transforms
   elements.forEach(element => {

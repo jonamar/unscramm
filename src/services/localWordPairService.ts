@@ -101,58 +101,101 @@ export class LocalWordPairService implements WordPairService {
   }
 
   /**
-   * Loads the word pair dictionary from the JSON file
-   * @returns Promise resolving when the dictionary is loaded
-   * @throws {DictionaryError} If the file couldn't be loaded or parsed
+   * Fetches and parses the word pairs dictionary from the specified path
+   * 
+   * @returns Promise resolving to the parsed dictionary data
+   * @throws {DictionaryError} If fetch fails or response is not OK
    */
-  private async loadDictionary(): Promise<void> {
-    if (this.isDictionaryLoaded && this.wordPairs.length > 0) {
-      return; // Dictionary already loaded
-    }
-
+  private async fetchDictionary(): Promise<WordPairData> {
     try {
-      // In a browser environment, we'd use fetch
       const response = await fetch(this.dictionaryPath);
       
       if (!response.ok) {
         throw new DictionaryError(`Failed to load word pairs dictionary: ${response.statusText}`);
       }
       
-      let data: WordPairData;
-      try {
-        data = await response.json();
-      } catch (error) {
-        throw new DictionaryError(`Failed to parse word pairs dictionary JSON: ${error instanceof Error ? error.message : String(error)}`);
+      return await response.json();
+    } catch (error) {
+      if (error instanceof DictionaryError) {
+        throw error;
       }
       
-      if (!data.wordPairs || !Array.isArray(data.wordPairs)) {
-        throw new DictionaryError('Invalid word pairs dictionary format: missing or invalid wordPairs array');
+      if (error instanceof SyntaxError) {
+        throw new DictionaryError(`Failed to parse word pairs dictionary JSON: ${error.message}`);
       }
       
-      // Validate that each entry has the required properties
-      const validPairs: WordPair[] = [];
-      for (const pair of data.wordPairs) {
-        if (!pair.misspelling || !pair.correct || 
-            typeof pair.misspelling !== 'string' || 
-            typeof pair.correct !== 'string') {
-          console.warn('Skipping invalid word pair:', pair);
-          continue;
-        }
-        
-        // Add unique IDs if not already present
-        const pairWithId: WordPair = {
-          ...pair,
-          id: pair.id || `${pair.misspelling}-${pair.correct}`
-        };
-        
-        validPairs.push(pairWithId);
+      throw new DictionaryError(`Failed to fetch dictionary: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Validates word pairs from the dictionary and adds IDs if needed
+   * 
+   * @param wordPairs - Array of word pairs to validate
+   * @returns Array of valid word pairs with IDs
+   */
+  private validateWordPairs(wordPairs: WordPair[]): WordPair[] {
+    if (!wordPairs || !Array.isArray(wordPairs)) {
+      throw new DictionaryError('Invalid word pairs dictionary format: missing or invalid wordPairs array');
+    }
+    
+    const validPairs: WordPair[] = [];
+    
+    for (const pair of wordPairs) {
+      if (!pair.misspelling || !pair.correct || 
+          typeof pair.misspelling !== 'string' || 
+          typeof pair.correct !== 'string') {
+        console.warn('Skipping invalid word pair:', pair);
+        continue;
       }
       
-      if (validPairs.length === 0) {
-        throw new DictionaryError('No valid word pairs found in dictionary');
-      }
+      // Add unique IDs if not already present
+      const pairWithId: WordPair = {
+        ...pair,
+        id: pair.id || `${pair.misspelling}-${pair.correct}`
+      };
       
-      this.wordPairs = validPairs;
+      validPairs.push(pairWithId);
+    }
+    
+    if (validPairs.length === 0) {
+      throw new DictionaryError('No valid word pairs found in dictionary');
+    }
+    
+    return validPairs;
+  }
+
+  /**
+   * Creates a fallback dictionary with basic word pairs
+   * 
+   * @returns Array of basic word pairs to use as fallback
+   */
+  private createFallbackDictionary(): WordPair[] {
+    console.warn('Using fallback dictionary due to loading error');
+    return [
+      { misspelling: 'teh', correct: 'the', id: 'fallback-1' },
+      { misspelling: 'recieve', correct: 'receive', id: 'fallback-2' },
+      { misspelling: 'wierd', correct: 'weird', id: 'fallback-3' }
+    ];
+  }
+
+  /**
+   * Loads the word pair dictionary from the JSON file
+   * @returns Promise resolving when the dictionary is loaded
+   * @throws {DictionaryError} If the file couldn't be loaded or parsed
+   */
+  private async loadDictionary(): Promise<void> {
+    // Early return if dictionary is already loaded
+    if (this.isDictionaryLoaded && this.wordPairs.length > 0) {
+      return;
+    }
+
+    try {
+      // Fetch and parse the dictionary
+      const data = await this.fetchDictionary();
+      
+      // Validate word pairs and add IDs
+      this.wordPairs = this.validateWordPairs(data.wordPairs);
       this.isDictionaryLoaded = true;
       
       // Perform initial shuffle
@@ -160,17 +203,10 @@ export class LocalWordPairService implements WordPairService {
       
     } catch (error) {
       console.error('Error loading word pairs dictionary:', error);
-      // For resilience, provide a minimal fallback dictionary
-      this.wordPairs = [
-        { misspelling: 'teh', correct: 'the', id: 'fallback-1' },
-        { misspelling: 'recieve', correct: 'receive', id: 'fallback-2' },
-        { misspelling: 'wierd', correct: 'weird', id: 'fallback-3' }
-      ];
-      this.isDictionaryLoaded = true;
       
-      // Don't throw the error here, just use fallback dictionary
-      // But log it for debugging purposes
-      console.warn('Using fallback dictionary due to loading error', error);
+      // For resilience, provide a minimal fallback dictionary
+      this.wordPairs = this.createFallbackDictionary();
+      this.isDictionaryLoaded = true;
     }
   }
 
@@ -214,6 +250,46 @@ export class LocalWordPairService implements WordPairService {
   }
 
   /**
+   * Selects a random word pair that differs from the last returned pair
+   * 
+   * @returns A randomly selected word pair
+   * @throws {DictionaryError} If no word pairs are available
+   */
+  private selectRandomPair(): WordPair {
+    if (this.wordPairs.length === 0) {
+      throw new DictionaryError('No word pairs available');
+    }
+
+    if (this.wordPairs.length === 1) {
+      // Only one pair available, just return it
+      return this.wordPairs[0];
+    }
+
+    // Try to find a pair different from the last one
+    let attempts = 0;
+    let pair: WordPair;
+    
+    do {
+      // If we've attempted more than half the dictionary size,
+      // just shuffle the dictionary and pick the first one
+      if (attempts > this.wordPairs.length / 2) {
+        this.shuffleDictionary();
+        return this.wordPairs[0];
+      }
+      
+      const randomIndex = Math.floor(Math.random() * this.wordPairs.length);
+      pair = this.wordPairs[randomIndex];
+      attempts++;
+    } while (
+      this.lastPair && 
+      pair.id === this.lastPair.id && 
+      this.wordPairs.length > 1
+    );
+
+    return pair;
+  }
+
+  /**
    * Returns a random word pair from the dictionary
    * @returns Promise resolving to a random WordPair
    * @throws {DictionaryError} If no word pairs are available
@@ -225,43 +301,13 @@ export class LocalWordPairService implements WordPairService {
         await this.loadDictionary();
       }
 
-      if (this.wordPairs.length === 0) {
-        throw new DictionaryError('No word pairs available');
-      }
-
-      if (this.wordPairs.length === 1) {
-        // Only one pair available, just return it
-        const pair = this.wordPairs[0];
-        await this.storeRecentPair(pair);
-        this.lastPair = pair;
-        return pair;
-      }
-
-      // Try to find a pair different from the last one
-      let attempts = 0;
-      let pair: WordPair;
+      // Select a random pair
+      const pair = this.selectRandomPair();
       
-      do {
-        // If we've attempted more than half the dictionary size,
-        // just shuffle the dictionary and pick the first one
-        if (attempts > this.wordPairs.length / 2) {
-          this.shuffleDictionary();
-          pair = this.wordPairs[0];
-          break;
-        }
-        
-        const randomIndex = Math.floor(Math.random() * this.wordPairs.length);
-        pair = this.wordPairs[randomIndex];
-        attempts++;
-      } while (
-        this.lastPair && 
-        pair.id === this.lastPair.id && 
-        this.wordPairs.length > 1
-      );
-
       // Store the pair as recently used
       await this.storeRecentPair(pair);
       this.lastPair = pair;
+      
       return pair;
     } catch (error) {
       // Rethrow if it's already one of our custom errors
