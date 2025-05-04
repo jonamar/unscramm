@@ -9,7 +9,7 @@ Minor suggestions
 • If you’re comfortable with the new App Router (Next.js 13+), you may eventually migrate to /src/app/… for nested layouts and server components, but your current “pages” approach is perfectly valid.
 • Add an API route (e.g. /src/pages/api/word-pairs.ts) so swapping to a remote service can be as easy as pointing your client to /api/word-pairs.
 • Verify your tsconfig.json has baseUrl: "src" and any path aliases you need.
-
+- CI improvements: Later (once you push), we can add a 5.1 GitHub Actions file to run the same scripts on every PR.
 
 
 notes to self:

@@ -17,6 +17,7 @@ Tech Stack
 	•	Testing:
 	•	Unit & Component: Jest + React Testing Library
 	•	E2E: Cypress (or Playwright)
+	•	Visual Regression: Storybook Test Runner for snapshot comparison across animation states
 	•	Code Quality: ESLint + Prettier + TypeScript strict mode
 
 ⸻

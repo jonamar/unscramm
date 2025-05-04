@@ -82,6 +82,7 @@ Unscrambler is an interactive web application that helps users immediately visua
 - Testing:
   - Unit: Jest + React Testing Library for core algorithm and component variants.
   - E2E: Cypress spec at /tests/e2e/spellcheck.spec.ts.
+  - Visual Regression: Storybook Test Runner for snapshot comparison of animation states.
 
 # Development Roadmap
 - Phase 1 (MVP – In Scope):

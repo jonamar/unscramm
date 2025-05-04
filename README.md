@@ -26,6 +26,21 @@ npm run test:coverage
 - `tests/e2e/`: End-to-end tests using Cypress or Playwright
 - `tests/utils/`: Shared test utilities and helpers
 
+### Testing Conventions
+
+The project follows these testing conventions:
+
+- **Unit/Component Tests**: Jest + React Testing Library for DOM structure, state transitions, and ARIA attribute verification
+- **Visual Regression**: Storybook + `@storybook/experimental-addon-test` for visual snapshot testing of all component states
+- **Local "CI"**: Husky Git hooks that run linting, unit tests, and Storybook tests automatically
+
+To update Storybook visual snapshots after intentional changes:
+```bash
+npm run storybook:test -- -u
+```
+
+For component tests, rely on `data-testid="letter"` and `data-state` attributes for stable selectors.
+
 ### Animation Testing
 
 The testing setup includes special utilities for testing animations:
