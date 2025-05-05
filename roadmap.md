@@ -23,7 +23,10 @@ Add automated code quality checks to our GitHub Actions workflow:
         - name: Check code complexity
             run: npx eslint src --ext .ts,.tsx --rule 'complexity:["error",10]' --rule 'max-depth:["error",4]'
 
-
+- Move the inline outlineColor style into the CSS Module (or a CSS variable theme) to keep all styling in one place.
+- Add a test that asserts the reduced-motion timings (e.g. that the variant durations collapse to ~0).
+- Consider extracting the animation-cleanup logic into a custom hook (useLetterAnimation) if you foresee reusing it in other animated components.
+- Ensure the CSS Module uses design-system tokens (from styleguide.md) for colors rather than hard-coded hex values.
 
 notes to self:
 - currently working on task 3 (3.5 next)

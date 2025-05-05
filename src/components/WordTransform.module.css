@@ -1,0 +1,119 @@
+.wordTransform {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 8px;
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.wordContainer {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  min-height: 4rem;
+  padding: 0.5rem;
+  margin: 1rem 0;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+  position: relative;
+  /* Create a containing block for absolutely positioned elements during animation */
+  transform-style: preserve-3d;
+  width: 100%;
+}
+
+/* Animation durations - these will be modified programmatically based on speedMultiplier */
+.wordTransform {
+  /* Default values from the design spec - WordTransform component will override these */
+  --remove-duration: 0.4s;
+  --add-duration: 0.3s; 
+  --reorder-duration: 1.0s;
+  
+  /* Animation staging delays */
+  --phase-transition-delay: 200ms;
+  --stagger-base-delay: 50ms;
+  
+  /* Animation easing curves - can be modified for different feels */
+  --ease-out-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out-back: cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  
+  /* Color coding - matches Letter component styling */
+  --deletion-color: #ff5252;
+  --insertion-color: #4caf50;
+  --movement-color: #ffeb3b;
+}
+
+/* Phase indicators - changes background gradient based on current phase */
+.wordTransform[data-phase="deleting"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(255, 82, 82, 0.1), transparent);
+  opacity: 0.2;
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.wordTransform[data-phase="moving"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(255, 235, 59, 0.1), transparent);
+  opacity: 0.2;
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.wordTransform[data-phase="inserting"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(76, 175, 80, 0.1), transparent);
+  opacity: 0.2;
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.wordTransform[data-phase="complete"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), transparent);
+  opacity: 0.2;
+  z-index: -1;
+  border-radius: inherit;
+}
+
+/* Space to separate letters slightly */
+.letterWrapper {
+  margin: 0 1px;
+  position: relative;
+}
+
+/* Support for reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .wordTransform {
+    --remove-duration: 0.001s !important;
+    --add-duration: 0.001s !important;
+    --reorder-duration: 0.001s !important;
+    --phase-transition-delay: 0ms !important;
+    --stagger-base-delay: 0ms !important;
+  }
+}
+
+/* Responsive design adjustments */
+@media (max-width: 480px) {
+  .wordContainer {
+    min-height: 3rem;
+    padding: 0.3rem;
+  }
+  
+  .letterWrapper {
+    margin: 0 0.5px;
+  }
+} 
