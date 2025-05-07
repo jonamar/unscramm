@@ -1,0 +1,11 @@
+# Task ID: 7
+# Title: Integrate components into main application page
+# Status: pending
+# Dependencies: 5, 6
+# Priority: high
+# Description: Assemble the core components into the main application page with proper layout and state management.
+# Details:
+Create the main application page that integrates the WordTransform and Controls components. Implement state management to handle user inputs, animation control, and word pair management. Connect the Controls component to the WordTransform component so user actions trigger appropriate animations. Implement the key user flows described in the PRD: 1) Manual word entry, 2) Shuffle functionality, 3) Play/Reset controls, 4) Speed adjustment. Ensure the layout is responsive according to the breakpoints in styleguide.md.
+
+# Test Strategy:
+Test the integrated application with end-to-end tests using Cypress. Verify all user flows work correctly. Test responsive behavior across different viewport sizes. Check that state is properly managed between components.

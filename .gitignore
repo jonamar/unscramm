@@ -44,6 +44,6 @@ next-env.d.ts
 .DS_Store
 
 # Task files
-tasks.json
-tasks/ 
-*storybook.log
+# tasks.json
+# tasks/ 
+# *storybook.log

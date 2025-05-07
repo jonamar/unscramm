@@ -1,0 +1,130 @@
+# Task ID: 5
+# Title: Implement WordTransform component
+# Status: in-progress
+# Dependencies: 2, 4
+# Priority: high
+# Description: Create the WordTransform component that orchestrates the full animation sequence using the Letter components.
+# Details:
+Develop the WordTransform component that takes misspelled and correct words as inputs and orchestrates the full animation sequence. Use the algorithm utilities from Task 2 to compute the edit plan. Render a sequence of Letter components and control their animations using Framer Motion's AnimatePresence and sequence capabilities. Implement the three-phase animation: 1) deletions, 2) movements, 3) insertions. Support variable animation speed through a speed multiplier prop. Ensure smooth transitions between animation phases.
+
+# Test Strategy:
+Test the WordTransform component with various word pairs, including edge cases. Verify the animation sequence is correct and responsive. Use React Testing Library to check component rendering and state management.
+
+# Subtasks:
+## 1. Set up WordTransform component with TypeScript interfaces [done]
+### Dependencies: None
+### Description: Create the basic structure of the WordTransform component with proper TypeScript interfaces, props definition, and state management for the animation sequence.
+### Details:
+Create a new file for the WordTransform component. Define TypeScript interfaces for props (misspelledWord, correctWord, speedMultiplier, etc.). Set up the component's initial state including animation phase tracking (idle, deleting, moving, inserting). Create a skeleton for the component that accepts props and renders a container for the letters. Add CSS variables for animation timing that will be influenced by the speedMultiplier prop.
+<info added on 2025-05-05T01:10:20.674Z>
+Create a new file for the WordTransform component. Define TypeScript interfaces for props (misspelledWord, correctWord, speedMultiplier, etc.). Set up the component's initial state including animation phase tracking (idle, deleting, moving, inserting). Create a skeleton for the component that accepts props and renders a container for the letters. Add CSS variables for animation timing that will be influenced by the speedMultiplier prop.
+
+Implementation details:
+- Created WordTransform.tsx with TypeScript interfaces for all required props (misspelledWord, correctWord) and optional props (speedMultiplier with default 1, className, animation event callbacks, cancelOnPropsChange flag)
+- Implemented state management using useReducer with an AnimationPhase enum to track animation progress
+- Created a comprehensive animation reducer with appropriate action types for phase transitions
+- Developed WordTransform.module.css with CSS variables for animation durations (--remove-duration, --add-duration, --reorder-duration)
+- Added support for dynamic visual feedback using data-phase attributes
+- Implemented accessibility features including reduced motion preference detection
+- Set up logic to dynamically modify animation durations based on the speedMultiplier prop
+- Added data-phase attributes for E2E testing and debugging purposes
+
+The component structure is now complete with all TypeScript interfaces defined. The next step is to integrate the word transformation algorithm from the next subtask and implement the actual animation logic.
+</info added on 2025-05-05T01:10:20.674Z>
+
+## 2. Integrate word transformation algorithm [done]
+### Dependencies: None
+### Description: Connect the WordTransform component with the algorithm utilities to compute the edit plan for transforming the misspelled word into the correct word.
+### Details:
+Import the algorithm utilities from Task 2. Implement a useEffect hook that computes the transformation plan when either word changes. The plan should identify which letters need to be deleted, which ones need to be moved, and which ones need to be inserted. Store this plan in component state. Handle edge cases such as empty strings, identical words, or completely different words. Ensure the algorithm results are properly typed and structured for the animation phases.
+<info added on 2025-05-07T00:09:28.358Z>
+Import the algorithm utilities from Task 2. Implement a useEffect hook that computes the transformation plan when either word changes. The plan should identify which letters need to be deleted, which ones need to be moved, and which ones need to be inserted. Store this plan in component state. Handle edge cases such as empty strings, identical words, or completely different words. Ensure the algorithm results are properly typed and structured for the animation phases.
+
+The integration of the word transformation algorithm has been implemented with the following components:
+
+1. Enhanced the initialization useEffect to include state.isAnimating in the dependencies array to properly track animation state changes.
+
+2. Created a memoized handlePhaseChange function that calls the onPhaseChange callback when animation phases transition.
+
+3. Implemented a dedicated useEffect to manage phase transitions based on the computed edit plan:
+   - Calculates the total number of animations required for each phase
+   - Intelligently skips phases that don't require animations (e.g., when no deletions are needed)
+   - Dispatches appropriate actions to initiate each animation phase
+   - Triggers the completion callback when the entire animation sequence finishes
+
+4. Added an effect to monitor when all animations in the current phase are complete to trigger the next phase.
+
+5. Developed helper functions to manage the animation flow:
+   - startAnimation function to begin the animation sequence
+   - handleLetterAnimationComplete function to track completion of individual letter animations
+
+6. Enhanced the UI with debugging and testing features:
+   - Added a manual animation start button for testing purposes
+   - Included debug information displaying the edit plan details (showing deletions, moves, and insertions)
+
+The implementation successfully handles edge cases including empty strings and identical words by computing appropriate edit plans and automatically transitioning through unnecessary phases. This completes the core algorithm integration, setting the foundation for the next subtask of implementing the animation state machine.
+</info added on 2025-05-07T00:09:28.358Z>
+
+## 3. Implement animation state machine [done]
+### Dependencies: None
+### Description: Create a state machine to manage the three phases of animation (deletions, movements, insertions) and handle transitions between them.
+### Details:
+Implement a state machine using useReducer for more predictable state transitions and easier testing. Define reducer actions for each animation phase (deleting, moving, inserting, complete). Create transition functions to move from one phase to the next when the current phase completes. Use Framer Motion's AnimatePresence for managing components entering/exiting the DOM. Implement timing calculations based on the speedMultiplier prop. Add event handlers to detect when animations complete to trigger the next phase.
+<info added on 2025-05-07T00:46:36.630Z>
+Implement a state machine using useReducer for more predictable state transitions and easier testing. Define reducer actions for each animation phase (deleting, moving, inserting, complete). Create transition functions to move from one phase to the next when the current phase completes. Use Framer Motion's AnimatePresence for managing components entering/exiting the DOM. Implement timing calculations based on the speedMultiplier prop. Add event handlers to detect when animations complete to trigger the next phase.
+
+The implementation includes a getLetterAnimationState function that determines the appropriate animation state for each letter based on the current animation phase (DELETING, MOVING, INSERTING), the letter's position in the word, and the edit plan (deletions, moves, insertions). A renderLetters function handles null safety for the edit plan and uses a switch statement to handle different animation phases. It renders source letters (misspelled word) during IDLE, DELETING, and MOVING phases, and target letters (correct word) during INSERTING and COMPLETE phases. The function applies appropriate animation states to each letter and sets onAnimationComplete callbacks only on letters that should trigger phase transitions.
+
+The component's main render method uses the renderLetters function, displays a Start Animation button only in the IDLE phase, shows debugging information about the current animation state, and applies proper CSS classes for styling. CSS styles maintain visual consistency and support animations through lettersContainer styles for the letter display area, animation control button styles, debug info display styling, and layout adjustments to properly show all elements. Tests have been updated to adapt to the new component structure that renders individual letters instead of text strings.
+</info added on 2025-05-07T00:46:36.630Z>
+
+## 4. Render and animate Letter components [pending]
+### Dependencies: None
+### Description: Implement the rendering logic for Letter components with proper animation attributes based on the current animation phase.
+### Details:
+Create a rendering system that maps the transformation plan to Letter components. Assign unique keys to each letter for stable identity during animations. Pass appropriate animation props to each Letter based on its role in the current phase (being deleted, moved, or inserted). Use Framer Motion's layout prop for automatic positioning. Implement staggered animations using custom delay calculations. Add data attributes to letters for testing and debugging purposes.
+<info added on 2025-05-05T01:22:16.869Z>
+Create a rendering system that maps the transformation plan to Letter components. Assign unique keys to each letter for stable identity during animations. Pass appropriate animation props to each Letter based on its role in the current phase (being deleted, moved, or inserted). Use Framer Motion's layout prop for automatic positioning. Implement staggered animations using custom delay calculations. Add data attributes to letters for testing and debugging purposes.
+
+After implementing the Letter component rendering:
+1. Create a WordTransform.stories.tsx file with stories for different animation states (idle, deleting, inserting, and transitioning)
+2. Include stories for both regular and reduced motion modes to ensure accessibility compliance
+3. Run Storybook to visually verify the component works correctly across all animation phases
+4. Set up initial snapshot tests with Storybook test runner to catch unintended visual regressions
+</info added on 2025-05-05T01:22:16.869Z>
+<info added on 2025-05-05T01:22:37.630Z>
+Create a rendering system that maps the transformation plan to Letter components. Assign unique keys to each letter for stable identity during animations. Pass appropriate animation props to each Letter based on its role in the current phase (being deleted, moved, or inserted). Use Framer Motion's layout prop for automatic positioning. Implement staggered animations using custom delay calculations. Add data attributes to letters for testing and debugging purposes.
+
+In addition to unit tests, implement comprehensive Storybook visual testing for the Letter components. Create stories that showcase each animation phase (idle, deleting, inserting, transitioning) and verify the visual appearance and behavior matches the expected design. Use Storybook's interaction testing capabilities to simulate user interactions and animation triggers. Implement visual regression tests using Chromatic or a similar tool to catch unintended visual changes. This dual testing approach (unit tests + visual testing) will ensure both the functional logic and visual appearance are correctly maintained.
+</info added on 2025-05-05T01:22:37.630Z>
+<info added on 2025-05-05T01:22:56.734Z>
+The test strategy for this subtask should be expanded to include Storybook testing. In addition to unit tests that verify the correct number of Letter components are rendered with appropriate props for each animation phase, we should implement Storybook stories to visually test the component behavior.
+
+Specifically, we should:
+1. Create Storybook stories for each animation phase (idle, deleting, inserting, transitioning)
+2. Include stories that demonstrate both regular and reduced motion modes for accessibility
+3. Add interaction tests in Storybook to verify animation triggers work correctly
+4. Implement visual regression testing using Chromatic or similar tools
+5. Document the testing approach in the component's README
+
+This comprehensive testing approach will ensure both functional correctness and visual consistency of the Letter components throughout the animation lifecycle.
+</info added on 2025-05-05T01:22:56.734Z>
+
+## 5. Handle prop changes and optimize performance [pending]
+### Dependencies: None
+### Description: Implement proper handling of prop changes during animation and optimize the component for performance.
+### Details:
+Decide and implement behavior for when props change mid-animation (restart, complete current animation first, etc.). Add a reset function to cleanly restart animations when words change. Implement memoization using useMemo and useCallback to prevent unnecessary re-renders. Add optional callback props for animation events (onAnimationStart, onPhaseChange, onAnimationComplete). Ensure smooth transitions between all animation phases with no visual glitches. Add final polish including accessibility attributes and responsive behavior.
+
+## 6. Integrate CSS variables for animation timing [pending]
+### Dependencies: None
+### Description: Set up and integrate CSS variables for animation timing from the stylesheet to ensure consistent animation speeds across the component.
+### Details:
+Create a set of CSS variables in the component's stylesheet for different animation durations and delays (e.g., --deletion-duration, --movement-duration, --insertion-duration). Implement a mechanism to modify these CSS variables based on the speedMultiplier prop. Use React's useRef to access the component's DOM element and update CSS variables programmatically. Ensure all animations reference these variables instead of hardcoded timing values. Add a helper function to calculate and update all timing variables when the speed multiplier changes.
+
+## 7. Add data-phase attributes and testing hooks [pending]
+### Dependencies: None
+### Description: Implement data-phase attributes and testing hooks to facilitate E2E testing and debugging of the animation sequence.
+### Details:
+Add data-phase attributes to the component's container element that reflect the current animation phase (e.g., data-phase="deleting", data-phase="moving"). Add data-testid attributes to key elements for easier selection in tests. Create a debug mode prop that, when enabled, adds additional data attributes showing the internal state of each letter (e.g., data-letter-state="deleted", data-letter-state="moving"). Implement a testing API through ref forwarding that exposes internal state and methods for testing purposes. Document all testing hooks and attributes for the QA team.
+

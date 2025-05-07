@@ -1,0 +1,472 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Set up Next.js 14 project with TypeScript and PWA configuration",
+      "description": "Initialize the project with Next.js 14, React 18, TypeScript (ESM), and configure PWA capabilities including service worker and manifest.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "details": "Create a new Next.js project using `create-next-app` with TypeScript support. Configure the project for ESM modules. Set up the PWA capabilities by adding the necessary Next.js PWA plugin and configuring the service worker and manifest.json file. Initialize the global styles based on the styleguide.md specifications, focusing on the dark theme and accessibility requirements. Set up the project structure following Next.js conventions with directories for components, utils, services, and tests.",
+      "testStrategy": "Verify project builds successfully. Confirm PWA configuration with Lighthouse audit. Check that TypeScript is properly configured with strict mode enabled.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Initialize Next.js 14 project with TypeScript and ESM configuration",
+          "description": "Set up a new Next.js 14 project with TypeScript support configured for ESM modules and establish the basic project structure.",
+          "dependencies": [],
+          "details": "1. Run `npx create-next-app@latest` with the following options:\n   - TypeScript: Yes\n   - ESLint: Yes\n   - Tailwind CSS: Optional (based on styleguide.md)\n   - App Router: Yes\n   - Import alias: Yes (@/)\n2. Configure TypeScript for ESM by updating tsconfig.json:\n   - Set \"module\": \"NodeNext\"\n   - Set \"moduleResolution\": \"NodeNext\"\n3. Update package.json to include \"type\": \"module\"\n4. Create the following directory structure:\n   - app/ (Next.js App Router)\n   - components/ (Reusable UI components)\n   - utils/ (Helper functions)\n   - services/ (API and external service integrations)\n   - types/ (TypeScript type definitions)\n   - tests/ (Test files)\n5. Test the setup by running `npm run dev` and verifying the app starts correctly\n6. Commit the initial project setup",
+          "status": "done",
+          "parentTaskId": 1
+        },
+        {
+          "id": 2,
+          "title": "Configure PWA capabilities with service worker and manifest",
+          "description": "Add PWA functionality to the Next.js application by setting up service worker and web manifest configuration.",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Install next-pwa package: `npm install next-pwa`\n2. Create a public/manifest.json file with the following properties:\n   - name\n   - short_name\n   - icons (in various sizes: 192x192, 512x512)\n   - start_url\n   - display (standalone)\n   - background_color\n   - theme_color\n3. Configure next-pwa in next.config.js:\n   ```js\n   const withPWA = require('next-pwa')({  \n     dest: 'public',\n     register: true,\n     skipWaiting: true,\n     disable: process.env.NODE_ENV === 'development'\n   });\n   \n   module.exports = withPWA({\n     // other Next.js config\n   });\n   ```\n4. Add necessary meta tags in app/layout.tsx:\n   - viewport\n   - theme-color\n   - manifest link\n   - apple-touch-icon\n5. Create placeholder icons in public/ directory\n6. Test PWA configuration using Lighthouse in Chrome DevTools\n7. Verify service worker registration in production build",
+          "status": "done",
+          "parentTaskId": 1
+        },
+        {
+          "id": 3,
+          "title": "Implement global styles based on styleguide specifications",
+          "description": "Set up global styling with dark theme support and accessibility requirements according to the styleguide.md specifications.",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Review styleguide.md for design specifications\n2. Create a global.css file in the app/ directory\n3. Implement CSS variables for theme colors with dark mode support:\n   ```css\n   :root {\n     /* Light theme variables */\n     --background: #ffffff;\n     --text: #000000;\n     /* Add other variables from styleguide */\n   }\n   \n   [data-theme='dark'] {\n     /* Dark theme variables */\n     --background: #121212;\n     --text: #ffffff;\n     /* Add other variables from styleguide */\n   }\n   ```\n4. Add base styles for accessibility:\n   - Appropriate font sizes and line heights\n   - Focus states for interactive elements\n   - Color contrast meeting WCAG AA standards\n5. Implement a theme toggle component in components/ThemeToggle.tsx\n6. Add theme context provider in app/providers.tsx\n7. Update app/layout.tsx to include the ThemeProvider and global styles\n8. Test theme switching functionality\n9. Verify accessibility using axe DevTools or similar tool",
+          "status": "done",
+          "parentTaskId": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Implement core algorithm utilities",
+      "description": "Develop the core algorithm modules for spell correction, including LCS, edit plan computation, and FLIP animation helpers that adhere to the project styleguide specifications.",
+      "status": "done",
+      "dependencies": [
+        1
+      ],
+      "priority": "high",
+      "details": "Create the following utility modules in the /utils directory: 1) lcs.ts with findLCSPositions function to identify common characters between misspelled and correct words, 2) editPlan.ts with computeEditPlan and identifyTrueMovers functions to determine necessary deletions, insertions, and character movements, 3) flipUtils.ts with FLIP (First, Last, Invert, Play) animation helper functions for smooth reordering animations. Each module should be fully typed with TypeScript and include detailed JSDoc comments explaining the algorithms and parameters. The FLIP animation utilities must adhere to the color palette, timing, and animation easing specifications defined in the styleguide.md, and should properly utilize the CSS variables from the styleguide for consistent visual presentation.",
+      "testStrategy": "Write comprehensive Jest unit tests for each algorithm function, covering edge cases like anagrams, empty strings, identical strings, and long words. Verify algorithm correctness and performance benchmarks. Include tests to verify that animations respect the timing and easing specifications from the styleguide.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement LCS algorithm (Longest Common Subsequence)",
+          "description": "Create the findLCSPositions function to identify common characters between misspelled and correct words using dynamic programming.",
+          "details": "",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 2
+        },
+        {
+          "id": 2,
+          "title": "Develop Edit Plan computation",
+          "description": "Implement the computeEditPlan function that determines necessary deletions, insertions, and character movements between two words.",
+          "details": "",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 2
+        },
+        {
+          "id": 3,
+          "title": "Create True Movers identification function",
+          "description": "Implement the identifyTrueMovers function that detects letters that break formation and should be highlighted during animation.",
+          "details": "",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 2
+        },
+        {
+          "id": 4,
+          "title": "Create FLIP animation base utilities",
+          "description": "Implement the foundational FLIP (First, Last, Invert, Play) animation utilities for smooth transitions that adhere to the styleguide specifications.",
+          "details": "Implementation steps:\n1. Create /utils/flipUtils.ts file\n2. Implement basic FLIP utility functions:\n   - captureElementState: to record the initial position of elements\n   - calculateElementTransform: to compute the transform needed between states\n3. Define TypeScript interfaces for element states and transforms\n4. Add detailed JSDoc comments explaining the FLIP technique and how each function contributes\n5. Write unit tests to verify the functions correctly calculate positions and transforms\n6. Ensure the utilities work with DOM elements and their positioning\n7. Reference the styleguide.md color palette and CSS variables for consistent styling\n8. Create constants for animation timing and easing that match the styleguide specifications",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 2
+        },
+        {
+          "id": 5,
+          "title": "Implement FLIP animation execution utilities",
+          "description": "Create utilities to execute FLIP animations based on the calculated transforms, following the styleguide's animation specifications.",
+          "details": "Implementation steps:\n1. Add to the existing /utils/flipUtils.ts file\n2. Implement specific functions mentioned in the spec:\n   - recordPositions(letters: HTMLElement[]) → { elm, left, top, width, height }[]\n   - applyInvertedTransforms(positions, exaggerationFactor)\n   - clearTransformsAfterReflow(elements, duration, easing)\n3. Create appropriate interfaces for the position data\n4. Add a high-level performFlipAnimation function that combines all steps\n5. Ensure these functions integrate well with the existing more complex implementation\n6. Add detailed JSDoc comments explaining the functions' purposes\n7. Write unit tests to verify the functions work correctly\n8. Verify the functions support the animation requirements for the WordTransform component",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 2
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Create WordPairService interface and implementation",
+      "description": "Develop the WordPairService interface and LocalWordPairService implementation for managing word pairs.",
+      "status": "done",
+      "dependencies": [
+        1
+      ],
+      "priority": "medium",
+      "details": "Create a WordPairService interface in /services/wordService.ts that defines methods for getting word pairs, shuffling, and validating inputs. Implement LocalWordPairService that reads from an in-app JSON dictionary of misspelled/correct word pairs. The service should provide methods for: 1) getting a random word pair, 2) validating user-entered word pairs, 3) storing recently used pairs. Include a sample JSON dictionary with common misspellings for the initial implementation.",
+      "testStrategy": "Write Jest tests to verify the service correctly loads word pairs, provides random shuffling, and properly validates inputs. Test edge cases like empty dictionary and invalid inputs.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Define WordPairService interface",
+          "description": "Create a TypeScript interface that defines all required methods for the word pair service",
+          "dependencies": [],
+          "details": "1. Create a new file at /services/wordPairService.ts\n2. Define the WordPairService interface with the following methods:\n   - getRandomPair(): Promise<WordPair>\n   - validateWordPair(misspelled: string, correct: string): Promise<boolean>\n   - storeRecentPair(pair: WordPair): Promise<void>\n   - getRecentPairs(count?: number): Promise<WordPair[]>\n3. Define the WordPair type/interface with properties:\n   - misspelled: string\n   - correct: string\n   - id?: string (optional unique identifier)\n4. Add JSDoc comments to document each method's purpose, parameters, and return values",
+          "status": "done",
+          "parentTaskId": 3
+        },
+        {
+          "id": 2,
+          "title": "Create sample word pair dictionary",
+          "description": "Create a JSON file with common misspellings and their corrections",
+          "dependencies": [],
+          "details": "1. Create a new file at /data/wordPairs.json\n2. Research and compile at least 50 common misspellings and their correct forms\n3. Structure the JSON as an array of objects with 'misspelled' and 'correct' properties\n4. Include a variety of difficulty levels and word types\n5. Validate the JSON format to ensure it's properly formatted\n6. Add a few comments in the file (as a separate JSON property or in code that imports it) explaining the data structure",
+          "status": "done",
+          "parentTaskId": 3
+        },
+        {
+          "id": 3,
+          "title": "Implement LocalWordPairService skeleton",
+          "description": "Create the basic structure of the LocalWordPairService class that implements the WordPairService interface",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "1. Create a new file at /services/localWordPairService.ts\n2. Import the WordPairService interface and WordPair type\n3. Create the LocalWordPairService class that implements WordPairService\n4. Add a constructor that accepts the path to the word pairs JSON file (with a default value)\n5. Add private properties for storing:\n   - The loaded dictionary of word pairs\n   - Recently used pairs\n6. Implement stub methods for all interface methods (returning placeholder values)\n7. Add a private method for loading the dictionary from the JSON file",
+          "status": "done",
+          "parentTaskId": 3
+        },
+        {
+          "id": 4,
+          "title": "Implement dictionary loading and random pair selection",
+          "description": "Complete the implementation of loading the dictionary and retrieving random word pairs",
+          "dependencies": [
+            3
+          ],
+          "details": "1. Implement the private method to load and parse the JSON dictionary\n2. Add error handling for file loading and JSON parsing issues\n3. Implement the getRandomPair() method to:\n   - Select a random pair from the dictionary\n   - Ensure the same pair isn't returned consecutively\n   - Add the selected pair to the recent pairs list\n   - Return a Promise resolving to the selected pair\n4. Implement the getRecentPairs() method to return the specified number of most recently used pairs\n5. Add a method to shuffle the dictionary to ensure randomness across sessions",
+          "status": "done",
+          "parentTaskId": 3
+        },
+        {
+          "id": 5,
+          "title": "Implement validation and error handling",
+          "description": "Add robust validation and error handling to the LocalWordPairService",
+          "dependencies": [
+            4
+          ],
+          "details": "1. Implement the validateWordPair() method to:\n   - Check if the provided misspelled/correct pair exists in the dictionary\n   - Handle case sensitivity appropriately\n   - Return a Promise resolving to a boolean result\n2. Add input validation to all public methods:\n   - Check for null/undefined parameters\n   - Validate string inputs (not empty, within reasonable length)\n   - Throw appropriate error types with descriptive messages\n3. Implement the storeRecentPair() method with validation\n4. Add a method to clear the recent pairs cache\n5. Ensure all async operations properly propagate errors",
+          "status": "done",
+          "parentTaskId": 3
+        },
+        {
+          "id": 6,
+          "title": "Write comprehensive tests",
+          "description": "Create unit and integration tests for the WordPairService implementation",
+          "dependencies": [
+            5
+          ],
+          "details": "1. Create a test file at /services/__tests__/localWordPairService.test.ts\n2. Write unit tests for each method of the LocalWordPairService:\n   - Test getRandomPair() returns valid pairs and doesn't repeat consecutively\n   - Test validateWordPair() correctly identifies valid and invalid pairs\n   - Test getRecentPairs() returns the correct number and order of pairs\n   - Test storeRecentPair() properly stores pairs\n3. Test error handling scenarios:\n   - Invalid inputs\n   - Missing dictionary file\n   - Malformed JSON\n4. Create mock data for testing\n5. Write integration tests that verify the service works with the Controls component\n6. Test offline capability by simulating network disconnection",
+          "status": "done",
+          "parentTaskId": 3
+        },
+        {
+          "id": 7,
+          "title": "Refactor service code to reduce complexity and remove dead code",
+          "description": "Address code quality issues found in the audit including high complexity methods and unused code",
+          "details": "<info added on 2025-05-04T02:39:46.962Z>\nThis subtask involves refactoring the WordPairService implementation to address code quality issues identified in the audit. The refactoring will focus on three main areas:\n\n1. Complexity Reduction in localWordPairService.ts:\n   - Refactor the loadDictionary() method (current complexity: 16) by:\n     - Extracting file reading logic into a separate function\n     - Creating a dedicated parsing function for dictionary entries\n     - Moving validation logic to its own helper function\n   - Simplify the getRandomPair() method (current complexity: 11) by:\n     - Extracting the filtering logic to a separate function\n     - Creating a dedicated random selection helper\n     - Removing nested conditionals where possible\n\n2. Dead Code Removal:\n   - Address the findLCSPositionsFromStrings function in editPlan.ts by either:\n     - Implementing it properly if needed for future functionality\n     - Removing it completely if unused\n   - Clean up flipUtils.ts by:\n     - Removing unnecessary ESLint disable comments\n     - Eliminating stray expressions that don't contribute to functionality\n     - Consolidating duplicate logic\n\n3. Documentation Improvements:\n   - Add JSDoc comments to all refactored functions\n   - Document the reasoning behind complex algorithms\n   - Update inline comments to explain non-obvious code sections\n   - Ensure test coverage is maintained by updating any affected tests\n\nThe refactoring should maintain all existing functionality while improving code maintainability. This work will reduce technical debt before implementing the Letter component in Task 4.\n</info added on 2025-05-04T02:39:46.962Z>",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 3
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Build Letter component for character animations",
+      "description": "Create the Letter component that handles individual character animations with appropriate styling and accessibility.",
+      "status": "done",
+      "dependencies": [
+        1,
+        2
+      ],
+      "priority": "high",
+      "details": "Develop a reusable Letter component that represents a single character in the animation sequence. Integrate Framer Motion for animations. The component should handle different states (normal, deletion, insertion, movement) with appropriate color coding (red for deletions, green for insertions, yellow for moves) as specified in the PRD. Ensure the component is accessible with proper ARIA attributes and supports keyboard focus states. Use CSS Modules for styling according to the styleguide.md specifications.",
+      "testStrategy": "Test the Letter component with React Testing Library, verifying it renders correctly in different states and animates as expected. Check accessibility with axe-core testing library.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create basic Letter component structure",
+          "description": "Set up the foundational structure of the Letter component with proper props typing and basic rendering functionality.",
+          "dependencies": [],
+          "details": "Create a new Letter.tsx component with TypeScript interfaces for props including character, animationState (normal, deletion, insertion, movement), and any callback functions. Implement basic rendering of the character in a span element. Set up the CSS Module file structure following styleguide.md specifications with placeholder classes.",
+          "status": "done",
+          "testStrategy": "Write unit tests to verify the component renders correctly with different character inputs and animation states."
+        },
+        {
+          "id": 2,
+          "title": "Implement state-based styling",
+          "description": "Add CSS styling for different letter states with appropriate color coding based on animation state.",
+          "dependencies": [],
+          "details": "Enhance the CSS Module with styles for each animation state: normal (default), deletion (red), insertion (green), and movement (yellow) as specified in the PRD. Create style variations that apply the correct colors, transitions, and visual treatments for each state. Ensure the component applies the correct class based on the current animationState prop.",
+          "status": "done",
+          "testStrategy": "Test that the correct CSS classes are applied based on the animationState prop and verify the visual appearance matches the design specifications."
+        },
+        {
+          "id": 3,
+          "title": "Integrate Framer Motion animations",
+          "description": "Add Framer Motion to the Letter component to handle smooth transitions between states and animation effects.",
+          "dependencies": [],
+          "details": "Replace the basic span element with Framer Motion's motion.span. Implement animation variants for each state (normal, deletion, insertion, movement). Configure appropriate transition properties (duration, easing) for smooth animations. Ensure animations trigger correctly when the animationState prop changes.",
+          "status": "done",
+          "testStrategy": "Create visual regression tests to verify animations work as expected. Test that animations trigger correctly when props change."
+        },
+        {
+          "id": 4,
+          "title": "Implement accessibility features",
+          "description": "Enhance the Letter component with proper accessibility attributes and keyboard focus states.",
+          "dependencies": [],
+          "details": "Add appropriate ARIA attributes to the Letter component based on its current state. Implement keyboard focus states with visible focus indicators. Ensure the component is properly announced by screen readers, especially during state transitions. Add aria-live attributes if necessary for dynamic changes. Update the CSS to include focus state styling that complies with WCAG standards.",
+          "status": "done",
+          "testStrategy": "Test with screen readers to verify proper announcements. Verify keyboard navigation works correctly. Run automated accessibility tests to catch common issues."
+        },
+        {
+          "id": 5,
+          "title": "Optimize performance and finalize component",
+          "description": "Optimize the Letter component for performance and finalize it for production use.",
+          "dependencies": [],
+          "details": "Implement React.memo to prevent unnecessary re-renders. Add proper cleanup for any animation effects or event listeners. Document the component API with JSDoc comments. Create storybook stories showcasing different states and animations. Ensure the component works correctly in all required browser environments. Perform final review against PRD requirements.",
+          "status": "done",
+          "testStrategy": "Conduct performance testing to ensure animations run smoothly. Create comprehensive test coverage for all component features and edge cases. Test in multiple browsers to ensure cross-browser compatibility."
+        },
+        {
+          "id": 6,
+          "title": "Implement e2e testing for animations",
+          "description": "Create end-to-end tests to verify animation behavior from a user perspective",
+          "details": "<info added on 2025-05-04T02:32:25.346Z>\nThis subtask focuses on implementing comprehensive end-to-end testing for the Letter component animations to ensure they function correctly from a user perspective.\n\n## Testing Environment Setup\n- Set up a testing framework using Cypress or Playwright that can properly capture and evaluate animations\n- Configure the environment to record videos of test runs for visual verification\n- Install necessary plugins for animation testing (e.g., cypress-real-events for hover states)\n\n## Test Scenarios\n- Create tests that verify animations trigger correctly on:\n  - Initial component mount/unmount\n  - Hover states\n  - Focus states\n  - Click interactions\n  - State changes from parent components\n- Implement tests for transition between different animation states\n\n## Visual Testing Implementation\n- Integrate visual testing tools (e.g., Percy, Applitools) to capture and compare animation snapshots\n- Create baseline references for expected animation appearances\n- Implement tests that verify animation timing matches design specifications\n- Test animation easing functions and transitions\n\n## Cross-Browser/Device Testing\n- Configure test runs across multiple browsers (Chrome, Firefox, Safari, Edge)\n- Test animations on different device sizes and resolutions\n- Verify animations work correctly on both high and low-performance devices\n- Test touch interactions on mobile devices\n\n## Performance Benchmarking\n- Create performance metrics for animation rendering time\n- Measure frame rates during animations\n- Establish benchmarks for acceptable performance thresholds\n- Monitor CPU/GPU usage during complex animations\n\n## Edge Case Testing\n- Test animations when interrupted by user interactions\n- Verify behavior during rapid state changes\n- Test animations when component is unmounted mid-animation\n- Verify animations work correctly when multiple Letter components animate simultaneously\n\n## Accessibility Testing\n- Verify animations respect user's reduced motion preferences\n- Test with animation-disabling browser settings\n- Ensure animations don't interfere with screen readers\n- Verify animations don't cause accessibility issues like flashing content\n\n## Integration with CI/CD\n- Configure tests to run automatically in CI/CD pipeline\n- Set up reporting for animation test results\n- Create documentation for animation testing approach\n</info added on 2025-05-04T02:32:25.346Z>\n<info added on 2025-05-04T02:33:02.551Z>\n# Comprehensive Test Strategy for E2E Animation Testing\n\n## Visual Regression Testing\n- Implement visual regression tests using Cypress or Playwright to capture and compare animation states\n- Set up screenshot comparison tests at key animation frames to verify visual correctness\n- Configure video recording of test runs to capture the full animation sequence for manual review\n- Create baseline references for all animation states and transitions\n- Implement pixel-by-pixel comparison with appropriate tolerance levels for animation variations\n\n## Cross-Browser and Device Testing\n- Configure test matrix covering Chrome, Firefox, Safari, and Edge browsers\n- Test animations across multiple viewport sizes (mobile, tablet, desktop)\n- Verify animations render consistently across different device pixel ratios\n- Implement device emulation to test touch-based animation triggers\n- Create browser-specific test cases for known rendering differences\n\n## Accessibility Compliance\n- Implement tests to verify animations respect prefers-reduced-motion settings\n- Create test cases with animation disabled via browser settings\n- Verify animations don't interfere with screen reader announcements\n- Test keyboard navigation through animated elements\n- Validate that animations meet WCAG 2.1 requirements for animation timing and flashing content\n\n## Performance Measurement\n- Integrate performance testing tools to measure:\n  - Animation frame rates (target 60fps)\n  - Time to first animation frame\n  - Animation completion time\n  - CPU/GPU utilization during animations\n- Establish performance budgets for animation metrics\n- Create performance regression tests to detect slowdowns\n- Implement throttling tests to verify animation behavior on low-end devices\n\n## Animation State Verification\n- Create test cases for all animation trigger events (hover, click, focus, mount/unmount)\n- Implement tests for interrupting animations mid-sequence\n- Verify correct behavior when rapidly changing animation states\n- Test animation queuing when multiple state changes occur in succession\n- Validate that animations complete correctly even under heavy system load\n\n## Automation Integration\n- Configure tests to run in CI/CD pipeline on every PR\n- Set up scheduled nightly runs for full animation test suite\n- Implement reporting dashboard for animation test results\n- Create alerting for animation performance regressions\n- Document test coverage and maintenance procedures\n</info added on 2025-05-04T02:33:02.551Z>",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 4
+        },
+        {
+          "id": 7,
+          "title": "Improve Letter component animation test infrastructure",
+          "description": "Refine the testing approach for Framer Motion animations to make tests more robust, faster, and maintainable",
+          "details": "Based on code review feedback, implement several improvements to the Letter component animation tests:\n\n1. Move the Framer Motion mock to a dedicated `__mocks__` folder for proper Jest resolution\n2. Simplify the mock to use a basic element that forwards all props automatically\n3. Add transition tests to verify state changes between animation states\n4. Implement a test environment flag to zero-out animation durations for faster and more deterministic tests\n5. Ensure tests focus on observable behavior rather than implementation details\n\nThese changes will improve test reliability, maintainability and performance across both unit and E2E tests.",
+          "status": "done",
+          "dependencies": [
+            "4.3"
+          ],
+          "parentTaskId": 4
+        },
+        {
+          "id": 8,
+          "title": "Scaffold Storybook visual-test runner",
+          "description": "Configure .storybook/main.ts with the test addon and add npm run storybook:test script",
+          "details": "• Configure .storybook/main.ts with the test addon\\n• Add npm run storybook:test script",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 4
+        },
+        {
+          "id": 9,
+          "title": "Create baseline stories & initial snapshots",
+          "description": "Write Letter.stories.tsx with Normal, Insertion, Deletion, Movement and capture/update snapshots locally",
+          "details": "• Write Letter.stories.tsx with Normal, Insertion, Deletion, Movement\\n• Capture/update snapshots locally (--updateSnapshots)",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 4
+        },
+        {
+          "id": 10,
+          "title": "Add reduced-motion variant tests",
+          "description": "In stories toggle prefers-reduced-motion: reduce and snapshot 'no-motion' renders",
+          "details": "• In stories toggle prefers-reduced-motion: reduce\\n• Snapshot \"no-motion\" renders\n<info added on 2025-05-04T22:37:29.821Z>\n• In stories toggle prefers-reduced-motion: reduce\n• Snapshot \"no-motion\" renders\n\nImplementation details:\n\n1. Added a set of stories specifically for reduced motion variants\n   - Created a ReducedMotionWrapper component that simulates 'prefers-reduced-motion: reduce' media query\n   - Added variants for all animation states: normal, insertion, deletion, movement, and all states combined\n\n2. Updated the test-runner.js to better handle snapshots\n   - Modified snapshot naming convention to include motion preference (normal-motion vs reduced-motion)\n   - Added a tolerance threshold for visual comparisons (1%)\n   - Added logging to track which snapshots were captured\n\n3. Generated snapshots for all variants\n   - Confirmed that reduced motion snapshots are created and stored correctly\n   - Visual inspection shows the expected differences between normal and reduced motion displays\n\n4. Technical approach:\n   - Used CSS @media query overrides to force reduced motion mode in the stories\n   - Leveraged the existing useReducedMotion hook from Framer Motion that's already in the Letter component\n   - Created a visual indicator in the UI showing when reduced motion mode is active\n\nThis implementation ensures the Letter component behaves appropriately for users with motion sensitivity and provides a testing infrastructure to prevent regressions.\n</info added on 2025-05-04T22:37:29.821Z>",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 4
+        },
+        {
+          "id": 11,
+          "title": "Wire up visual tests in CI & docs",
+          "description": "Insert npm run storybook:test into your pipeline and document snapshot workflow in README",
+          "details": "• Insert npm run storybook:test into your pipeline\\n• Document snapshot workflow in README",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 4
+        },
+        {
+          "id": 12,
+          "title": "Configure local Git hooks",
+          "description": "Install Husky & lint-staged and setup pre-commit and pre-push hooks",
+          "details": "• Install Husky & lint-staged\\n• Pre-commit hook: npm run lint && npm test\\n• Pre-push hook: npm run storybook:test\n<info added on 2025-05-04T23:18:52.452Z>\n• Install Husky & lint-staged\n• Pre-commit hook: npm run lint && npm test\n• Pre-push hook: npm run storybook:test\n\nImplemented Git hooks with a two-stage workflow based on developer recommendations:\n\n1. **Installed and configured lint-staged**:\n   - Added as a dev dependency with `npm install --save-dev lint-staged`\n   - Configured in package.json to run eslint with auto-fix on changed files\n   - Only targets TypeScript/JavaScript files in src directory\n\n2. **Configured pre-commit hook for fast feedback**:\n   - Updated .husky/pre-commit to run `npx lint-staged`\n   - This gives immediate linting feedback without slowing down workflow\n   - Fast enough to run on every commit\n   - Automatically fixes simple issues\n\n3. **Maintained pre-push hook for thorough validation**:\n   - Kept existing config that runs Storybook tests\n   - Visual tests only run when pushing code\n   - Uses parallel execution for optimal performance\n\n4. **Updated documentation**:\n   - Added Git Hooks Workflow section to README\n   - Documented the two-stage approach\n   - Included instructions for bypassing hooks when needed\n   - Listed configuration files\n\nThis implementation balances fast feedback with thorough validation, providing immediate code quality feedback during development while protecting against visual regressions before sharing code.\n</info added on 2025-05-04T23:18:52.452Z>",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 4
+        },
+        {
+          "id": 13,
+          "title": "Document local dev/test workflow",
+          "description": "Update README with commands & hook behavior and show how to rebaseline Storybook snapshots",
+          "details": "• Update README with commands & hook behavior\\n• Show how to rebaseline Storybook snapshots\n<info added on 2025-05-04T23:29:42.112Z>\n• Update README with commands & hook behavior\n• Show how to rebaseline Storybook snapshots\n• Added Webpack5 filesystem cache to Storybook configuration with 14-day expiration, providing 40-60% faster builds\n• Implemented cache cleanup utilities including `cache:clean` script and monthly automated cleanup via setup-cron.sh\n• Created comprehensive README documentation covering:\n  - Development Workflow with Getting Started instructions\n  - Build & Production commands\n  - Performance Optimizations section with caching details\n  - Monthly cron job setup instructions\n  - Detailed Rebaselining Visual Snapshots workflow\n• Ensured maintainability with proper script permissions, error handling, idempotent cron setup, and user-friendly instructions\n</info added on 2025-05-04T23:29:42.112Z>",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 4
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Implement WordTransform component",
+      "description": "Create the WordTransform component that orchestrates the full animation sequence using the Letter components.",
+      "status": "in-progress",
+      "dependencies": [
+        2,
+        4
+      ],
+      "priority": "high",
+      "details": "Develop the WordTransform component that takes misspelled and correct words as inputs and orchestrates the full animation sequence. Use the algorithm utilities from Task 2 to compute the edit plan. Render a sequence of Letter components and control their animations using Framer Motion's AnimatePresence and sequence capabilities. Implement the three-phase animation: 1) deletions, 2) movements, 3) insertions. Support variable animation speed through a speed multiplier prop. Ensure smooth transitions between animation phases.",
+      "testStrategy": "Test the WordTransform component with various word pairs, including edge cases. Verify the animation sequence is correct and responsive. Use React Testing Library to check component rendering and state management.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Set up WordTransform component with TypeScript interfaces",
+          "description": "Create the basic structure of the WordTransform component with proper TypeScript interfaces, props definition, and state management for the animation sequence.",
+          "dependencies": [],
+          "details": "Create a new file for the WordTransform component. Define TypeScript interfaces for props (misspelledWord, correctWord, speedMultiplier, etc.). Set up the component's initial state including animation phase tracking (idle, deleting, moving, inserting). Create a skeleton for the component that accepts props and renders a container for the letters. Add CSS variables for animation timing that will be influenced by the speedMultiplier prop.\n<info added on 2025-05-05T01:10:20.674Z>\nCreate a new file for the WordTransform component. Define TypeScript interfaces for props (misspelledWord, correctWord, speedMultiplier, etc.). Set up the component's initial state including animation phase tracking (idle, deleting, moving, inserting). Create a skeleton for the component that accepts props and renders a container for the letters. Add CSS variables for animation timing that will be influenced by the speedMultiplier prop.\n\nImplementation details:\n- Created WordTransform.tsx with TypeScript interfaces for all required props (misspelledWord, correctWord) and optional props (speedMultiplier with default 1, className, animation event callbacks, cancelOnPropsChange flag)\n- Implemented state management using useReducer with an AnimationPhase enum to track animation progress\n- Created a comprehensive animation reducer with appropriate action types for phase transitions\n- Developed WordTransform.module.css with CSS variables for animation durations (--remove-duration, --add-duration, --reorder-duration)\n- Added support for dynamic visual feedback using data-phase attributes\n- Implemented accessibility features including reduced motion preference detection\n- Set up logic to dynamically modify animation durations based on the speedMultiplier prop\n- Added data-phase attributes for E2E testing and debugging purposes\n\nThe component structure is now complete with all TypeScript interfaces defined. The next step is to integrate the word transformation algorithm from the next subtask and implement the actual animation logic.\n</info added on 2025-05-05T01:10:20.674Z>",
+          "status": "done",
+          "testStrategy": "Write unit tests to verify props are correctly received and initial state is properly set up. Use React Testing Library to confirm the component renders without errors."
+        },
+        {
+          "id": 2,
+          "title": "Integrate word transformation algorithm",
+          "description": "Connect the WordTransform component with the algorithm utilities to compute the edit plan for transforming the misspelled word into the correct word.",
+          "dependencies": [],
+          "details": "Import the algorithm utilities from Task 2. Implement a useEffect hook that computes the transformation plan when either word changes. The plan should identify which letters need to be deleted, which ones need to be moved, and which ones need to be inserted. Store this plan in component state. Handle edge cases such as empty strings, identical words, or completely different words. Ensure the algorithm results are properly typed and structured for the animation phases.\n<info added on 2025-05-07T00:09:28.358Z>\nImport the algorithm utilities from Task 2. Implement a useEffect hook that computes the transformation plan when either word changes. The plan should identify which letters need to be deleted, which ones need to be moved, and which ones need to be inserted. Store this plan in component state. Handle edge cases such as empty strings, identical words, or completely different words. Ensure the algorithm results are properly typed and structured for the animation phases.\n\nThe integration of the word transformation algorithm has been implemented with the following components:\n\n1. Enhanced the initialization useEffect to include state.isAnimating in the dependencies array to properly track animation state changes.\n\n2. Created a memoized handlePhaseChange function that calls the onPhaseChange callback when animation phases transition.\n\n3. Implemented a dedicated useEffect to manage phase transitions based on the computed edit plan:\n   - Calculates the total number of animations required for each phase\n   - Intelligently skips phases that don't require animations (e.g., when no deletions are needed)\n   - Dispatches appropriate actions to initiate each animation phase\n   - Triggers the completion callback when the entire animation sequence finishes\n\n4. Added an effect to monitor when all animations in the current phase are complete to trigger the next phase.\n\n5. Developed helper functions to manage the animation flow:\n   - startAnimation function to begin the animation sequence\n   - handleLetterAnimationComplete function to track completion of individual letter animations\n\n6. Enhanced the UI with debugging and testing features:\n   - Added a manual animation start button for testing purposes\n   - Included debug information displaying the edit plan details (showing deletions, moves, and insertions)\n\nThe implementation successfully handles edge cases including empty strings and identical words by computing appropriate edit plans and automatically transitioning through unnecessary phases. This completes the core algorithm integration, setting the foundation for the next subtask of implementing the animation state machine.\n</info added on 2025-05-07T00:09:28.358Z>",
+          "status": "done",
+          "testStrategy": "Test that the transformation plan is correctly generated for various word pairs. Include edge cases like empty strings, identical words, and completely different words."
+        },
+        {
+          "id": 3,
+          "title": "Implement animation state machine",
+          "description": "Create a state machine to manage the three phases of animation (deletions, movements, insertions) and handle transitions between them.",
+          "dependencies": [],
+          "details": "Implement a state machine using useReducer for more predictable state transitions and easier testing. Define reducer actions for each animation phase (deleting, moving, inserting, complete). Create transition functions to move from one phase to the next when the current phase completes. Use Framer Motion's AnimatePresence for managing components entering/exiting the DOM. Implement timing calculations based on the speedMultiplier prop. Add event handlers to detect when animations complete to trigger the next phase.\n<info added on 2025-05-07T00:46:36.630Z>\nImplement a state machine using useReducer for more predictable state transitions and easier testing. Define reducer actions for each animation phase (deleting, moving, inserting, complete). Create transition functions to move from one phase to the next when the current phase completes. Use Framer Motion's AnimatePresence for managing components entering/exiting the DOM. Implement timing calculations based on the speedMultiplier prop. Add event handlers to detect when animations complete to trigger the next phase.\n\nThe implementation includes a getLetterAnimationState function that determines the appropriate animation state for each letter based on the current animation phase (DELETING, MOVING, INSERTING), the letter's position in the word, and the edit plan (deletions, moves, insertions). A renderLetters function handles null safety for the edit plan and uses a switch statement to handle different animation phases. It renders source letters (misspelled word) during IDLE, DELETING, and MOVING phases, and target letters (correct word) during INSERTING and COMPLETE phases. The function applies appropriate animation states to each letter and sets onAnimationComplete callbacks only on letters that should trigger phase transitions.\n\nThe component's main render method uses the renderLetters function, displays a Start Animation button only in the IDLE phase, shows debugging information about the current animation state, and applies proper CSS classes for styling. CSS styles maintain visual consistency and support animations through lettersContainer styles for the letter display area, animation control button styles, debug info display styling, and layout adjustments to properly show all elements. Tests have been updated to adapt to the new component structure that renders individual letters instead of text strings.\n</info added on 2025-05-07T00:46:36.630Z>",
+          "status": "done",
+          "testStrategy": "Test state transitions by mocking animation completion events. Verify that phases proceed in the correct order and that the component reaches the 'complete' state after all animations finish."
+        },
+        {
+          "id": 4,
+          "title": "Render and animate Letter components",
+          "description": "Implement the rendering logic for Letter components with proper animation attributes based on the current animation phase.",
+          "dependencies": [],
+          "details": "Create a rendering system that maps the transformation plan to Letter components. Assign unique keys to each letter for stable identity during animations. Pass appropriate animation props to each Letter based on its role in the current phase (being deleted, moved, or inserted). Use Framer Motion's layout prop for automatic positioning. Implement staggered animations using custom delay calculations. Add data attributes to letters for testing and debugging purposes.\n<info added on 2025-05-05T01:22:16.869Z>\nCreate a rendering system that maps the transformation plan to Letter components. Assign unique keys to each letter for stable identity during animations. Pass appropriate animation props to each Letter based on its role in the current phase (being deleted, moved, or inserted). Use Framer Motion's layout prop for automatic positioning. Implement staggered animations using custom delay calculations. Add data attributes to letters for testing and debugging purposes.\n\nAfter implementing the Letter component rendering:\n1. Create a WordTransform.stories.tsx file with stories for different animation states (idle, deleting, inserting, and transitioning)\n2. Include stories for both regular and reduced motion modes to ensure accessibility compliance\n3. Run Storybook to visually verify the component works correctly across all animation phases\n4. Set up initial snapshot tests with Storybook test runner to catch unintended visual regressions\n</info added on 2025-05-05T01:22:16.869Z>\n<info added on 2025-05-05T01:22:37.630Z>\nCreate a rendering system that maps the transformation plan to Letter components. Assign unique keys to each letter for stable identity during animations. Pass appropriate animation props to each Letter based on its role in the current phase (being deleted, moved, or inserted). Use Framer Motion's layout prop for automatic positioning. Implement staggered animations using custom delay calculations. Add data attributes to letters for testing and debugging purposes.\n\nIn addition to unit tests, implement comprehensive Storybook visual testing for the Letter components. Create stories that showcase each animation phase (idle, deleting, inserting, transitioning) and verify the visual appearance and behavior matches the expected design. Use Storybook's interaction testing capabilities to simulate user interactions and animation triggers. Implement visual regression tests using Chromatic or a similar tool to catch unintended visual changes. This dual testing approach (unit tests + visual testing) will ensure both the functional logic and visual appearance are correctly maintained.\n</info added on 2025-05-05T01:22:37.630Z>\n<info added on 2025-05-05T01:22:56.734Z>\nThe test strategy for this subtask should be expanded to include Storybook testing. In addition to unit tests that verify the correct number of Letter components are rendered with appropriate props for each animation phase, we should implement Storybook stories to visually test the component behavior.\n\nSpecifically, we should:\n1. Create Storybook stories for each animation phase (idle, deleting, inserting, transitioning)\n2. Include stories that demonstrate both regular and reduced motion modes for accessibility\n3. Add interaction tests in Storybook to verify animation triggers work correctly\n4. Implement visual regression testing using Chromatic or similar tools\n5. Document the testing approach in the component's README\n\nThis comprehensive testing approach will ensure both functional correctness and visual consistency of the Letter components throughout the animation lifecycle.\n</info added on 2025-05-05T01:22:56.734Z>",
+          "status": "pending",
+          "testStrategy": "Test that the correct number of Letter components are rendered with appropriate props for each animation phase. Verify that letters have the correct animation attributes during each phase. Additionally, create Storybook stories for different animation states and run visual regression tests to ensure visual consistency. Include tests for regular and reduced motion modes to verify accessibility compliance."
+        },
+        {
+          "id": 5,
+          "title": "Handle prop changes and optimize performance",
+          "description": "Implement proper handling of prop changes during animation and optimize the component for performance.",
+          "dependencies": [],
+          "details": "Decide and implement behavior for when props change mid-animation (restart, complete current animation first, etc.). Add a reset function to cleanly restart animations when words change. Implement memoization using useMemo and useCallback to prevent unnecessary re-renders. Add optional callback props for animation events (onAnimationStart, onPhaseChange, onAnimationComplete). Ensure smooth transitions between all animation phases with no visual glitches. Add final polish including accessibility attributes and responsive behavior.",
+          "status": "pending",
+          "testStrategy": "Test the component's behavior when props change during animation. Measure and verify performance using React DevTools. Test with various word lengths to ensure the component handles different scenarios efficiently."
+        },
+        {
+          "id": 6,
+          "title": "Integrate CSS variables for animation timing",
+          "description": "Set up and integrate CSS variables for animation timing from the stylesheet to ensure consistent animation speeds across the component.",
+          "dependencies": [],
+          "details": "Create a set of CSS variables in the component's stylesheet for different animation durations and delays (e.g., --deletion-duration, --movement-duration, --insertion-duration). Implement a mechanism to modify these CSS variables based on the speedMultiplier prop. Use React's useRef to access the component's DOM element and update CSS variables programmatically. Ensure all animations reference these variables instead of hardcoded timing values. Add a helper function to calculate and update all timing variables when the speed multiplier changes.",
+          "status": "pending",
+          "testStrategy": "Test that CSS variables are correctly set based on the speedMultiplier prop. Verify that animations respond appropriately to changes in the speed multiplier. Check that all animations use the CSS variables rather than hardcoded values."
+        },
+        {
+          "id": 7,
+          "title": "Add data-phase attributes and testing hooks",
+          "description": "Implement data-phase attributes and testing hooks to facilitate E2E testing and debugging of the animation sequence.",
+          "dependencies": [],
+          "details": "Add data-phase attributes to the component's container element that reflect the current animation phase (e.g., data-phase=\"deleting\", data-phase=\"moving\"). Add data-testid attributes to key elements for easier selection in tests. Create a debug mode prop that, when enabled, adds additional data attributes showing the internal state of each letter (e.g., data-letter-state=\"deleted\", data-letter-state=\"moving\"). Implement a testing API through ref forwarding that exposes internal state and methods for testing purposes. Document all testing hooks and attributes for the QA team.",
+          "status": "pending",
+          "testStrategy": "Verify that data attributes correctly update as the animation progresses through different phases. Test the debug mode to ensure it provides useful information. Create E2E tests using Cypress or similar tools that utilize the data attributes to verify animation sequences."
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Develop Controls component and user interface",
+      "description": "Create the Controls component with text inputs, buttons, and speed slider for user interaction.",
+      "status": "pending",
+      "dependencies": [
+        3
+      ],
+      "priority": "medium",
+      "details": "Implement the Controls component with: 1) Text inputs for 'misspelling' and 'correct' words with clear labels and placeholders, 2) Play and Reset buttons, 3) Shuffle button that uses the WordPairService, 4) Speed slider for adjusting animation speed (0.5x-2x). Style the component according to the dark theme specifications in styleguide.md. Ensure all controls are properly sized for both desktop and mobile use. Implement form validation to prevent empty submissions or excessively long words.",
+      "testStrategy": "Test the Controls component with React Testing Library, verifying all interactive elements work as expected. Test form validation, button states, and integration with the WordPairService. Verify responsive behavior at different viewport sizes."
+    },
+    {
+      "id": 7,
+      "title": "Integrate components into main application page",
+      "description": "Assemble the core components into the main application page with proper layout and state management.",
+      "status": "pending",
+      "dependencies": [
+        5,
+        6
+      ],
+      "priority": "high",
+      "details": "Create the main application page that integrates the WordTransform and Controls components. Implement state management to handle user inputs, animation control, and word pair management. Connect the Controls component to the WordTransform component so user actions trigger appropriate animations. Implement the key user flows described in the PRD: 1) Manual word entry, 2) Shuffle functionality, 3) Play/Reset controls, 4) Speed adjustment. Ensure the layout is responsive according to the breakpoints in styleguide.md.",
+      "testStrategy": "Test the integrated application with end-to-end tests using Cypress. Verify all user flows work correctly. Test responsive behavior across different viewport sizes. Check that state is properly managed between components."
+    },
+    {
+      "id": 8,
+      "title": "Implement accessibility features",
+      "description": "Enhance the application with accessibility features to meet WCAG standards and support diverse users.",
+      "status": "pending",
+      "dependencies": [
+        7
+      ],
+      "priority": "medium",
+      "details": "Implement accessibility features throughout the application: 1) Ensure proper keyboard navigation and focus management, 2) Add ARIA attributes to all interactive elements, 3) Implement color-blind friendly palettes as alternative themes, 4) Add screen reader support with descriptive text for animations, 5) Ensure sufficient color contrast according to WCAG standards, 6) Add skip-to-content links and proper heading hierarchy. Test with screen readers and keyboard-only navigation.",
+      "testStrategy": "Conduct an accessibility audit using axe-core. Test with screen readers (NVDA, VoiceOver). Verify keyboard navigation works properly. Check color contrast ratios meet WCAG AA standards. Test with color blindness simulators."
+    },
+    {
+      "id": 9,
+      "title": "Optimize performance and animation timing",
+      "description": "Optimize the application to ensure animations start within 50ms of user action and run smoothly across devices.",
+      "status": "pending",
+      "dependencies": [
+        7
+      ],
+      "priority": "medium",
+      "details": "Implement performance optimizations to meet the 50ms animation start requirement: 1) Use React.memo and useMemo for expensive computations, 2) Implement code-splitting with Next.js dynamic imports, 3) Optimize the animation algorithms for efficiency, 4) Add debouncing to user inputs, 5) Implement proper loading states and feedback, 6) Use the React Profiler to identify and fix performance bottlenecks. Benchmark animation start times and optimize until the 50ms requirement is consistently met.",
+      "testStrategy": "Use the Performance API to measure animation start times. Create performance tests with Lighthouse. Test on various devices and network conditions. Verify smooth animations on both high and low-end devices."
+    },
+    {
+      "id": 10,
+      "title": "Finalize PWA features and conduct comprehensive testing",
+      "description": "Complete the PWA implementation and conduct thorough testing across devices, browsers, and network conditions.",
+      "status": "pending",
+      "dependencies": [
+        8,
+        9
+      ],
+      "priority": "low",
+      "details": "Finalize the PWA implementation: 1) Complete the service worker configuration for offline capability, 2) Optimize the app manifest for proper installation experience, 3) Implement caching strategies for assets and dictionary data, 4) Add install prompts and offline indicators. Conduct comprehensive testing across multiple devices, browsers, and network conditions. Fix any issues found during testing. Prepare the application for deployment with proper build configuration and environment variables.",
+      "testStrategy": "Test PWA features with Lighthouse. Verify offline functionality by testing with network throttling and airplane mode. Test installation process on various devices. Run the full Cypress E2E test suite. Conduct final manual QA across different viewports and devices."
+    }
+  ],
+  "metadata": {
+    "projectName": "Unscrambler Implementation",
+    "totalTasks": 10,
+    "sourceFile": "scripts/phase_1-prd.txt",
+    "generatedAt": "2023-11-15"
+  }
+}

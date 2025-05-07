@@ -1,0 +1,137 @@
+# Task ID: 3
+# Title: Create WordPairService interface and implementation
+# Status: done
+# Dependencies: 1
+# Priority: medium
+# Description: Develop the WordPairService interface and LocalWordPairService implementation for managing word pairs.
+# Details:
+Create a WordPairService interface in /services/wordService.ts that defines methods for getting word pairs, shuffling, and validating inputs. Implement LocalWordPairService that reads from an in-app JSON dictionary of misspelled/correct word pairs. The service should provide methods for: 1) getting a random word pair, 2) validating user-entered word pairs, 3) storing recently used pairs. Include a sample JSON dictionary with common misspellings for the initial implementation.
+
+# Test Strategy:
+Write Jest tests to verify the service correctly loads word pairs, provides random shuffling, and properly validates inputs. Test edge cases like empty dictionary and invalid inputs.
+
+# Subtasks:
+## 1. Define WordPairService interface [done]
+### Dependencies: None
+### Description: Create a TypeScript interface that defines all required methods for the word pair service
+### Details:
+1. Create a new file at /services/wordPairService.ts
+2. Define the WordPairService interface with the following methods:
+   - getRandomPair(): Promise<WordPair>
+   - validateWordPair(misspelled: string, correct: string): Promise<boolean>
+   - storeRecentPair(pair: WordPair): Promise<void>
+   - getRecentPairs(count?: number): Promise<WordPair[]>
+3. Define the WordPair type/interface with properties:
+   - misspelled: string
+   - correct: string
+   - id?: string (optional unique identifier)
+4. Add JSDoc comments to document each method's purpose, parameters, and return values
+
+## 2. Create sample word pair dictionary [done]
+### Dependencies: None
+### Description: Create a JSON file with common misspellings and their corrections
+### Details:
+1. Create a new file at /data/wordPairs.json
+2. Research and compile at least 50 common misspellings and their correct forms
+3. Structure the JSON as an array of objects with 'misspelled' and 'correct' properties
+4. Include a variety of difficulty levels and word types
+5. Validate the JSON format to ensure it's properly formatted
+6. Add a few comments in the file (as a separate JSON property or in code that imports it) explaining the data structure
+
+## 3. Implement LocalWordPairService skeleton [done]
+### Dependencies: 3.1, 3.2
+### Description: Create the basic structure of the LocalWordPairService class that implements the WordPairService interface
+### Details:
+1. Create a new file at /services/localWordPairService.ts
+2. Import the WordPairService interface and WordPair type
+3. Create the LocalWordPairService class that implements WordPairService
+4. Add a constructor that accepts the path to the word pairs JSON file (with a default value)
+5. Add private properties for storing:
+   - The loaded dictionary of word pairs
+   - Recently used pairs
+6. Implement stub methods for all interface methods (returning placeholder values)
+7. Add a private method for loading the dictionary from the JSON file
+
+## 4. Implement dictionary loading and random pair selection [done]
+### Dependencies: 3.3
+### Description: Complete the implementation of loading the dictionary and retrieving random word pairs
+### Details:
+1. Implement the private method to load and parse the JSON dictionary
+2. Add error handling for file loading and JSON parsing issues
+3. Implement the getRandomPair() method to:
+   - Select a random pair from the dictionary
+   - Ensure the same pair isn't returned consecutively
+   - Add the selected pair to the recent pairs list
+   - Return a Promise resolving to the selected pair
+4. Implement the getRecentPairs() method to return the specified number of most recently used pairs
+5. Add a method to shuffle the dictionary to ensure randomness across sessions
+
+## 5. Implement validation and error handling [done]
+### Dependencies: 3.4
+### Description: Add robust validation and error handling to the LocalWordPairService
+### Details:
+1. Implement the validateWordPair() method to:
+   - Check if the provided misspelled/correct pair exists in the dictionary
+   - Handle case sensitivity appropriately
+   - Return a Promise resolving to a boolean result
+2. Add input validation to all public methods:
+   - Check for null/undefined parameters
+   - Validate string inputs (not empty, within reasonable length)
+   - Throw appropriate error types with descriptive messages
+3. Implement the storeRecentPair() method with validation
+4. Add a method to clear the recent pairs cache
+5. Ensure all async operations properly propagate errors
+
+## 6. Write comprehensive tests [done]
+### Dependencies: 3.5
+### Description: Create unit and integration tests for the WordPairService implementation
+### Details:
+1. Create a test file at /services/__tests__/localWordPairService.test.ts
+2. Write unit tests for each method of the LocalWordPairService:
+   - Test getRandomPair() returns valid pairs and doesn't repeat consecutively
+   - Test validateWordPair() correctly identifies valid and invalid pairs
+   - Test getRecentPairs() returns the correct number and order of pairs
+   - Test storeRecentPair() properly stores pairs
+3. Test error handling scenarios:
+   - Invalid inputs
+   - Missing dictionary file
+   - Malformed JSON
+4. Create mock data for testing
+5. Write integration tests that verify the service works with the Controls component
+6. Test offline capability by simulating network disconnection
+
+## 7. Refactor service code to reduce complexity and remove dead code [done]
+### Dependencies: None
+### Description: Address code quality issues found in the audit including high complexity methods and unused code
+### Details:
+<info added on 2025-05-04T02:39:46.962Z>
+This subtask involves refactoring the WordPairService implementation to address code quality issues identified in the audit. The refactoring will focus on three main areas:
+
+1. Complexity Reduction in localWordPairService.ts:
+   - Refactor the loadDictionary() method (current complexity: 16) by:
+     - Extracting file reading logic into a separate function
+     - Creating a dedicated parsing function for dictionary entries
+     - Moving validation logic to its own helper function
+   - Simplify the getRandomPair() method (current complexity: 11) by:
+     - Extracting the filtering logic to a separate function
+     - Creating a dedicated random selection helper
+     - Removing nested conditionals where possible
+
+2. Dead Code Removal:
+   - Address the findLCSPositionsFromStrings function in editPlan.ts by either:
+     - Implementing it properly if needed for future functionality
+     - Removing it completely if unused
+   - Clean up flipUtils.ts by:
+     - Removing unnecessary ESLint disable comments
+     - Eliminating stray expressions that don't contribute to functionality
+     - Consolidating duplicate logic
+
+3. Documentation Improvements:
+   - Add JSDoc comments to all refactored functions
+   - Document the reasoning behind complex algorithms
+   - Update inline comments to explain non-obvious code sections
+   - Ensure test coverage is maintained by updating any affected tests
+
+The refactoring should maintain all existing functionality while improving code maintainability. This work will reduce technical debt before implementing the Letter component in Task 4.
+</info added on 2025-05-04T02:39:46.962Z>
+
