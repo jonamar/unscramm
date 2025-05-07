@@ -39,9 +39,22 @@ describe('WordTransform Component', () => {
     const wordContainer = screen.getByTestId('word-transform').querySelector('#wordContainer');
     expect(wordContainer).toBeInTheDocument();
     
-    // Check if the words are displayed (this is just for the skeleton implementation)
-    expect(screen.getByText(/Misspelled: recieve/i)).toBeInTheDocument();
-    expect(screen.getByText(/Correct: receive/i)).toBeInTheDocument();
+    // Check if the animation start button is rendered
+    const startButton = screen.getByTestId('start-animation-button');
+    expect(startButton).toBeInTheDocument();
+    expect(startButton).toHaveTextContent('Start Animation');
+    
+    // Check if the debug info is displayed
+    expect(screen.getByText(/Phase: idle/i)).toBeInTheDocument();
+    expect(screen.getByText(/Edit Plan:/i)).toBeInTheDocument();
+    
+    // Check if all letters from the misspelled word are rendered
+    const letters = screen.getAllByTestId('letter');
+    expect(letters).toHaveLength(7); // 'recieve' has 7 letters
+    
+    // Check the first and last letters to confirm correct content
+    expect(letters[0]).toHaveTextContent('r');
+    expect(letters[6]).toHaveTextContent('e');
   });
 
   it('handles colorsEnabled prop correctly', () => {

@@ -189,7 +189,7 @@ const WordTransform: React.FC<WordTransformProps> = ({
         payload: { sourceWord: misspelling, targetWord: correct }
       });
     }
-  }, [misspelling, correct, cancelOnPropsChange]);
+  }, [misspelling, correct, cancelOnPropsChange, state.isAnimating]);
   
   // Update CSS variables for animation timing based on speed multiplier
   useEffect(() => {
@@ -208,8 +208,235 @@ const WordTransform: React.FC<WordTransformProps> = ({
       container.style.setProperty('--reorder-duration', `${reorderBase / speed}s`);
     }
   }, [speed]);
+
+  // Memoize animation phase handlers to avoid unnecessary renders
+  const handlePhaseChange = useMemo(() => {
+    return (phase: AnimationPhase) => {
+      if (onPhaseChange) {
+        onPhaseChange(phase);
+      }
+    };
+  }, [onPhaseChange]);
+
+  // Effect to handle phase transitions and total animations tracking
+  useEffect(() => {
+    // Skip for initial render or if no edit plan
+    if (!state.editPlan) return;
+
+    // Set up total animations expected in each phase
+    let totalAnimationsInPhase = 0;
+
+    if (state.phase === AnimationPhase.DELETING) {
+      totalAnimationsInPhase = state.editPlan.deletions.length;
+      // If no deletions, move to next phase immediately
+      if (totalAnimationsInPhase === 0) {
+        dispatch({ type: 'COMPLETE_PHASE' });
+      } else {
+        dispatch({ 
+          type: 'START_PHASE', 
+          payload: { 
+            phase: AnimationPhase.DELETING, 
+            total: totalAnimationsInPhase 
+          } 
+        });
+      }
+    } else if (state.phase === AnimationPhase.MOVING) {
+      totalAnimationsInPhase = state.editPlan.moves.length;
+      // If no moves, move to next phase immediately
+      if (totalAnimationsInPhase === 0) {
+        dispatch({ type: 'COMPLETE_PHASE' });
+      } else {
+        dispatch({ 
+          type: 'START_PHASE', 
+          payload: { 
+            phase: AnimationPhase.MOVING, 
+            total: totalAnimationsInPhase 
+          } 
+        });
+      }
+    } else if (state.phase === AnimationPhase.INSERTING) {
+      totalAnimationsInPhase = state.editPlan.insertions.length;
+      // If no insertions, move to next phase immediately
+      if (totalAnimationsInPhase === 0) {
+        dispatch({ type: 'COMPLETE_PHASE' });
+      } else {
+        dispatch({ 
+          type: 'START_PHASE', 
+          payload: { 
+            phase: AnimationPhase.INSERTING, 
+            total: totalAnimationsInPhase 
+          } 
+        });
+      }
+    } else if (state.phase === AnimationPhase.COMPLETE) {
+      // Animation sequence complete
+      if (onAnimationComplete) {
+        onAnimationComplete();
+      }
+    }
+
+    // Notify of phase change
+    handlePhaseChange(state.phase);
+  }, [state.phase, state.editPlan, handlePhaseChange, onAnimationComplete]);
+
+  // Effect to check if all animations in the current phase are complete
+  useEffect(() => {
+    if (state.isAnimating && 
+        state.completedAnimations > 0 && 
+        state.completedAnimations >= state.totalAnimationsInPhase) {
+      // Move to the next phase when all animations in current phase complete
+      dispatch({ type: 'COMPLETE_PHASE' });
+    }
+  }, [state.completedAnimations, state.totalAnimationsInPhase, state.isAnimating]);
+
+  // Function to start animation sequence
+  const startAnimation = () => {
+    if (!state.isAnimating && state.editPlan) {
+      if (onAnimationStart) {
+        onAnimationStart();
+      }
+      dispatch({ type: 'START_ANIMATION' });
+    }
+  };
+
+  // Handle animation completion for a single letter
+  const handleLetterAnimationComplete = () => {
+    dispatch({ type: 'ANIMATION_COMPLETE' });
+  };
   
-  // Main rendering logic - just a skeleton for now
+  // Determine letter animation state based on current phase and letter properties
+  const getLetterAnimationState = (
+    letterIndex: number, 
+    phase: AnimationPhase,
+    editPlan: EditPlan
+  ): LetterAnimationState => {
+    // Default animation state is 'normal'
+    let animationState: LetterAnimationState = 'normal';
+    
+    switch (phase) {
+      case AnimationPhase.DELETING:
+        // Mark letters that will be deleted with 'deletion' state
+        if (editPlan.deletions.includes(letterIndex)) {
+          animationState = 'deletion';
+        }
+        break;
+        
+      case AnimationPhase.MOVING:
+        // Mark letters that will move with 'movement' state
+        // Highlight true movers with more emphasis
+        const isMoving = editPlan.moves.some(move => move.fromIndex === letterIndex);
+        const isTrueMover = editPlan.highlightIndices.includes(letterIndex);
+        
+        if (isMoving || isTrueMover) {
+          animationState = 'movement';
+        }
+        break;
+        
+      case AnimationPhase.INSERTING:
+        // No special state for existing letters during insertion phase
+        break;
+        
+      default:
+        // Keep default 'normal' state
+        break;
+    }
+    
+    return animationState;
+  };
+
+  // Render letters based on current animation phase
+  const renderLetters = () => {
+    // Early return if no edit plan is available
+    if (!state.editPlan) return null;
+    
+    // Use a non-null assertion for clarity in this scope 
+    // We've already checked that state.editPlan is not null
+    const editPlan = state.editPlan;
+    
+    switch (state.phase) {
+      case AnimationPhase.IDLE:
+      case AnimationPhase.DELETING:
+      case AnimationPhase.MOVING:
+        // Show source letters (from misspelled word)
+        return (
+          <div className={styles.lettersContainer}>
+            <AnimatePresence>
+              {state.sourceLetters.map((letter, index) => {
+                // Skip deleted letters in moving phase
+                if (state.phase === AnimationPhase.MOVING && 
+                    editPlan.deletions.includes(index)) {
+                  return null;
+                }
+                
+                const animationState = getLetterAnimationState(
+                  index, 
+                  state.phase,
+                  editPlan
+                );
+                
+                // Only animate letters in specific states for the current phase
+                const shouldAnimate = 
+                  (state.phase === AnimationPhase.DELETING && animationState === 'deletion') ||
+                  (state.phase === AnimationPhase.MOVING && animationState === 'movement');
+                
+                return (
+                  <Letter 
+                    key={`source-${index}`}
+                    character={letter}
+                    animationState={animationState}
+                    initialIndex={index}
+                    onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
+                    className={styles.letter}
+                  />
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        );
+        
+      case AnimationPhase.INSERTING:
+      case AnimationPhase.COMPLETE:
+        // Show target letters (from correct word)
+        return (
+          <div className={styles.lettersContainer}>
+            <AnimatePresence>
+              {state.targetLetters.map((letter, index) => {
+                // Check if this letter is being inserted
+                const isInserted = editPlan.insertions.some(
+                  insertion => insertion.position === index
+                );
+                
+                // Determine animation state based on current phase and insertion status
+                const animationState: LetterAnimationState = 
+                  (state.phase === AnimationPhase.INSERTING && isInserted) 
+                    ? 'insertion' 
+                    : 'normal';
+                
+                // Only trigger animation completion callback for inserted letters
+                const shouldAnimate = 
+                  state.phase === AnimationPhase.INSERTING && animationState === 'insertion';
+                
+                return (
+                  <Letter 
+                    key={`target-${index}`}
+                    character={letter}
+                    animationState={animationState}
+                    initialIndex={index}
+                    onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
+                    className={styles.letter}
+                  />
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        );
+        
+      default:
+        return null;
+    }
+  };
+  
+  // Main rendering logic with animation state machine
   return (
     <div 
       ref={containerRef}
@@ -219,10 +446,28 @@ const WordTransform: React.FC<WordTransformProps> = ({
       data-colors-enabled={colorsEnabled}
     >
       <div className={styles.wordContainer} id="wordContainer">
-        {/* Animation logic and Letter rendering will be implemented in subsequent subtasks */}
-        <div>Misspelled: {misspelling}</div>
-        <div>Correct: {correct}</div>
-        <div>Current phase: {state.phase}</div>
+        {renderLetters()}
+        
+        {/* Debug information */}
+        <div className={styles.controlsContainer}>
+          {state.editPlan && !state.isAnimating && state.phase === AnimationPhase.IDLE && (
+            <button 
+              onClick={startAnimation}
+              className={styles.actionButton}
+              data-testid="start-animation-button"
+            >
+              Start Animation
+            </button>
+          )}
+          
+          {state.editPlan && (
+            <div className={styles.debugInfo}>
+              <div>Phase: {state.phase}</div>
+              <div>Animations: {state.completedAnimations} / {state.totalAnimationsInPhase}</div>
+              <div>Edit Plan: {state.editPlan.deletions.length} deletions, {state.editPlan.moves.length} moves, {state.editPlan.insertions.length} insertions</div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
