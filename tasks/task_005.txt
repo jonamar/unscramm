@@ -232,3 +232,25 @@ Create the WordTransform component that takes misspelled and correct words as pr
 ### Details:
 Update existing Jest/React Testing Library tests to interact with the component via state machine events. Add data-phase and data-testid attributes to key elements for test selection. Create E2E tests that verify the full animation sequence works correctly. Develop Storybook examples that demonstrate different animation scenarios: words with deletions only, insertions only, movements only, and combinations. Include examples with different speed multiplier values.
 
+## 11. Wire true-mover animation state through to Letter component and Framer Motion [pending]
+### Dependencies: 5.4, 5.5
+### Description: Ensure the 'true-mover' animation state is passed through to the Letter component and Framer Motion. Do not collapse it to 'movement'. Add a Framer Motion variant and/or prop for true-mover in Letter. Update CSS/animation for true-mover to provide distinct visual and motion feedback.
+### Details:
+- Update mapToLetterAnimationState and/or Letter props to allow 'true-mover' to be passed through.
+- Add a Framer Motion variant and/or prop for 'true-mover' in Letter.
+- Update Letter.module.css and animation logic to provide distinct styling and motion for true-movers.
+- Ensure the WordTransform component applies the correct class/data-attribute for true-movers.
+- Test visually in Storybook and with unit tests.
+
+## 12. Expand Jest/RTL test suite for WordTransform: phase transitions, CSS vars, and true-mover rendering [pending]
+### Dependencies: 5.11
+### Description: Add integration/unit tests for WordTransform using fake timers and deterministic edit plans. Assert phase transitions (IDLE→DELETING→MOVING→INSERTING→COMPLETE), CSS variable changes for speedMultiplier, and true-mover rendering (class, data-attribute, or animation variant).
+### Details:
+- Use jest.useFakeTimers() and jest.runAllTimers() to control animation timing in tests.
+- Mock computeEditPlan to return a known plan (e.g., for 'ab'→'ba', highlight index 0 or 1).
+- Assert:
+  - CSS variable changes for speedMultiplier
+  - Phase transitions (IDLE → DELETING → MOVING → INSERTING → COMPLETE)
+  - That a true-mover letter gets the correct class/data-attribute and/or animation variant
+- Add tests to src/components/__tests__/WordTransform.test.tsx.
+

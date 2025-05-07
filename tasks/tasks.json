@@ -428,6 +428,29 @@
           "details": "Update existing Jest/React Testing Library tests to interact with the component via state machine events. Add data-phase and data-testid attributes to key elements for test selection. Create E2E tests that verify the full animation sequence works correctly. Develop Storybook examples that demonstrate different animation scenarios: words with deletions only, insertions only, movements only, and combinations. Include examples with different speed multiplier values.",
           "status": "pending",
           "testStrategy": "Ensure tests cover all animation phases and edge cases. Use mock timers to speed up animation testing. Verify that Storybook visual tests pass. Create specific test cases for zero-length phases to ensure they're properly skipped."
+        },
+        {
+          "id": 11,
+          "title": "Wire true-mover animation state through to Letter component and Framer Motion",
+          "description": "Ensure the 'true-mover' animation state is passed through to the Letter component and Framer Motion. Do not collapse it to 'movement'. Add a Framer Motion variant and/or prop for true-mover in Letter. Update CSS/animation for true-mover to provide distinct visual and motion feedback.",
+          "details": "- Update mapToLetterAnimationState and/or Letter props to allow 'true-mover' to be passed through.\n- Add a Framer Motion variant and/or prop for 'true-mover' in Letter.\n- Update Letter.module.css and animation logic to provide distinct styling and motion for true-movers.\n- Ensure the WordTransform component applies the correct class/data-attribute for true-movers.\n- Test visually in Storybook and with unit tests.",
+          "status": "pending",
+          "dependencies": [
+            "5.4",
+            "5.5"
+          ],
+          "parentTaskId": 5
+        },
+        {
+          "id": 12,
+          "title": "Expand Jest/RTL test suite for WordTransform: phase transitions, CSS vars, and true-mover rendering",
+          "description": "Add integration/unit tests for WordTransform using fake timers and deterministic edit plans. Assert phase transitions (IDLE→DELETING→MOVING→INSERTING→COMPLETE), CSS variable changes for speedMultiplier, and true-mover rendering (class, data-attribute, or animation variant).",
+          "details": "- Use jest.useFakeTimers() and jest.runAllTimers() to control animation timing in tests.\n- Mock computeEditPlan to return a known plan (e.g., for 'ab'→'ba', highlight index 0 or 1).\n- Assert:\n  - CSS variable changes for speedMultiplier\n  - Phase transitions (IDLE → DELETING → MOVING → INSERTING → COMPLETE)\n  - That a true-mover letter gets the correct class/data-attribute and/or animation variant\n- Add tests to src/components/__tests__/WordTransform.test.tsx.",
+          "status": "pending",
+          "dependencies": [
+            "5.11"
+          ],
+          "parentTaskId": 5
         }
       ]
     },
