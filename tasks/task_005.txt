@@ -31,6 +31,26 @@ Implementation details:
 
 The component structure is now complete with all TypeScript interfaces defined. The next step is to integrate the word transformation algorithm from the next subtask and implement the actual animation logic.
 </info added on 2025-05-05T01:10:20.674Z>
+<info added on 2025-05-07T01:14:37.820Z>
+The WordTransform component has been enhanced with several improvements based on code review feedback:
+
+1. Renamed the `speed` prop to `speedMultiplier` for better consistency with the specification. This change has been propagated throughout the component, including all CSS variable calculations and test files.
+
+2. Fixed an effect dependencies issue by removing `state.isAnimating` from the dependencies array of the initialization effect, preventing unwanted animation resets during the animation process.
+
+3. Implemented memoization for the computeEditPlan function using React's useMemo hook. This optimization prevents unnecessary recalculations when the component re-renders for reasons unrelated to word changes.
+
+4. Added proper visual differentiation for "true movers" (letters that move to new positions rather than being deleted/added):
+   - Created a new `ExtendedLetterAnimationState` type that includes a 'true-movement' state
+   - Enhanced the `getLetterAnimationState` function to specifically identify true movers
+   - Added a mapping function to convert extended states to standard Letter component states
+   - Implemented a special CSS class `.trueMover` with enhanced styling (bold, increased brightness and saturation)
+   - Applied the trueMover class conditionally to Letter components
+
+5. Added data attributes throughout the component for improved testing and debugging capabilities
+
+All tests are now passing with these improvements, and the component is ready for integration with the word transformation algorithm.
+</info added on 2025-05-07T01:14:37.820Z>
 
 ## 2. Integrate word transformation algorithm [done]
 ### Dependencies: None
@@ -64,6 +84,72 @@ The integration of the word transformation algorithm has been implemented with t
 
 The implementation successfully handles edge cases including empty strings and identical words by computing appropriate edit plans and automatically transitioning through unnecessary phases. This completes the core algorithm integration, setting the foundation for the next subtask of implementing the animation state machine.
 </info added on 2025-05-07T00:09:28.358Z>
+<info added on 2025-05-07T01:23:53.329Z>
+Import the algorithm utilities from Task 2. Implement a useEffect hook that computes the transformation plan when either word changes. The plan should identify which letters need to be deleted, which ones need to be moved, and which ones need to be inserted. Store this plan in component state. Handle edge cases such as empty strings, identical words, or completely different words. Ensure the algorithm results are properly typed and structured for the animation phases.
+
+<info added on 2025-05-07T00:09:28.358Z>
+Import the algorithm utilities from Task 2. Implement a useEffect hook that computes the transformation plan when either word changes. The plan should identify which letters need to be deleted, which ones need to be moved, and which ones need to be inserted. Store this plan in component state. Handle edge cases such as empty strings, identical words, or completely different words. Ensure the algorithm results are properly typed and structured for the animation phases.
+
+The integration of the word transformation algorithm has been implemented with the following components:
+
+1. Enhanced the initialization useEffect to include state.isAnimating in the dependencies array to properly track animation state changes.
+
+2. Created a memoized handlePhaseChange function that calls the onPhaseChange callback when animation phases transition.
+
+3. Implemented a dedicated useEffect to manage phase transitions based on the computed edit plan:
+   - Calculates the total number of animations required for each phase
+   - Intelligently skips phases that don't require animations (e.g., when no deletions are needed)
+   - Dispatches appropriate actions to initiate each animation phase
+   - Triggers the completion callback when the entire animation sequence finishes
+
+4. Added an effect to monitor when all animations in the current phase are complete to trigger the next phase.
+
+5. Developed helper functions to manage the animation flow:
+   - startAnimation function to begin the animation sequence
+   - handleLetterAnimationComplete function to track completion of individual letter animations
+
+6. Enhanced the UI with debugging and testing features:
+   - Added a manual animation start button for testing purposes
+   - Included debug information displaying the edit plan details (showing deletions, moves, and insertions)
+
+The implementation successfully handles edge cases including empty strings and identical words by computing appropriate edit plans and automatically transitioning through unnecessary phases. This completes the core algorithm integration, setting the foundation for the next subtask of implementing the animation state machine.
+</info added on 2025-05-07T00:09:28.358Z>
+
+Following the implementation of the core algorithm integration, several significant improvements have been made to the WordTransform component based on developer feedback:
+
+1. Renamed the 'speed' prop to 'speedMultiplier' for better alignment with the specification:
+   - Updated all references to this prop throughout the component
+   - Adjusted CSS variable calculations that depend on this value
+   - Updated test files to reflect the new prop name
+
+2. Fixed a critical effect dependencies issue:
+   - Removed state.isAnimating from the dependencies array in the initialization effect
+   - This prevents unwanted resets when animation begins, improving stability
+
+3. Optimized performance with memoization for the computeEditPlan function:
+   - Implemented useMemo for the edit plan calculation
+   - The calculation now only runs when misspelling or correct props change
+   - Added TypeScript null safety checks to prevent runtime errors
+
+4. Enhanced visual differentiation for "true movers":
+   - Created an ExtendedLetterAnimationState type that includes a 'true-movement' state
+   - Improved the getLetterAnimationState function to specifically identify true movers
+   - Added a helper function to map extended states to standard Letter states
+   - Implemented a special .trueMover CSS class with enhanced styling for better user experience
+
+5. Improved state machine clarity and maintainability:
+   - Added a visual phase transition diagram in the component comments
+   - Created a PHASE_TRANSITIONS map for declarative next-state determination
+   - Refactored phase transition logic to be more declarative using a configuration object
+   - Added proper TypeScript interfaces for the phase configuration
+
+6. Implemented comprehensive testing for the animation state machine:
+   - Added tests for animation phase transitions
+   - Verified callback behavior (onAnimationStart, onPhaseChange, onAnimationComplete)
+   - Created tests for prop changes during animation
+
+These improvements have significantly enhanced the component's maintainability, performance, and visual appeal while addressing all key points from the code review. The WordTransform component now provides a more robust and efficient implementation of the word transformation algorithm with improved animation control.
+</info added on 2025-05-07T01:23:53.329Z>
 
 ## 3. Implement animation state machine [done]
 ### Dependencies: None
@@ -127,4 +213,22 @@ Create a set of CSS variables in the component's stylesheet for different animat
 ### Description: Implement data-phase attributes and testing hooks to facilitate E2E testing and debugging of the animation sequence.
 ### Details:
 Add data-phase attributes to the component's container element that reflect the current animation phase (e.g., data-phase="deleting", data-phase="moving"). Add data-testid attributes to key elements for easier selection in tests. Create a debug mode prop that, when enabled, adds additional data attributes showing the internal state of each letter (e.g., data-letter-state="deleted", data-letter-state="moving"). Implement a testing API through ref forwarding that exposes internal state and methods for testing purposes. Document all testing hooks and attributes for the QA team.
+
+## 8. Define and unit-test WordTransform finite state machine [pending]
+### Dependencies: None
+### Description: Create a finite state machine for the WordTransform component that manages the animation sequence states and transitions.
+### Details:
+Create src/components/wordTransform.machine.ts with XState defining five states: idle, deleting, moving, inserting, and complete. Include context to track deletion/move/insertion counts. Define events (START, DONE_PHASE, RESET) that trigger transitions between states. Implement logic to skip phases with zero-length operations. Ensure the machine handles the complete animation lifecycle and can be reset.
+
+## 9. Implement WordTransform component with FSM integration [pending]
+### Dependencies: 5.8
+### Description: Develop the WordTransform component that uses the state machine to orchestrate the animation sequence of Letter components.
+### Details:
+Create the WordTransform component that takes misspelled and correct words as props. Replace any existing useReducer/useEffect logic with useMachine(wordTransformMachine). Use the algorithm utilities from Task 2 to compute the edit plan. Render Letter components based on the current animation phase. Implement event handlers to send('START') on animation start, send('DONE_PHASE') when Letter animations complete, and send('RESET') to restart. Map the machine's current state to visual feedback and control props. Support a speed multiplier prop that affects animation duration.
+
+## 10. Update tests and add Storybook examples [pending]
+### Dependencies: 5.9
+### Description: Refactor existing tests to work with the state machine implementation and create Storybook examples showcasing the component.
+### Details:
+Update existing Jest/React Testing Library tests to interact with the component via state machine events. Add data-phase and data-testid attributes to key elements for test selection. Create E2E tests that verify the full animation sequence works correctly. Develop Storybook examples that demonstrate different animation scenarios: words with deletions only, insertions only, movements only, and combinations. Include examples with different speed multiplier values.
 

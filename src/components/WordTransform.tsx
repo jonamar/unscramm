@@ -6,6 +6,22 @@ import styles from './WordTransform.module.css';
 
 /**
  * Animation phases for the word transformation sequence
+ * 
+ * Phase Transition Diagram:
+ * 
+ * ┌─────────┐    START     ┌──────────┐   IF NO DELETIONS   ┌─────────┐   IF NO MOVES   ┌───────────┐   ALWAYS   ┌───────────┐
+ * │  IDLE   │──────────────▶ DELETING │───────────────────▶│ MOVING  │────────────────▶│ INSERTING │───────────▶│ COMPLETE  │
+ * └─────────┘              └──────────┘                    └─────────┘                 └───────────┘            └───────────┘
+ *     ▲                                                                                                               │
+ *     │                                                                                                               │
+ *     └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ *                                               RESET (on new words)
+ * 
+ * Events that trigger transitions:
+ * - START: User clicks "Start Animation" button
+ * - All transitions: When all animations in the current phase are complete
+ * - IF NO X: Immediate skip when a phase has no animations to perform
+ * - RESET: When words change and cancelOnPropsChange is true
  */
 export enum AnimationPhase {
   IDLE = 'idle',
@@ -24,7 +40,7 @@ export interface WordTransformProps {
   /** The correctly spelled word to transform to */
   correct: string;
   /** Optional speed multiplier for animations (default: 1) */
-  speed?: number;
+  speedMultiplier?: number;
   /** Whether to enable color coding for different animation states (default: true) */
   colorsEnabled?: boolean;
   /** Optional class name for styling */
@@ -38,6 +54,11 @@ export interface WordTransformProps {
   /** Optional flag for canceling mid-animation when props change (default: true) */
   cancelOnPropsChange?: boolean;
 }
+
+/**
+ * Extends the standard animation states to include a special true-mover state
+ */
+type ExtendedLetterAnimationState = LetterAnimationState | 'true-movement';
 
 /**
  * State for the animation reducer
@@ -63,7 +84,7 @@ interface AnimationState {
  * Actions for the animation reducer
  */
 type AnimationAction =
-  | { type: 'INITIALIZE'; payload: { sourceWord: string; targetWord: string } }
+  | { type: 'INITIALIZE'; payload: { sourceWord: string; targetWord: string; editPlan: EditPlan } }
   | { type: 'START_ANIMATION' }
   | { type: 'START_PHASE'; payload: { phase: AnimationPhase; total: number } }
   | { type: 'ANIMATION_COMPLETE' }
@@ -84,15 +105,34 @@ const initialState: AnimationState = {
 };
 
 /**
+ * Phase transition map - defines the next phase for each current phase
+ */
+const PHASE_TRANSITIONS: Record<AnimationPhase, AnimationPhase | null> = {
+  [AnimationPhase.IDLE]: AnimationPhase.DELETING,
+  [AnimationPhase.DELETING]: AnimationPhase.MOVING,
+  [AnimationPhase.MOVING]: AnimationPhase.INSERTING,
+  [AnimationPhase.INSERTING]: AnimationPhase.COMPLETE,
+  [AnimationPhase.COMPLETE]: null // Terminal state
+};
+
+/**
+ * Interface for phase-specific behavior configuration
+ */
+interface PhaseConfig {
+  getTotal: () => number;
+  shouldSkip: (total: number) => boolean;
+  onEnter?: () => void;
+}
+
+/**
  * Reducer function for animation state management
  */
 function animationReducer(state: AnimationState, action: AnimationAction): AnimationState {
   switch (action.type) {
     case 'INITIALIZE':
-      const { sourceWord, targetWord } = action.payload;
+      const { sourceWord, targetWord, editPlan } = action.payload;
       const sourceLetters = sourceWord.split('');
       const targetLetters = targetWord.split('');
-      const editPlan = computeEditPlan(sourceWord, targetWord);
       
       return {
         ...state,
@@ -128,16 +168,13 @@ function animationReducer(state: AnimationState, action: AnimationAction): Anima
         completedAnimations: newCompletedCount
       };
       
-    case 'COMPLETE_PHASE':
-      // Determine next phase based on current phase
-      let nextPhase = state.phase;
+    case 'COMPLETE_PHASE': {
+      // Determine next phase using the transition map
+      const nextPhase = PHASE_TRANSITIONS[state.phase];
       
-      if (state.phase === AnimationPhase.DELETING) {
-        nextPhase = AnimationPhase.MOVING;
-      } else if (state.phase === AnimationPhase.MOVING) {
-        nextPhase = AnimationPhase.INSERTING;
-      } else if (state.phase === AnimationPhase.INSERTING) {
-        nextPhase = AnimationPhase.COMPLETE;
+      // If there's no next phase (we're at the end), stay in current phase
+      if (nextPhase === null) {
+        return state;
       }
       
       return {
@@ -145,6 +182,7 @@ function animationReducer(state: AnimationState, action: AnimationAction): Anima
         phase: nextPhase,
         completedAnimations: 0
       };
+    }
       
     case 'RESET':
       return initialState;
@@ -161,7 +199,7 @@ function animationReducer(state: AnimationState, action: AnimationAction): Anima
 const WordTransform: React.FC<WordTransformProps> = ({
   misspelling,
   correct,
-  speed = 1,
+  speedMultiplier = 1,
   colorsEnabled = true,
   className = '',
   onAnimationStart,
@@ -175,10 +213,18 @@ const WordTransform: React.FC<WordTransformProps> = ({
   // Reference to container element for CSS variables
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // Memoize the edit plan calculation for better performance
+  const memoizedEditPlan = useMemo(() => {
+    if (misspelling !== '' && correct !== '') {
+      return computeEditPlan(misspelling, correct);
+    }
+    return null;
+  }, [misspelling, correct]);
+  
   // Initialize with words when props change
   useEffect(() => {
-    if (misspelling !== '' && correct !== '') {
-      // Reset animation if props change during animation
+    if (misspelling !== '' && correct !== '' && memoizedEditPlan) {
+      // Reset animation if props change during animation and cancelOnPropsChange is true
       if (state.isAnimating && cancelOnPropsChange) {
         dispatch({ type: 'RESET' });
       }
@@ -186,10 +232,14 @@ const WordTransform: React.FC<WordTransformProps> = ({
       // Initialize with new words
       dispatch({
         type: 'INITIALIZE',
-        payload: { sourceWord: misspelling, targetWord: correct }
+        payload: { 
+          sourceWord: misspelling, 
+          targetWord: correct,
+          editPlan: memoizedEditPlan
+        }
       });
     }
-  }, [misspelling, correct, cancelOnPropsChange, state.isAnimating]);
+  }, [misspelling, correct, cancelOnPropsChange, memoizedEditPlan]);
   
   // Update CSS variables for animation timing based on speed multiplier
   useEffect(() => {
@@ -203,11 +253,11 @@ const WordTransform: React.FC<WordTransformProps> = ({
       const reorderBase = parseFloat(computedStyle.getPropertyValue('--reorder-duration') || '1.0s');
       
       // Apply speed multiplier (faster = smaller values)
-      container.style.setProperty('--remove-duration', `${removeBase / speed}s`);
-      container.style.setProperty('--add-duration', `${addBase / speed}s`);
-      container.style.setProperty('--reorder-duration', `${reorderBase / speed}s`);
+      container.style.setProperty('--remove-duration', `${removeBase / speedMultiplier}s`);
+      container.style.setProperty('--add-duration', `${addBase / speedMultiplier}s`);
+      container.style.setProperty('--reorder-duration', `${reorderBase / speedMultiplier}s`);
     }
-  }, [speed]);
+  }, [speedMultiplier]);
 
   // Memoize animation phase handlers to avoid unnecessary renders
   const handlePhaseChange = useMemo(() => {
@@ -223,55 +273,57 @@ const WordTransform: React.FC<WordTransformProps> = ({
     // Skip for initial render or if no edit plan
     if (!state.editPlan) return;
 
-    // Set up total animations expected in each phase
-    let totalAnimationsInPhase = 0;
+    // Configure phase-specific behavior
+    const phaseConfig: Record<Exclude<AnimationPhase, AnimationPhase.IDLE>, PhaseConfig> = {
+      [AnimationPhase.DELETING]: {
+        getTotal: () => state.editPlan?.deletions.length || 0,
+        shouldSkip: (total: number) => total === 0,
+      },
+      [AnimationPhase.MOVING]: {
+        getTotal: () => state.editPlan?.moves.length || 0,
+        shouldSkip: (total: number) => total === 0,
+      },
+      [AnimationPhase.INSERTING]: {
+        getTotal: () => state.editPlan?.insertions.length || 0,
+        shouldSkip: (total: number) => total === 0,
+      },
+      [AnimationPhase.COMPLETE]: {
+        getTotal: () => 0,
+        shouldSkip: () => false,
+        onEnter: () => {
+          if (onAnimationComplete) {
+            onAnimationComplete();
+          }
+        }
+      }
+    };
 
-    if (state.phase === AnimationPhase.DELETING) {
-      totalAnimationsInPhase = state.editPlan.deletions.length;
-      // If no deletions, move to next phase immediately
-      if (totalAnimationsInPhase === 0) {
+    // Skip AnimationPhase.IDLE as it's handled separately
+    if (state.phase !== AnimationPhase.IDLE) {
+      const config = phaseConfig[state.phase as Exclude<AnimationPhase, AnimationPhase.IDLE>];
+      
+      if (!config) return;
+
+      // Get total animations for this phase
+      const totalAnimationsInPhase = config.getTotal();
+      
+      // If this phase has an onEnter callback, call it 
+      if (config.onEnter) {
+        config.onEnter();
+      }
+      
+      // If this phase has no animations, skip to next phase
+      if (config.shouldSkip(totalAnimationsInPhase)) {
         dispatch({ type: 'COMPLETE_PHASE' });
       } else {
+        // Otherwise start the phase with the calculated number of animations
         dispatch({ 
           type: 'START_PHASE', 
           payload: { 
-            phase: AnimationPhase.DELETING, 
+            phase: state.phase, 
             total: totalAnimationsInPhase 
           } 
         });
-      }
-    } else if (state.phase === AnimationPhase.MOVING) {
-      totalAnimationsInPhase = state.editPlan.moves.length;
-      // If no moves, move to next phase immediately
-      if (totalAnimationsInPhase === 0) {
-        dispatch({ type: 'COMPLETE_PHASE' });
-      } else {
-        dispatch({ 
-          type: 'START_PHASE', 
-          payload: { 
-            phase: AnimationPhase.MOVING, 
-            total: totalAnimationsInPhase 
-          } 
-        });
-      }
-    } else if (state.phase === AnimationPhase.INSERTING) {
-      totalAnimationsInPhase = state.editPlan.insertions.length;
-      // If no insertions, move to next phase immediately
-      if (totalAnimationsInPhase === 0) {
-        dispatch({ type: 'COMPLETE_PHASE' });
-      } else {
-        dispatch({ 
-          type: 'START_PHASE', 
-          payload: { 
-            phase: AnimationPhase.INSERTING, 
-            total: totalAnimationsInPhase 
-          } 
-        });
-      }
-    } else if (state.phase === AnimationPhase.COMPLETE) {
-      // Animation sequence complete
-      if (onAnimationComplete) {
-        onAnimationComplete();
       }
     }
 
@@ -309,9 +361,9 @@ const WordTransform: React.FC<WordTransformProps> = ({
     letterIndex: number, 
     phase: AnimationPhase,
     editPlan: EditPlan
-  ): LetterAnimationState => {
+  ): ExtendedLetterAnimationState => {
     // Default animation state is 'normal'
-    let animationState: LetterAnimationState = 'normal';
+    let animationState: ExtendedLetterAnimationState = 'normal';
     
     switch (phase) {
       case AnimationPhase.DELETING:
@@ -322,12 +374,15 @@ const WordTransform: React.FC<WordTransformProps> = ({
         break;
         
       case AnimationPhase.MOVING:
-        // Mark letters that will move with 'movement' state
-        // Highlight true movers with more emphasis
+        // Differentiate between regular moves and true movers
         const isMoving = editPlan.moves.some(move => move.fromIndex === letterIndex);
         const isTrueMover = editPlan.highlightIndices.includes(letterIndex);
         
-        if (isMoving || isTrueMover) {
+        if (isTrueMover) {
+          // True movers get a special animation state for enhanced highlighting
+          animationState = 'true-movement';
+        } else if (isMoving) {
+          // Regular moving letters
           animationState = 'movement';
         }
         break;
@@ -342,6 +397,15 @@ const WordTransform: React.FC<WordTransformProps> = ({
     }
     
     return animationState;
+  };
+
+  // Map extended animation state to standard Letter component animation state
+  const mapToLetterAnimationState = (
+    extendedState: ExtendedLetterAnimationState
+  ): LetterAnimationState => {
+    // True-movement is not directly supported by Letter component,
+    // so we map it to the standard 'movement' state, but will add a class
+    return extendedState === 'true-movement' ? 'movement' : extendedState;
   };
 
   // Render letters based on current animation phase
@@ -368,16 +432,25 @@ const WordTransform: React.FC<WordTransformProps> = ({
                   return null;
                 }
                 
-                const animationState = getLetterAnimationState(
+                const extendedAnimationState = getLetterAnimationState(
                   index, 
                   state.phase,
                   editPlan
                 );
                 
+                const animationState = mapToLetterAnimationState(extendedAnimationState);
+                
                 // Only animate letters in specific states for the current phase
                 const shouldAnimate = 
                   (state.phase === AnimationPhase.DELETING && animationState === 'deletion') ||
-                  (state.phase === AnimationPhase.MOVING && animationState === 'movement');
+                  (state.phase === AnimationPhase.MOVING && 
+                   (extendedAnimationState === 'movement' || extendedAnimationState === 'true-movement'));
+                
+                // Determine CSS classes - add special class for true movers
+                const cssClasses = [
+                  styles.letter,
+                  extendedAnimationState === 'true-movement' ? styles.trueMover : ''
+                ].filter(Boolean).join(' ');
                 
                 return (
                   <Letter 
@@ -386,7 +459,9 @@ const WordTransform: React.FC<WordTransformProps> = ({
                     animationState={animationState}
                     initialIndex={index}
                     onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
-                    className={styles.letter}
+                    className={cssClasses}
+                    // Add a data attribute to help with testing and debugging
+                    data-extended-state={extendedAnimationState}
                   />
                 );
               })}
