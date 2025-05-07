@@ -74,10 +74,17 @@ const createLetterVariants = (shouldReduceMotion: boolean): Variants => {
     },
     movement: {
       scale: shouldReduceMotion ? 1 : [1, 1.1, 1],
+      // Enhanced animation for movement (especially benefits true movers with additional CSS)
+      // More pronounced bounce and slightly longer duration
       transition: {
         duration: getDuration(0.8),
-        ease: shouldReduceMotion ? "easeOut" : [0.1, 2, 0.3, 1], // Matches the cubic-bezier in CSS
-        times: shouldReduceMotion ? [0, 1] : [0, 0.3, 1]
+        // Use an exaggerated bounce effect
+        ease: shouldReduceMotion ? "easeOut" : [0.1, 2.3, 0.36, 1.2], 
+        times: shouldReduceMotion ? [0, 1] : [0, 0.4, 1],
+        // Add a little more bounce to emphasize the movement
+        bounce: 0.5,
+        // Make true movers stand out with longer animation
+        stiffness: 120
       }
     }
   };

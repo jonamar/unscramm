@@ -39,7 +39,7 @@ export interface WordTransformProps {
   misspelling: string;
   /** The correctly spelled word to transform to */
   correct: string;
-  /** Optional speed multiplier for animations (default: 1) */
+  /** Speed multiplier for animations (default: 1) - higher values make animations faster */
   speedMultiplier?: number;
   /** Whether to enable color coding for different animation states (default: true) */
   colorsEnabled?: boolean;
@@ -58,7 +58,7 @@ export interface WordTransformProps {
 /**
  * Extends the standard animation states to include a special true-mover state
  */
-type ExtendedLetterAnimationState = LetterAnimationState | 'true-movement';
+type ExtendedLetterAnimationState = LetterAnimationState | 'true-mover';
 
 /**
  * State for the animation reducer
@@ -213,7 +213,7 @@ const WordTransform: React.FC<WordTransformProps> = ({
   // Reference to container element for CSS variables
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Memoize the edit plan calculation for better performance
+  // Memoize the edit plan calculation to prevent expensive O(n²) recalculations
   const memoizedEditPlan = useMemo(() => {
     if (misspelling !== '' && correct !== '') {
       return computeEditPlan(misspelling, correct);
@@ -329,31 +329,27 @@ const WordTransform: React.FC<WordTransformProps> = ({
 
     // Notify of phase change
     handlePhaseChange(state.phase);
+    
+    // Remove state.isAnimating from the dependency array to prevent unwanted reruns
+    // This is safe because we only care about phase changes and editPlan changes
   }, [state.phase, state.editPlan, handlePhaseChange, onAnimationComplete]);
 
-  // Effect to check if all animations in the current phase are complete
-  useEffect(() => {
-    if (state.isAnimating && 
-        state.completedAnimations > 0 && 
-        state.completedAnimations >= state.totalAnimationsInPhase) {
-      // Move to the next phase when all animations in current phase complete
-      dispatch({ type: 'COMPLETE_PHASE' });
-    }
-  }, [state.completedAnimations, state.totalAnimationsInPhase, state.isAnimating]);
-
-  // Function to start animation sequence
+  // Start animation function
   const startAnimation = () => {
-    if (!state.isAnimating && state.editPlan) {
-      if (onAnimationStart) {
-        onAnimationStart();
-      }
-      dispatch({ type: 'START_ANIMATION' });
+    if (onAnimationStart) {
+      onAnimationStart();
     }
+    
+    dispatch({ type: 'START_ANIMATION' });
   };
 
-  // Handle animation completion for a single letter
+  // Callback handler for letter animation completions
   const handleLetterAnimationComplete = () => {
-    dispatch({ type: 'ANIMATION_COMPLETE' });
+    if (state.completedAnimations + 1 >= state.totalAnimationsInPhase) {
+      dispatch({ type: 'COMPLETE_PHASE' });
+    } else {
+      dispatch({ type: 'ANIMATION_COMPLETE' });
+    }
   };
   
   // Determine letter animation state based on current phase and letter properties
@@ -374,16 +370,18 @@ const WordTransform: React.FC<WordTransformProps> = ({
         break;
         
       case AnimationPhase.MOVING:
-        // Differentiate between regular moves and true movers
+        // Check if letter is moving at all
         const isMoving = editPlan.moves.some(move => move.fromIndex === letterIndex);
-        const isTrueMover = editPlan.highlightIndices.includes(letterIndex);
         
-        if (isTrueMover) {
-          // True movers get a special animation state for enhanced highlighting
-          animationState = 'true-movement';
-        } else if (isMoving) {
-          // Regular moving letters
-          animationState = 'movement';
+        if (isMoving) {
+          // Check if letter is a true mover (special highlight)
+          if (editPlan.highlightIndices.includes(letterIndex)) {
+            // True movers get a special animation state for enhanced highlighting
+            animationState = 'true-mover';
+          } else {
+            // Regular moving letters
+            animationState = 'movement';
+          }
         }
         break;
         
@@ -403,9 +401,16 @@ const WordTransform: React.FC<WordTransformProps> = ({
   const mapToLetterAnimationState = (
     extendedState: ExtendedLetterAnimationState
   ): LetterAnimationState => {
-    // True-movement is not directly supported by Letter component,
-    // so we map it to the standard 'movement' state, but will add a class
-    return extendedState === 'true-movement' ? 'movement' : extendedState;
+    // Map our extended state to the states supported by the Letter component
+    switch(extendedState) {
+      case 'true-mover':
+        // 'true-mover' is not directly supported by Letter component,
+        // so we map it to the standard 'movement' state
+        return 'movement';
+      default:
+        // Other states can be passed through directly
+        return extendedState as LetterAnimationState;
+    }
   };
 
   // Render letters based on current animation phase
@@ -444,12 +449,12 @@ const WordTransform: React.FC<WordTransformProps> = ({
                 const shouldAnimate = 
                   (state.phase === AnimationPhase.DELETING && animationState === 'deletion') ||
                   (state.phase === AnimationPhase.MOVING && 
-                   (extendedAnimationState === 'movement' || extendedAnimationState === 'true-movement'));
+                   (extendedAnimationState === 'movement' || extendedAnimationState === 'true-mover'));
                 
                 // Determine CSS classes - add special class for true movers
                 const cssClasses = [
                   styles.letter,
-                  extendedAnimationState === 'true-movement' ? styles.trueMover : ''
+                  extendedAnimationState === 'true-mover' ? styles.trueMover : ''
                 ].filter(Boolean).join(' ');
                 
                 return (
