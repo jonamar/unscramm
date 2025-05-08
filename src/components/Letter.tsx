@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { motion, Variants, usePresence, useReducedMotion } from 'framer-motion';
 import styles from './Letter.module.css';
 
@@ -55,11 +55,12 @@ const createLetterVariants = (shouldReduceMotion: boolean): Variants => {
     },
     deletion: {
       opacity: 0,
-      scale: shouldReduceMotion ? 1 : 0.8,
-      y: shouldReduceMotion ? 0 : 10,
+      scale: shouldReduceMotion ? 1 : [1, 0.8],
+      y: shouldReduceMotion ? 0 : [0, 10],
       transition: {
         duration: getDuration(0.4),
-        ease: "easeOut"
+        ease: "easeOut",
+        times: shouldReduceMotion ? [0, 1] : [0, 1]
       }
     },
     insertion: {
@@ -69,13 +70,14 @@ const createLetterVariants = (shouldReduceMotion: boolean): Variants => {
       transition: {
         duration: getDuration(0.5),
         ease: "easeOut",
-        times: shouldReduceMotion ? [0, 1] : [0, 0.6, 1]
+        times: shouldReduceMotion ? [0, 1] : [0, 0.6, 1],
+        // Add a slight bounce for insertions
+        bounce: 0.2
       }
     },
     movement: {
       scale: shouldReduceMotion ? 1 : [1, 1.1, 1],
-      // Enhanced animation for movement (especially benefits true movers with additional CSS)
-      // More pronounced bounce and slightly longer duration
+      // Enhanced animation for movement
       transition: {
         duration: getDuration(0.8),
         // Use an exaggerated bounce effect
@@ -91,18 +93,18 @@ const createLetterVariants = (shouldReduceMotion: boolean): Variants => {
 };
 
 /**
- * Get the appropriate ARIA label for the current animation state
+ * Get ARIA label based on animation state
  * 
- * @param character - The character being displayed
+ * @param character - The letter being displayed
  * @param state - The current animation state
- * @returns A descriptive label for screen readers
+ * @returns Descriptive label for screen readers
  */
 const getAriaLabel = (character: string, state: LetterAnimationState): string => {
   switch (state) {
     case 'deletion':
-      return `Letter ${character} being deleted`;
+      return `Letter ${character} being removed`;
     case 'insertion':
-      return `Letter ${character} being inserted`;
+      return `Letter ${character} being added`;
     case 'movement':
       return `Letter ${character} moving to new position`;
     default:
@@ -149,7 +151,7 @@ const getAriaLive = (state: LetterAnimationState): 'off' | 'polite' => {
  *   onAnimationComplete={() => console.log('Animation completed')}
  * />
  */
-const Letter: React.FC<LetterProps> = ({
+const Letter: React.FC<LetterProps> = memo(({
   character,
   animationState = 'normal',
   onAnimationComplete,
@@ -162,8 +164,8 @@ const Letter: React.FC<LetterProps> = ({
   const [isPresent, safeToRemove] = usePresence();
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Check if user prefers reduced motion
-  const shouldReduceMotion = useReducedMotion();
+  // Hook to check user's motion preference (accessibility)
+  const shouldReduceMotion = useReducedMotion() || process.env.NODE_ENV === 'test';
   
   // Create variants with motion preference applied
   const letterVariants = createLetterVariants(!!shouldReduceMotion);
@@ -208,9 +210,17 @@ const Letter: React.FC<LetterProps> = ({
     ...(initialIndex !== undefined && { "data-index": initialIndex }),
   };
 
+  // Construct dynamic className
+  const letterClasses = [
+    styles.letter,
+    styles[animationState],
+    shouldReduceMotion && styles.reducedMotion,
+    className
+  ].filter(Boolean).join(' ');
+
   return (
     <motion.span 
-      className={`${styles.letter} ${styles[animationState]} ${className}`}
+      className={letterClasses}
       {...dataProps}
       initial="normal"
       animate={animationState}
@@ -247,24 +257,10 @@ const Letter: React.FC<LetterProps> = ({
       {character}
     </motion.span>
   );
-};
+});
 
 /**
  * Memoized version of the Letter component to prevent unnecessary re-renders.
  * Only re-renders when props actually change, improving performance in lists.
  */
-export default React.memo(Letter, (prevProps, nextProps) => {
-  // Custom comparison function for memoization
-  // Return true if the component should NOT re-render
-  return (
-    prevProps.character === nextProps.character &&
-    prevProps.animationState === nextProps.animationState &&
-    prevProps.initialIndex === nextProps.initialIndex &&
-    prevProps.className === nextProps.className &&
-    prevProps.tabIndex === nextProps.tabIndex &&
-    prevProps.disableLayoutAnimation === nextProps.disableLayoutAnimation &&
-    // For callback props, only re-render if one exists and the other doesn't
-    // We don't compare function references as they may change on each render
-    !!prevProps.onAnimationComplete === !!nextProps.onAnimationComplete
-  );
-}); 
+export default Letter; 

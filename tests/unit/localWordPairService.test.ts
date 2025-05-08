@@ -234,11 +234,11 @@ describe('LocalWordPairService', () => {
       const pair2 = await service.getRandomPair();
       const pair3 = await service.getRandomPair();
       
-      // Check recent pairs
+      // Check recent pairs - the service has default maxRecentPairs of 10, so it should keep all 3
       const recent = await service.getRecentPairs();
       expect(recent).toHaveLength(3);
       
-      // Should be in reverse order (newest first)
+      // Should have most recent pairs first (newest first)
       expect(recent[0].id).toBe(pair3.id);
       expect(recent[1].id).toBe(pair2.id);
       expect(recent[2].id).toBe(pair1.id);

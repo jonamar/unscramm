@@ -57,86 +57,42 @@ export default meta;
 type Story = StoryObj<typeof Letter>;
 
 /**
- * The normal state represents a character in its default state (white).
+ * Default state of the Letter component.
  */
-export const Normal: Story = {
+export const Default: Story = {
   args: {
     character: 'A',
     animationState: 'normal',
-    tabIndex: 0,
   },
 };
 
 /**
- * The insertion state represents a character being added (green).
- */
-export const Insertion: Story = {
-  args: {
-    character: 'B',
-    animationState: 'insertion',
-    tabIndex: 0,
-  },
-};
-
-/**
- * The deletion state represents a character being removed (red).
- * Note: Tab index is automatically set to -1 in this state.
+ * Demonstrates a letter being deleted.
  */
 export const Deletion: Story = {
   args: {
-    character: 'C',
+    character: 'B',
     animationState: 'deletion',
-    tabIndex: 0,
   },
 };
 
 /**
- * The movement state represents a character changing position (yellow).
+ * Demonstrates a letter being inserted.
+ */
+export const Insertion: Story = {
+  args: {
+    character: 'C',
+    animationState: 'insertion',
+  },
+};
+
+/**
+ * Demonstrates a letter moving to a new position.
  */
 export const Movement: Story = {
   args: {
     character: 'D',
     animationState: 'movement',
-    tabIndex: 0,
-  },
-};
-
-/**
- * Example showing all animation states side by side.
- */
-export const AllStates: Story = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '1rem' }}>
-      <Letter character="N" animationState="normal" />
-      <Letter character="I" animationState="insertion" />
-      <Letter character="D" animationState="deletion" />
-      <Letter character="M" animationState="movement" />
-    </div>
-  ),
-  parameters: {
-    docs: {
-      description: {
-        story: 'This story shows all four animation states side by side for comparison.',
-      },
-    },
-  },
-};
-
-/**
- * Example showing letter with layout animation disabled.
- */
-export const DisabledLayoutAnimation: Story = {
-  args: {
-    character: 'X',
-    animationState: 'normal',
-    disableLayoutAnimation: true,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: 'This story demonstrates a letter with layout animations disabled for performance optimization.',
-      },
-    },
   },
 };
 
@@ -168,62 +124,66 @@ export const CustomStyling: Story = {
 };
 
 /**
- * Example showing keyboard focus state.
+ * Demonstrates keyboard navigation and focus states.
  */
-export const WithKeyboardFocus: Story = {
+export const KeyboardNavigation: Story = {
   args: {
     character: 'F',
     animationState: 'normal',
     tabIndex: 0,
   },
-  parameters: {
-    docs: {
-      description: {
-        story: 'This shows the letter with keyboard focus. In a real application, you can tab to this element.',
-      },
-    },
-    pseudo: { focus: true },
-  },
+  decorators: [
+    (Story) => (
+      <div>
+        <p style={{ marginBottom: '1rem', color: '#fff' }}>
+          Press Tab to focus the letter and observe focus styles
+        </p>
+        <Story />
+      </div>
+    ),
+  ],
 };
 
 /**
- * Demonstrates accessibility features with annotations.
+ * Shows how the component handles long animations.
  */
-export const AccessibilityFeatures: Story = {
-  render: () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+export const LongAnimation: Story = {
+  args: {
+    character: 'M',
+    animationState: 'movement',
+    onAnimationComplete: () => console.log('Animation completed'),
+  },
+  decorators: [
+    (Story) => (
       <div>
-        <strong>ARIA Attributes:</strong>
-        <ul style={{ textAlign: 'left', marginBottom: '1rem' }}>
-          <li>role="text"</li>
-          <li>aria-label="Letter X" (changes with state)</li>
-          <li>aria-live="polite" (for state changes)</li>
-          <li>aria-atomic="true"</li>
-          <li>aria-relevant="text"</li>
-          <li>aria-hidden="true" (only in deletion state)</li>
-        </ul>
+        <p style={{ marginBottom: '1rem', color: '#fff' }}>
+          This story demonstrates a longer movement animation with bounce effect
+        </p>
+        <Story />
       </div>
-      <div style={{ display: 'flex', gap: '1rem' }}>
-        <div>
-          <p>Normal:</p>
-          <Letter character="A" animationState="normal" />
-        </div>
-        <div>
-          <p>Deletion:</p>
-          <Letter character="B" animationState="deletion" />
-        </div>
-        <div>
-          <p>Insertion:</p>
-          <Letter character="C" animationState="insertion" />
-        </div>
-        <div>
-          <p>Movement:</p>
-          <Letter character="D" animationState="movement" />
-        </div>
+    ),
+  ],
+};
+
+/**
+ * Demonstrates accessibility features.
+ */
+export const Accessibility: Story = {
+  args: {
+    character: 'A',
+    animationState: 'insertion',
+  },
+  decorators: [
+    (Story) => (
+      <div>
+        <p style={{ marginBottom: '1rem', color: '#fff' }}>
+          Use a screen reader to hear the ARIA labels and live region updates
+        </p>
+        <Story />
       </div>
-    </div>
-  ),
-}; 
+    ),
+  ],
+};
 
 /**
  * REDUCED MOTION STORIES
@@ -259,99 +219,28 @@ const ReducedMotionWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 /**
- * Normal state with reduced motion
+ * Shows how animations are simplified when reduced motion is preferred.
  */
-export const NormalReducedMotion: Story = {
+export const ReducedMotionDeletion: Story = {
   args: {
-    character: 'A',
-    animationState: 'normal',
-    tabIndex: 0,
-  },
-  decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
-  parameters: {
-    docs: {
-      description: {
-        story: 'Shows the normal state with reduced motion settings enabled.',
-      },
-    },
-  },
-};
-
-/**
- * Insertion state with reduced motion
- */
-export const InsertionReducedMotion: Story = {
-  args: {
-    character: 'B',
-    animationState: 'insertion',
-    tabIndex: 0,
-  },
-  decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
-  parameters: {
-    docs: {
-      description: {
-        story: 'Shows the insertion state with reduced motion settings enabled. Note the simplified animation.',
-      },
-    },
-  },
-};
-
-/**
- * Deletion state with reduced motion
- */
-export const DeletionReducedMotion: Story = {
-  args: {
-    character: 'C',
+    character: 'R',
     animationState: 'deletion',
-    tabIndex: 0,
   },
   decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
-  parameters: {
-    docs: {
-      description: {
-        story: 'Shows the deletion state with reduced motion settings enabled. Note the simplified animation.',
-      },
-    },
-  },
 };
 
-/**
- * Movement state with reduced motion
- */
-export const MovementReducedMotion: Story = {
+export const ReducedMotionInsertion: Story = {
   args: {
-    character: 'D',
-    animationState: 'movement',
-    tabIndex: 0,
+    character: 'R',
+    animationState: 'insertion',
   },
   decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
-  parameters: {
-    docs: {
-      description: {
-        story: 'Shows the movement state with reduced motion settings enabled. Note the simplified animation.',
-      },
-    },
-  },
 };
 
-/**
- * All states with reduced motion
- */
-export const AllStatesReducedMotion: Story = {
-  render: () => (
-    <div style={{ display: 'flex', gap: '1rem' }}>
-      <Letter character="N" animationState="normal" />
-      <Letter character="I" animationState="insertion" />
-      <Letter character="D" animationState="deletion" />
-      <Letter character="M" animationState="movement" />
-    </div>
-  ),
-  decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
-  parameters: {
-    docs: {
-      description: {
-        story: 'Shows all animation states with reduced motion settings enabled. Note the simplified animations while still maintaining the visual distinctions between states.',
-      },
-    },
+export const ReducedMotionMovement: Story = {
+  args: {
+    character: 'R',
+    animationState: 'movement',
   },
+  decorators: [(Story) => <ReducedMotionWrapper><Story /></ReducedMotionWrapper>],
 }; 

@@ -22,6 +22,12 @@ describe('Letter Component', () => {
     jest.clearAllMocks();
     mockUseReducedMotion.mockClear();
     mockUseReducedMotion.mockReturnValue(false);
+    
+    // Ensure NODE_ENV is not 'test' for most tests
+    jest.replaceProperty(process, 'env', {
+      ...process.env,
+      NODE_ENV: 'development'
+    });
   });
 
   it('renders the character correctly', () => {
@@ -213,14 +219,14 @@ describe('Letter Component', () => {
       // Check deletion state
       rerender(<Letter character="i" animationState="deletion" />);
       letterElement = screen.getByTestId('letter');
-      expect(letterElement).toHaveAttribute('aria-label', 'Letter i being deleted');
+      expect(letterElement).toHaveAttribute('aria-label', 'Letter i being removed');
       expect(letterElement).toHaveAttribute('aria-live', 'polite');
       expect(letterElement).toHaveAttribute('aria-hidden', 'true');
       
       // Check insertion state
       rerender(<Letter character="i" animationState="insertion" />);
       letterElement = screen.getByTestId('letter');
-      expect(letterElement).toHaveAttribute('aria-label', 'Letter i being inserted');
+      expect(letterElement).toHaveAttribute('aria-label', 'Letter i being added');
       expect(letterElement).toHaveAttribute('aria-live', 'polite');
       expect(letterElement).not.toHaveAttribute('aria-hidden');
       
@@ -337,6 +343,42 @@ describe('Letter Component', () => {
       
       // Reset the mock for other tests
       mockUseReducedMotion.mockReturnValue(false);
+    });
+  });
+
+  describe('Animation Variants', () => {
+    it('applies correct classes based on animation state', () => {
+      // Normal state
+      const { unmount: unmount1 } = render(<Letter character="a" animationState="normal" />);
+      expect(screen.getByTestId('letter')).toHaveClass('letter', 'normal');
+      unmount1();
+      
+      // Deletion state
+      const { unmount: unmount2 } = render(<Letter character="b" animationState="deletion" />);
+      expect(screen.getByTestId('letter')).toHaveClass('letter', 'deletion');
+      unmount2();
+      
+      // Insertion state
+      const { unmount: unmount3 } = render(<Letter character="c" animationState="insertion" />);
+      expect(screen.getByTestId('letter')).toHaveClass('letter', 'insertion');
+      unmount3();
+      
+      // Movement state
+      const { unmount: unmount4 } = render(<Letter character="d" animationState="movement" />);
+      expect(screen.getByTestId('letter')).toHaveClass('letter', 'movement');
+      unmount4();
+    });
+
+    it('handles reduced motion preferences', () => {
+      // Mock reduced motion preference as true
+      mockUseReducedMotion.mockReturnValue(true);
+      
+      render(<Letter character="m" animationState="movement" />);
+      const letterElement = screen.getByTestId('letter');
+      
+      // When reduced motion is preferred, verify basic rendering still works
+      expect(letterElement).toHaveTextContent('m');
+      expect(letterElement).toHaveClass('letter');
     });
   });
 }); 

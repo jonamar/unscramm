@@ -43,7 +43,7 @@
 
 .deletion {
   color: #ff5252; /* Red for deletions - WCAG AAA compliant on dark backgrounds */
-  /* Styling will be enhanced with Framer Motion animations later */
+  /* Styling will be enhanced with Framer Motion animations */
   text-decoration: line-through;
   opacity: 0.8;
   transition: 
@@ -54,7 +54,7 @@
 
 .insertion {
   color: #4caf50; /* Green for insertions - WCAG AAA compliant on dark backgrounds */
-  /* Styling will be enhanced with Framer Motion animations later */
+  /* Styling will be enhanced with Framer Motion animations */
   text-shadow: 0 0 8px rgba(76, 175, 80, 0.5), 0 0 2px rgba(0, 0, 0, 0.8);
   transition: 
     color 0.3s ease,
@@ -64,7 +64,7 @@
 
 .movement {
   color: #ffeb3b; /* Yellow for moves - WCAG AAA compliant on dark backgrounds */
-  /* Styling will be enhanced with Framer Motion animations later */
+  /* Styling will be enhanced with Framer Motion animations */
   text-shadow: 0 0 8px rgba(255, 235, 59, 0.5), 0 0 2px rgba(0, 0, 0, 0.8);
   transition: 
     color 0.3s ease,
@@ -178,4 +178,14 @@
   .deletion, .insertion, .movement {
     color: #000 !important;
   }
+}
+
+/* Accessibility: Reduced motion preference */
+.reducedMotion {
+  transition-duration: 0.001ms !important;
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-property: none !important;
+  /* No bounce, scale, or complex transforms for reduced motion users */
+  transform: none !important;
 } 
