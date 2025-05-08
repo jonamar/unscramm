@@ -164,7 +164,7 @@ The implementation includes a getLetterAnimationState function that determines t
 The component's main render method uses the renderLetters function, displays a Start Animation button only in the IDLE phase, shows debugging information about the current animation state, and applies proper CSS classes for styling. CSS styles maintain visual consistency and support animations through lettersContainer styles for the letter display area, animation control button styles, debug info display styling, and layout adjustments to properly show all elements. Tests have been updated to adapt to the new component structure that renders individual letters instead of text strings.
 </info added on 2025-05-07T00:46:36.630Z>
 
-## 4. Render and animate Letter components [in-progress]
+## 4. Render and animate Letter components [done]
 ### Dependencies: None
 ### Description: Implement the rendering logic for Letter components with proper animation attributes based on the current animation phase.
 ### Details:
@@ -263,25 +263,30 @@ The Letter component implementation is now complete and ready for integration wi
 </info added on 2025-05-07T22:59:43.789Z>
 
 ## 5. Handle prop changes and optimize performance [pending]
-### Dependencies: None
+### Dependencies: 5.13, 5.15, 5.19, 5.27, 5.31
 ### Description: Implement proper handling of prop changes during animation and optimize the component for performance.
 ### Details:
 Decide and implement behavior for when props change mid-animation (restart, complete current animation first, etc.). Add a reset function to cleanly restart animations when words change. Implement memoization using useMemo and useCallback to prevent unnecessary re-renders. Add optional callback props for animation events (onAnimationStart, onPhaseChange, onAnimationComplete). Ensure smooth transitions between all animation phases with no visual glitches. Add final polish including accessibility attributes and responsive behavior.
+<info added on 2025-05-08T02:22:58.503Z>
+Decide and implement behavior for when props change mid-animation (restart, complete current animation first, etc.). Add a reset function to cleanly restart animations when words change. Implement memoization using useMemo and useCallback to prevent unnecessary re-renders. Add optional callback props for animation events (onAnimationStart, onPhaseChange, onAnimationComplete). Ensure smooth transitions between all animation phases with no visual glitches. Add final polish including accessibility attributes and responsive behavior.
+
+Before implementing these performance optimizations, ensure that all code quality subtasks (5.27-5.31) are completed. These code improvements will establish a solid foundation for the performance work and ensure that the component follows best practices. Once the code quality improvements are in place, proceed with the prop change handling and performance optimizations as outlined above.
+</info added on 2025-05-08T02:22:58.503Z>
 
 ## 6. Integrate CSS variables for animation timing [pending]
-### Dependencies: None
+### Dependencies: 5.27, 5.28, 5.29, 5.30, 5.31
 ### Description: Set up and integrate CSS variables for animation timing from the stylesheet to ensure consistent animation speeds across the component.
 ### Details:
 Create a set of CSS variables in the component's stylesheet for different animation durations and delays (e.g., --deletion-duration, --movement-duration, --insertion-duration). Implement a mechanism to modify these CSS variables based on the speedMultiplier prop. Use React's useRef to access the component's DOM element and update CSS variables programmatically. Ensure all animations reference these variables instead of hardcoded timing values. Add a helper function to calculate and update all timing variables when the speed multiplier changes.
 
 ## 7. Add data-phase attributes and testing hooks [pending]
-### Dependencies: None
+### Dependencies: 5.27
 ### Description: Implement data-phase attributes and testing hooks to facilitate E2E testing and debugging of the animation sequence.
 ### Details:
 Add data-phase attributes to the component's container element that reflect the current animation phase (e.g., data-phase="deleting", data-phase="moving"). Add data-testid attributes to key elements for easier selection in tests. Create a debug mode prop that, when enabled, adds additional data attributes showing the internal state of each letter (e.g., data-letter-state="deleted", data-letter-state="moving"). Implement a testing API through ref forwarding that exposes internal state and methods for testing purposes. Document all testing hooks and attributes for the QA team.
 
 ## 8. Define and unit-test WordTransform finite state machine [pending]
-### Dependencies: None
+### Dependencies: 5.27
 ### Description: Create a finite state machine for the WordTransform component that manages the animation sequence states and transitions.
 ### Details:
 Create src/components/wordTransform.machine.ts with XState defining five states: idle, deleting, moving, inserting, and complete. Include context to track deletion/move/insertion counts. Define events (START, DONE_PHASE, RESET) that trigger transitions between states. Implement logic to skip phases with zero-length operations. Ensure the machine handles the complete animation lifecycle and can be reset.
@@ -299,7 +304,7 @@ Create the WordTransform component that takes misspelled and correct words as pr
 Update existing Jest/React Testing Library tests to interact with the component via state machine events. Add data-phase and data-testid attributes to key elements for test selection. Create E2E tests that verify the full animation sequence works correctly. Develop Storybook examples that demonstrate different animation scenarios: words with deletions only, insertions only, movements only, and combinations. Include examples with different speed multiplier values.
 
 ## 11. Wire true-mover animation state through to Letter component and Framer Motion [pending]
-### Dependencies: 5.4, 5.5
+### Dependencies: 5.4, 5.27
 ### Description: Ensure the 'true-mover' animation state is passed through to the Letter component and Framer Motion. Do not collapse it to 'movement'. Add a Framer Motion variant and/or prop for true-mover in Letter. Update CSS/animation for true-mover to provide distinct visual and motion feedback.
 ### Details:
 - Update mapToLetterAnimationState and/or Letter props to allow 'true-mover' to be passed through.
@@ -319,4 +324,334 @@ Update existing Jest/React Testing Library tests to interact with the component 
   - Phase transitions (IDLE → DELETING → MOVING → INSERTING → COMPLETE)
   - That a true-mover letter gets the correct class/data-attribute and/or animation variant
 - Add tests to src/components/__tests__/WordTransform.test.tsx.
+
+## 13. Fix COMPLETE-phase loop in phase transition effect [pending]
+### Dependencies: 5.3
+### Description: Fix the issue where PhaseConfig for AnimationPhase.COMPLETE never skips, causing unnecessary renders due to dispatching START_PHASE even in COMPLETE phase.
+### Details:
+- Modify the phase transition effect to add a check for the COMPLETE phase.
+- Only dispatch START_PHASE when not already in COMPLETE phase.
+- Add a test to verify that re-renders don't occur unnecessarily after reaching COMPLETE phase.
+- Update the PhaseConfig definition to properly handle the COMPLETE phase.
+- Ensure the reducer correctly handles the case when START_PHASE is dispatched in COMPLETE phase.
+- Update the phase transition documentation to reflect this fix.
+<info added on 2025-05-08T02:18:04.076Z>
+- Modify the phase transition effect to add a check for the COMPLETE phase.
+- Only dispatch START_PHASE when not already in COMPLETE phase.
+- Add a test to verify that re-renders don't occur unnecessarily after reaching COMPLETE phase.
+- Update the PhaseConfig definition to properly handle the COMPLETE phase.
+- Ensure the reducer correctly handles the case when START_PHASE is dispatched in COMPLETE phase.
+- Update the phase transition documentation to reflect this fix.
+
+This is a high-priority performance fix that addresses unnecessary re-renders in the WordTransform component. The current implementation causes the component to continuously loop through phase transitions even after reaching the COMPLETE phase, which creates performance overhead especially in components with many word transformations. This issue becomes particularly noticeable in complex UIs where multiple WordTransform components are present. The fix will significantly improve rendering efficiency by preventing these redundant cycles.
+</info added on 2025-05-08T02:18:04.076Z>
+
+## 14. Fix props-change "cancel" logic to respect cancelOnPropsChange flag [pending]
+### Dependencies: 5.3
+### Description: Correct the issue where INITIALIZE is always dispatched on prop change regardless of cancelOnPropsChange flag, effectively ignoring the flag.
+### Details:
+- Modify the prop change effect to check the cancelOnPropsChange flag before dispatching INITIALIZE.
+- Only dispatch INITIALIZE when cancelOnPropsChange is true during in-flight animations.
+- Allow animations to continue when cancelOnPropsChange is false.
+- Add test cases that verify animations continue when cancelOnPropsChange is false and props change.
+- Add test cases that verify animations reset when cancelOnPropsChange is true and props change.
+- Update documentation to clearly explain the behavior of the cancelOnPropsChange flag.
+
+## 15. Fix stale edit plan on empty inputs [pending]
+### Dependencies: 5.2, 5.3
+### Description: Correct the issue where empty misspelling or correct inputs result in null from useMemo but don't clear state.editPlan, leaving stale letters on screen.
+### Details:
+- Add explicit CLEAR action to clear the edit plan when inputs become empty.
+- Modify the useMemo for edit plan to handle empty inputs correctly.
+- Ensure the reducer properly handles the CLEAR action to reset the edit plan.
+- Add test cases for empty input transitions (from valid words to empty and vice versa).
+- Update the component to visually reflect empty state without showing stale letters.
+- Add defensive checks to prevent rendering letters when inputs are empty.
+
+## 16. Fix CSS variable lookup for per-component overrides [pending]
+### Dependencies: 5.6
+### Description: Fix the issue where CSS variable lookups read from document.documentElement instead of the component's own .wordTransform element, missing per-component overrides.
+### Details:
+- Update CSS variable lookup to use getComputedStyle on the component's own element.
+- Use useRef to track the component's DOM element.
+- Apply the CSS variables directly to the .wordTransform element instead of relying on global variables.
+- Ensure speedMultiplier prop correctly modifies component-level CSS variables.
+- Add support for CSS variable customization via className props.
+- Update test cases to verify CSS variable overrides are correctly applied.
+- Document the CSS variable customization approach in comments.
+
+## 17. Add missing exit animations for deleted letters [pending]
+### Dependencies: 5.4
+### Description: Fix the issue where deleted letters during the moving phase are filtered out without explicit exit variants, causing them to vanish abruptly.
+### Details:
+- Add explicit exit variant to the Letter component for deleted letters.
+- Ensure AnimatePresence is properly configured to handle exit animations.
+- Update the filtering logic in the moving phase to maintain letters that are being deleted.
+- Add a specific 'exiting' animation state for letters being removed.
+- Set appropriate exit delay and duration for smooth animation.
+- Test that letters properly animate out instead of abruptly disappearing.
+- Update CSS styling to ensure exit animations are visually pleasing.
+<info added on 2025-05-08T02:18:42.630Z>
+- Add explicit exit variant to the Letter component for deleted letters.
+- Ensure AnimatePresence is properly configured to handle exit animations.
+- Update the filtering logic in the moving phase to maintain letters that are being deleted.
+- Add a specific 'exiting' animation state for letters being removed.
+- Set appropriate exit delay and duration for smooth animation.
+- Test that letters properly animate out instead of abruptly disappearing.
+- Update CSS styling to ensure exit animations are visually pleasing.
+
+This is a medium-high priority issue as it directly impacts the user experience. The abrupt disappearance of letters creates a jarring visual effect that breaks the smooth flow of the WordTransform component. Users may perceive this as a bug or glitch in the interface, reducing confidence in the application. Implementing proper exit animations will significantly improve the perceived quality and polish of the component.
+</info added on 2025-05-08T02:18:42.630Z>
+
+## 18. Add ARIA live region for phase changes [pending]
+### Dependencies: 5.3, 5.7
+### Description: Implement an ARIA live region to announce high-level phase transitions (e.g. "Deleting 3 letters…"), improving accessibility beyond individual letter roles. [Updated: 5/7/2025]
+### Details:
+- Add an ARIA live region to the WordTransform component.
+- Create informative messages for each animation phase (e.g., "Deleting 3 letters", "Moving 2 letters", "Adding 1 letter").
+- Update the phase change logic to announce appropriate messages.
+- Ensure proper aria-live attribute settings (polite for non-critical updates).
+- Respect user preferences for verbosity and reduced motion.
+- Add internationalization support for the announcement messages.
+- Test with screen readers to verify proper announcements.
+<info added on 2025-05-08T02:18:27.262Z>
+- Add an ARIA live region to the WordTransform component.
+- Create informative messages for each animation phase (e.g., \"Deleting 3 letters\", \"Moving 2 letters\", \"Adding 1 letter\").
+- Update the phase change logic to announce appropriate messages.
+- Ensure proper aria-live attribute settings (polite for non-critical updates).
+- Respect user preferences for verbosity and reduced motion.
+- Add internationalization support for the announcement messages.
+- Test with screen readers to verify proper announcements.
+
+This accessibility feature should be prioritized as medium-high importance since it provides critical context for users with visual impairments. Without these announcements, users relying on screen readers would miss the visual transformations happening in the component, creating a significant accessibility gap. This implementation directly supports WCAG 2.1 Success Criterion 4.1.3 (Status Messages) which requires that status messages can be programmatically determined so they can be presented to users of assistive technologies without receiving focus.
+</info added on 2025-05-08T02:18:27.262Z>
+
+## 19. Implement restart/replay functionality [pending]
+### Dependencies: 5.3
+### Description: Add the ability to restart or replay the same transformation after reaching the COMPLETE phase, as required by the spec.
+### Details:
+- Add a RESTART action to the WordTransform reducer.
+- Implement a restart button that appears in the COMPLETE phase.
+- Update the machine to allow transitions from COMPLETE back to IDLE.
+- Ensure the edit plan is preserved for replay without recalculation.
+- Add a callback prop for onRestart to notify parent components.
+- Style the restart button to match the application design.
+- Add keyboard support for the restart functionality (e.g., spacebar or Enter key).
+- Test that animations work correctly when replayed multiple times.
+<info added on 2025-05-08T02:18:14.468Z>
+- Add a RESTART action to the WordTransform reducer.
+- Implement a restart button that appears in the COMPLETE phase.
+- Update the machine to allow transitions from COMPLETE back to IDLE.
+- Ensure the edit plan is preserved for replay without recalculation.
+- Add a callback prop for onRestart to notify parent components.
+- Style the restart button to match the application design.
+- Add keyboard support for the restart functionality (e.g., spacebar or Enter key).
+- Test that animations work correctly when replayed multiple times.
+
+This is a core feature required by the specification, not an optional enhancement or bug fix. The restart functionality is essential for the WordTransform component's complete operation and user experience. Implementation should be prioritized accordingly.
+</info added on 2025-05-08T02:18:14.468Z>
+
+## 20. Make test hooks consistent across source and target letters [pending]
+### Dependencies: 5.4, 5.7
+### Description: Fix inconsistency where data-extended-state is added on source letters but insertion/movement states and data-indices aren't exposed on target letters in the same way.
+### Details:
+- Create a helper function to generate consistent data attributes for both source and target letters.
+- Ensure data-extended-state, data-index, and other attributes are applied consistently.
+- Add the missing data-indices on target letters to match source letters.
+- Ensure insertion/movement states are properly exposed on target letters.
+- Document the test hook attributes in component comments.
+- Add test cases to verify consistency of data attributes.
+- Create a comprehensive testing guide for QA to understand available hooks.
+
+## 21. Extract sub-renderers for better modularity [pending]
+### Dependencies: 5.4
+### Description: Extract the "render source letters" and "render target letters" blocks into small memoized components to isolate rendering logic.
+### Details:
+- Create SourceLetters and TargetLetters components extracted from WordTransform.
+- Memoize these components using React.memo to prevent unnecessary re-renders.
+- Define clear prop interfaces for these components.
+- Pass only the necessary props from WordTransform to each component.
+- Handle edge cases like empty strings or null edit plans within these components.
+- Update tests to reflect the new component structure.
+- Document the component structure and responsibilities in comments.
+
+## 22. Lift phaseConfig out of effect for better performance [pending]
+### Dependencies: 5.3
+### Description: Move the phaseConfig map outside of the effect to avoid re-creating it on every phase change, improving performance.
+### Details:
+- Move the phaseConfig map outside of the useEffect hook.
+- Define it once at the component level or in a useMemo with minimal dependencies.
+- Ensure the configuration is properly typed with TypeScript.
+- Update all references to the phaseConfig in the effect.
+- Modify any dynamic aspects of the configuration to work with this new structure.
+- Test performance with React DevTools profiler before and after the change.
+- Document the performance optimization in comments.
+
+## 23. Unify animation duration values [pending]
+### Dependencies: 5.4, 5.6
+### Description: Unify duration values by reading from CSS variables via getComputedStyle instead of hard-coding base values in createLetterVariants.
+### Details:
+- Update createLetterVariants to read duration values from CSS variables using getComputedStyle.
+- Set up a mechanism to pass the container element to Letter components.
+- Remove hardcoded duration values from Letter component variants.
+- Ensure CSS variables are properly defined and accessible.
+- Synchronize the duration values between CSS and JS.
+- Add fallback values for when CSS variables aren't available.
+- Test performance with this approach to ensure smooth animations.
+
+## 24. Cache callbacks with useCallback for reduced re-renders [pending]
+### Dependencies: 5.3
+### Description: Wrap startAnimation, handleLetterAnimationComplete in useCallback to reduce re-renders in deeply nested letter lists.
+### Details:
+- Implement useCallback for all event handler functions in WordTransform.
+- Carefully define dependency arrays to avoid stale closures.
+- Apply to startAnimation, handleLetterAnimationComplete, and other handler functions.
+- Test render performance with React DevTools profiler.
+- Compare re-render counts before and after the optimization.
+- Use React.memo on Letter component to maximize the benefit.
+- Document optimization techniques in component comments.
+
+## 25. Simplify reducer types with discriminated union [pending]
+### Dependencies: 5.3
+### Description: Convert AnimationAction union into a proper TypeScript discriminated union to remove duplicated type fields and improve compile-time safety.
+### Details:
+- Refactor AnimationAction to use a discriminated union pattern with a 'type' property.
+- Remove redundant type fields from action interfaces.
+- Update the reducer to use the new type pattern for cleaner switch statements.
+- Add exhaustiveness checking using TypeScript's never type.
+- Ensure strict type checking for all action handlers.
+- Update all action creators to match the new type format.
+- Improve error messages for invalid state transitions.
+
+## 26. Centralize test hooks with a helper function [pending]
+### Dependencies: 5.7, 5.20
+### Description: Create a helper function that generates consistent data-testid, data-state, and data-index attributes for both source and target letters.
+### Details:
+- Create a centralized helper function like getLetterTestProps(letter, index, phase, state).
+- Use this helper consistently for both source and target letters.
+- Return all necessary test attributes in a standard format.
+- Apply these attributes in a consistent manner for both letter types.
+- Document the available test hooks for QA team reference.
+- Add test cases to verify consistent attribute application.
+- Create a type definition for the helper function return value.
+
+## 27. Refactor high-complexity arrow functions in Letter.tsx [pending]
+### Dependencies: 5.4
+### Description: Extract complex arrow functions into named helpers or split into smaller functions to reduce ESLint complexity to ≤ 10.
+### Details:
+- Identify arrow functions in Letter.tsx with high cyclomatic complexity.
+- Break down the createLetterVariants function into smaller, more focused helper functions.
+- Extract logical sections of complex functions into named helper functions.
+- Ensure each function follows the single responsibility principle.
+- Maintain proper TypeScript typings for all extracted functions.
+- Add appropriate JSDoc comments to document each function's purpose.
+- Verify that the refactored code maintains the same functionality.
+- Run ESLint to confirm complexity metrics are now below the threshold.
+<info added on 2025-05-08T02:23:32.324Z>
+- Identify arrow functions in Letter.tsx with high cyclomatic complexity.
+- Break down the createLetterVariants function into smaller, more focused helper functions.
+- Extract logical sections of complex functions into named helper functions.
+- Ensure each function follows the single responsibility principle.
+- Maintain proper TypeScript typings for all extracted functions.
+- Add appropriate JSDoc comments to document each function's purpose.
+- Verify that the refactored code maintains the same functionality.
+- Run ESLint to confirm complexity metrics are now below the threshold.
+
+This refactoring task is a prerequisite for upcoming performance optimizations. Complex arrow functions make the code harder to understand, test, and optimize. By breaking down these functions into smaller, well-named components, we'll create a more maintainable codebase that will be easier to optimize in subsequent tasks. The refactoring should focus on readability and maintainability without introducing performance regressions.
+</info added on 2025-05-08T02:23:32.324Z>
+
+## 28. Tighten TypeScript typings in mocks and tests [pending]
+### Dependencies: 5.4
+### Description: Replace all 'any' types in mocks and tests with proper interfaces and remove or strongly type any unused function parameters.
+### Details:
+- Scan __mocks__ directory for any uses of 'any' type.
+- Replace generic 'any' types with specific interfaces or types.
+- Create new interfaces where necessary to properly type mock objects.
+- Review all test files for 'any' types and replace them with proper types.
+- Check for unused function parameters and either remove them or add proper types.
+- Update mock implementations to use TypeScript's type guards where appropriate.
+- Ensure type definitions are exported for reuse where needed.
+- Verify tests still pass after type improvements.
+<info added on 2025-05-08T02:23:48.464Z>
+- Scan __mocks__ directory for any uses of 'any' type.
+- Replace generic 'any' types with specific interfaces or types.
+- Create new interfaces where necessary to properly type mock objects.
+- Review all test files for 'any' types and replace them with proper types.
+- Check for unused function parameters and either remove them or add proper types.
+- Update mock implementations to use TypeScript's type guards where appropriate.
+- Ensure type definitions are exported for reuse where needed.
+- Verify tests still pass after type improvements.
+
+This task is a high priority TypeScript improvement that must be completed before performance optimizations can begin. Proper typing will ensure type safety throughout the codebase and prevent potential runtime errors. Focus on the WordTransform component and related files first, as this appears to be part of a larger refactoring effort based on the adjacent subtasks.
+</info added on 2025-05-08T02:23:48.464Z>
+
+## 29. Prune dead code from components and utilities [pending]
+### Dependencies: 5.4
+### Description: Delete unused variables, imports, and stray helper functions no longer invoked throughout the codebase.
+### Details:
+- Use ESLint's no-unused-vars rule to identify unused variables in components.
+- Remove unused imports from all component files, particularly WordTransform.tsx and Letter.tsx.
+- Check for unused variables like 'definition' and 'mockAnimationComplete'.
+- Identify and remove any helper functions that are no longer called.
+- Clean up any commented-out code that's not needed for reference.
+- Remove any duplicate utility functions.
+- Check for and remove unused CSS classes in module CSS files.
+- Run a full test suite to ensure removal of code doesn't break functionality.
+<info added on 2025-05-08T02:24:10.306Z>
+- Use ESLint's no-unused-vars rule to identify unused variables in components.
+- Remove unused imports from all component files, particularly WordTransform.tsx and Letter.tsx.
+- Check for unused variables like 'definition' and 'mockAnimationComplete'.
+- Identify and remove any helper functions that are no longer called.
+- Clean up any commented-out code that's not needed for reference.
+- Remove any duplicate utility functions.
+- Check for and remove unused CSS classes in module CSS files.
+- Run a full test suite to ensure removal of code doesn't break functionality.
+- This cleanup task must be completed before performance optimizations to prevent wasting time optimizing code that will be removed.
+- Focus especially on the WordTransform component and its related utilities as this is the parent task's focus area.
+- Create a report of all removed code with line counts to document the cleanup effort.
+- Coordinate with the team members working on TypeScript typings (subtask 5.28) to ensure alignment in code cleanup efforts.
+</info added on 2025-05-08T02:24:10.306Z>
+
+## 30. Fix React-specific lint errors [pending]
+### Dependencies: 5.4
+### Description: Fix various React-specific lint errors including adding displayName to anonymous components, repairing missing hook dependencies, and escaping JSX entities in stories.
+### Details:
+- Add displayName property to all memo and anonymous components for better debugging.
+- Review all useEffect, useMemo, and useCallback hooks to ensure dependency arrays are complete.
+- Focus particularly on WordTransform.tsx to fix missing dependencies in hooks.
+- Check all Storybook stories for unescaped JSX entities (like &, >, <) and escape them properly.
+- Review PropTypes usage and ensure they are correctly defined.
+- Use the React linting rules to identify any other React-specific issues.
+- Fix any React key warnings that might appear in the console.
+- Ensure all components use function declarations or arrow functions consistently.
+<info added on 2025-05-08T02:24:24.064Z>
+- Add displayName property to all memo and anonymous components for better debugging.
+- Review all useEffect, useMemo, and useCallback hooks to ensure dependency arrays are complete.
+- Focus particularly on WordTransform.tsx to fix missing dependencies in hooks.
+- Check all Storybook stories for unescaped JSX entities (like &, >, <) and escape them properly.
+- Review PropTypes usage and ensure they are correctly defined.
+- Use the React linting rules to identify any other React-specific issues.
+- Fix any React key warnings that might appear in the console.
+- Ensure all components use function declarations or arrow functions consistently.
+- This is a high priority task that must be completed before moving on to performance optimizations.
+- Fixing these React-specific lint errors is critical for maintaining code quality and preventing potential bugs in the WordTransform component.
+- Pay special attention to the React hooks exhaustive-deps rule violations as they can lead to subtle bugs and performance issues.
+- After fixes are applied, verify that no new console warnings appear during component rendering.
+</info added on 2025-05-08T02:24:24.064Z>
+
+## 31. Ensure clean linter and test runs [pending]
+### Dependencies: 5.27, 5.28, 5.29, 5.30
+### Description: Re-run linters and tests to ensure zero errors/warnings, all tests pass, and no new code clones are introduced.
+### Details:
+- Run `npm run lint` and fix any remaining errors or warnings.
+- Run `npm test` to ensure all tests pass after code changes.
+- Run `npx jscpd src` to check for code duplication and address any issues.
+- Fix any TypeScript errors that may have been introduced during refactoring.
+- Run Storybook to ensure visual tests are still passing.
+- Check for any accessibility warnings in the console.
+- Verify that all test files have appropriate coverage.
+- Document any patterns or issues found for future reference.
+<info added on 2025-05-08T02:24:42.870Z>
+- Run `npm run lint` and fix any remaining errors or warnings.\n- Run `npm test` to ensure all tests pass after code changes.\n- Run `npx jscpd src` to check for code duplication and address any issues.\n- Fix any TypeScript errors that may have been introduced during refactoring.\n- Run Storybook to ensure visual tests are still passing.\n- Check for any accessibility warnings in the console.\n- Verify that all test files have appropriate coverage.\n- Document any patterns or issues found for future reference.\n\nThis is a critical verification step that must be completed with high attention to detail. The WordTransform component implementation cannot be considered complete until all code quality checks pass without errors or warnings. Given that this follows several implementation and refactoring subtasks (including fixing React-specific lint errors), it's essential to ensure no regressions were introduced. Prioritize addressing any issues found immediately rather than letting them accumulate. Document all fixes made for team knowledge sharing.
+</info added on 2025-05-08T02:24:42.870Z>
 
