@@ -1,6 +1,13 @@
 # Unscramm
 
-An interactive "animated spellcheck" widget that shows the transformation from misspelled to correctly spelled words with animated character transitions.
+An interactive "animated spellcheck" tool that shows the transformation from misspelled to correctly spelled words with animated character transitions.
+
+This project is two things at once: 
+
+1. An experiment in accessibly, and visually, unscrambling words that my dyslexic brain sometimes mixes up
+2. An experiment in using rigerous project management techniques and best practices in modular, scalable development to build a complex project where an AI does all of the coding and code reviews. 
+
+So far it's painstaking work but very informative. I've yet to produce a useable, bug free prototype but we're not at the end of the spec of plan yet so I'll keep my fingers crossed until then. Feel free to take a look inside the spec.md, the /scripts/phase_1-prd.md or the '/tasks' folder for a more detailed account of where this project is experimenting its way towards. 
 
 ## Development Workflow
 
