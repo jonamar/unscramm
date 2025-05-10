@@ -324,11 +324,30 @@ Create src/components/wordTransform.machine.ts with XState defining five states:
 ### Details:
 Create the WordTransform component that takes misspelled and correct words as props. Replace any existing useReducer/useEffect logic with useMachine(wordTransformMachine). Use the algorithm utilities from Task 2 to compute the edit plan. Render Letter components based on the current animation phase. Implement event handlers to send('START') on animation start, send('DONE_PHASE') when Letter animations complete, and send('RESET') to restart. Map the machine's current state to visual feedback and control props. Support a speed multiplier prop that affects animation duration.
 
-## 10. Update tests and add Storybook examples [pending]
+## 10. Update tests and add Storybook examples [done]
 ### Dependencies: 5.9, 5.12
 ### Description: Refactor existing tests to work with the state machine implementation and create Storybook examples showcasing the component.
 ### Details:
 Update existing Jest/React Testing Library tests to interact with the component via state machine events. Add data-phase and data-testid attributes to key elements for test selection. Create E2E tests that verify the full animation sequence works correctly. Develop Storybook examples that demonstrate different animation scenarios: words with deletions only, insertions only, movements only, and combinations. Include examples with different speed multiplier values.
+<info added on 2025-05-10T19:33:29.281Z>
+Update existing Jest/React Testing Library tests to interact with the component via state machine events. Add data-phase and data-testid attributes to key elements for test selection. Create E2E tests that verify the full animation sequence works correctly. Develop Storybook examples that demonstrate different animation scenarios: words with deletions only, insertions only, movements only, and combinations. Include examples with different speed multiplier values.
+
+The WordTransformFSM Storybook stories have been expanded with comprehensive examples including:
+- Dedicated stories for each operation type (deletions-only, insertions-only, movements-only)
+- A combined operations story showing complex transformations
+- Edge case stories for empty strings, identical strings, and zero-length phases
+- Documentation descriptions for each story explaining what they demonstrate
+
+Test coverage has been enhanced with:
+- Fixed and expanded tests for phase transitions through all animation states
+- Tests for empty string handling (both empty→word and word→empty)
+- Tests verifying CSS variable changes based on speedMultiplier
+- Tests for proper animation state application to letters
+- Tests for zero-length phases (skipping unnecessary animation phases)
+- Tests for identical strings (direct to complete phase)
+
+All tests are now passing and the Storybook examples accurately demonstrate the component's capabilities and edge case handling.
+</info added on 2025-05-10T19:33:29.281Z>
 
 ## 11. Wire true-mover animation state through to Letter component and Framer Motion [done]
 ### Dependencies: 5.4, 5.27
