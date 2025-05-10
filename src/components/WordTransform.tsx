@@ -22,6 +22,10 @@ import styles from './WordTransform.module.css';
  * - All transitions: When all animations in the current phase are complete
  * - IF NO X: Immediate skip when a phase has no animations to perform
  * - RESET: When words change and cancelOnPropsChange is true
+ * 
+ * Note: The COMPLETE phase is a terminal state that prevents further animations or re-renders.
+ * It will not loop back to itself unnecessarily, improving performance for complex UIs with
+ * multiple WordTransform components.
  */
 export enum AnimationPhase {
   IDLE = 'idle',
@@ -51,7 +55,11 @@ export interface WordTransformProps {
   onAnimationComplete?: () => void;
   /** Optional callback when animation phase changes */
   onPhaseChange?: (phase: AnimationPhase) => void;
-  /** Optional flag for canceling mid-animation when props change (default: true) */
+  /** 
+   * Flag to control behavior when props change during an animation:
+   * - true (default): Cancel any in-flight animation and reset to IDLE state
+   * - false: Continue current animation and only update words for the next animation
+   */
   cancelOnPropsChange?: boolean;
 }
 
@@ -227,19 +235,31 @@ const WordTransform: React.FC<WordTransformProps> = ({
       // Reset animation if props change during animation and cancelOnPropsChange is true
       if (state.isAnimating && cancelOnPropsChange) {
         dispatch({ type: 'RESET' });
+        
+        // Then initialize with new words
+        dispatch({
+          type: 'INITIALIZE',
+          payload: { 
+            sourceWord: misspelling, 
+            targetWord: correct,
+            editPlan: memoizedEditPlan
+          }
+        });
+      } else if (!state.isAnimating) {
+        // If not animating, always initialize with new words regardless of cancelOnPropsChange
+        dispatch({
+          type: 'INITIALIZE',
+          payload: { 
+            sourceWord: misspelling, 
+            targetWord: correct,
+            editPlan: memoizedEditPlan
+          }
+        });
       }
-      
-      // Initialize with new words
-      dispatch({
-        type: 'INITIALIZE',
-        payload: { 
-          sourceWord: misspelling, 
-          targetWord: correct,
-          editPlan: memoizedEditPlan
-        }
-      });
+      // When cancelOnPropsChange is false and animation is in progress,
+      // we don't dispatch INITIALIZE to allow the current animation to complete
     }
-  }, [misspelling, correct, cancelOnPropsChange, memoizedEditPlan]);
+  }, [misspelling, correct, cancelOnPropsChange, memoizedEditPlan, state.isAnimating]);
   
   // Update CSS variables for animation timing based on speed multiplier
   useEffect(() => {
@@ -289,7 +309,7 @@ const WordTransform: React.FC<WordTransformProps> = ({
       },
       [AnimationPhase.COMPLETE]: {
         getTotal: () => 0,
-        shouldSkip: () => false,
+        shouldSkip: () => true, // Always skip for COMPLETE phase to prevent unnecessary START_PHASE
         onEnter: () => {
           if (onAnimationComplete) {
             onAnimationComplete();
@@ -312,7 +332,14 @@ const WordTransform: React.FC<WordTransformProps> = ({
         config.onEnter();
       }
       
-      // If this phase has no animations, skip to next phase
+      // Special handling for COMPLETE phase - don't dispatch anything to prevent unnecessary re-renders
+      if (state.phase === AnimationPhase.COMPLETE) {
+        // COMPLETE phase is a terminal state, so we don't dispatch any further actions
+        // This prevents the unnecessary re-render loop in COMPLETE phase
+        return;
+      }
+      
+      // For other phases, check if we should skip or start the phase
       if (config.shouldSkip(totalAnimationsInPhase)) {
         dispatch({ type: 'COMPLETE_PHASE' });
       } else {

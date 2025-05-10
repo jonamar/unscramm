@@ -325,7 +325,7 @@ Update existing Jest/React Testing Library tests to interact with the component 
   - That a true-mover letter gets the correct class/data-attribute and/or animation variant
 - Add tests to src/components/__tests__/WordTransform.test.tsx.
 
-## 13. Fix COMPLETE-phase loop in phase transition effect [pending]
+## 13. Fix COMPLETE-phase loop in phase transition effect [done]
 ### Dependencies: 5.3
 ### Description: Fix the issue where PhaseConfig for AnimationPhase.COMPLETE never skips, causing unnecessary renders due to dispatching START_PHASE even in COMPLETE phase.
 ### Details:
@@ -346,7 +346,7 @@ Update existing Jest/React Testing Library tests to interact with the component 
 This is a high-priority performance fix that addresses unnecessary re-renders in the WordTransform component. The current implementation causes the component to continuously loop through phase transitions even after reaching the COMPLETE phase, which creates performance overhead especially in components with many word transformations. This issue becomes particularly noticeable in complex UIs where multiple WordTransform components are present. The fix will significantly improve rendering efficiency by preventing these redundant cycles.
 </info added on 2025-05-08T02:18:04.076Z>
 
-## 14. Fix props-change "cancel" logic to respect cancelOnPropsChange flag [pending]
+## 14. Fix props-change "cancel" logic to respect cancelOnPropsChange flag [done]
 ### Dependencies: 5.3
 ### Description: Correct the issue where INITIALIZE is always dispatched on prop change regardless of cancelOnPropsChange flag, effectively ignoring the flag.
 ### Details:

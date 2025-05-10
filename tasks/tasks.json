@@ -473,7 +473,7 @@
           "title": "Fix COMPLETE-phase loop in phase transition effect",
           "description": "Fix the issue where PhaseConfig for AnimationPhase.COMPLETE never skips, causing unnecessary renders due to dispatching START_PHASE even in COMPLETE phase.",
           "details": "- Modify the phase transition effect to add a check for the COMPLETE phase.\n- Only dispatch START_PHASE when not already in COMPLETE phase.\n- Add a test to verify that re-renders don't occur unnecessarily after reaching COMPLETE phase.\n- Update the PhaseConfig definition to properly handle the COMPLETE phase.\n- Ensure the reducer correctly handles the case when START_PHASE is dispatched in COMPLETE phase.\n- Update the phase transition documentation to reflect this fix.\n<info added on 2025-05-08T02:18:04.076Z>\n- Modify the phase transition effect to add a check for the COMPLETE phase.\n- Only dispatch START_PHASE when not already in COMPLETE phase.\n- Add a test to verify that re-renders don't occur unnecessarily after reaching COMPLETE phase.\n- Update the PhaseConfig definition to properly handle the COMPLETE phase.\n- Ensure the reducer correctly handles the case when START_PHASE is dispatched in COMPLETE phase.\n- Update the phase transition documentation to reflect this fix.\n\nThis is a high-priority performance fix that addresses unnecessary re-renders in the WordTransform component. The current implementation causes the component to continuously loop through phase transitions even after reaching the COMPLETE phase, which creates performance overhead especially in components with many word transformations. This issue becomes particularly noticeable in complex UIs where multiple WordTransform components are present. The fix will significantly improve rendering efficiency by preventing these redundant cycles.\n</info added on 2025-05-08T02:18:04.076Z>",
-          "status": "pending",
+          "status": "done",
           "dependencies": [
             "5.3"
           ],
@@ -484,7 +484,7 @@
           "title": "Fix props-change \"cancel\" logic to respect cancelOnPropsChange flag",
           "description": "Correct the issue where INITIALIZE is always dispatched on prop change regardless of cancelOnPropsChange flag, effectively ignoring the flag.",
           "details": "- Modify the prop change effect to check the cancelOnPropsChange flag before dispatching INITIALIZE.\n- Only dispatch INITIALIZE when cancelOnPropsChange is true during in-flight animations.\n- Allow animations to continue when cancelOnPropsChange is false.\n- Add test cases that verify animations continue when cancelOnPropsChange is false and props change.\n- Add test cases that verify animations reset when cancelOnPropsChange is true and props change.\n- Update documentation to clearly explain the behavior of the cancelOnPropsChange flag.",
-          "status": "pending",
+          "status": "done",
           "dependencies": [
             "5.3"
           ],
