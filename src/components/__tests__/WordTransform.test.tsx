@@ -1,6 +1,8 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import WordTransform, { AnimationPhase } from '../WordTransform';
+import { render, screen, fireEvent, cleanup, within, act } from '@testing-library/react';
+import WordTransform, { AnimationPhase, WordTransformTestingAPI } from '../WordTransform';
+import '@testing-library/jest-dom';
+import { computeEditPlan } from '../../utils/editPlan';
 import { jest } from '@jest/globals';
 
 /**
@@ -421,6 +423,90 @@ describe('WordTransform Component', () => {
     // Additional verification: check that state stays as COMPLETE
     const component = screen.getByTestId('word-transform');
     expect(component).toHaveAttribute('data-phase', AnimationPhase.COMPLETE);
+  });
+
+  // Test the data-phase attributes and testing hooks
+  it('provides data-phase attributes for testing and debugging', () => {
+    render(
+      <WordTransform
+        misspelling="test"
+        correct="tests"
+      />
+    );
+    
+    // Check the main component has the correct data-phase attribute
+    const component = screen.getByTestId('word-transform');
+    expect(component).toHaveAttribute('data-phase', AnimationPhase.IDLE);
+    
+    // Start animation
+    const startButton = screen.getByTestId('start-animation-button');
+    fireEvent.click(startButton);
+    
+    // Verify data-phase updates as animation progresses
+    expect(component).toHaveAttribute('data-phase', AnimationPhase.DELETING);
+    
+    // Verify other data attributes
+    expect(component).toHaveAttribute('data-animation-active', 'true');
+    expect(component).toHaveAttribute('data-edit-plan-loaded', 'true');
+    expect(component).toHaveAttribute('data-animations-progress');
+  });
+  
+  // Test debug mode
+  it('adds additional debug attributes when debugMode is enabled', () => {
+    render(
+      <WordTransform
+        misspelling="test"
+        correct="tests"
+        debugMode={true}
+      />
+    );
+    
+    // Check the main component has the debug mode attribute
+    const component = screen.getByTestId('word-transform');
+    expect(component).toHaveAttribute('data-debug-mode', 'true');
+    
+    // Check that letters have debug attributes
+    const letters = screen.getAllByTestId('letter');
+    expect(letters.length).toBeGreaterThan(0);
+    
+    letters.forEach(letter => {
+      expect(letter).toHaveAttribute('data-debug', 'true');
+      expect(letter).toHaveAttribute('data-letter-index');
+      expect(letter).toHaveAttribute('data-animation-active');
+    });
+  });
+  
+  // Test ref forwarding and testing API
+  it('forwards ref with testing API methods and state', () => {
+    // Create a ref to access the component's testing API
+    const ref = React.createRef<WordTransformTestingAPI>();
+    
+    render(
+      <WordTransform
+        misspelling="test"
+        correct="tests"
+        ref={ref}
+      />
+    );
+    
+    // Verify the ref contains the testing API properties
+    expect(ref.current).not.toBeNull();
+    if (ref.current) {
+      expect(ref.current.phase).toBe(AnimationPhase.IDLE);
+      expect(ref.current.isAnimating).toBe(false);
+      expect(ref.current.sourceLetters).toEqual(['t', 'e', 's', 't']);
+      expect(ref.current.targetLetters).toEqual([]);
+      expect(typeof ref.current.startAnimation).toBe('function');
+      
+      // Test the startAnimation method
+      act(() => {
+        ref.current!.startAnimation();
+      });
+      
+      // Check that calling the method through the ref works
+      expect(ref.current.isAnimating).toBe(true);
+      expect(ref.current.phase).toBe(AnimationPhase.DELETING);
+    }
   });
 
   // Helper to force animation to a specific phase

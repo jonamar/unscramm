@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useRef, useMemo } from 'react';
+import React, { useReducer, useEffect, useRef, useMemo, useImperativeHandle } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import Letter, { LetterAnimationState } from './Letter';
 import { computeEditPlan, EditPlan } from '../utils/editPlan';
@@ -61,6 +61,12 @@ export interface WordTransformProps {
    * - false: Continue current animation and only update words for the next animation
    */
   cancelOnPropsChange?: boolean;
+  /**
+   * Enable debug mode to show additional data attributes for testing and development
+   * - Adds data-* attributes to each letter showing more detailed state information
+   * - Useful for E2E testing and for debugging animation issues
+   */
+  debugMode?: boolean;
 }
 
 /**
@@ -212,10 +218,33 @@ function animationReducer(state: AnimationState, action: AnimationAction): Anima
 }
 
 /**
+ * Testing API interface for WordTransform component
+ * Exposes internal state and methods for testing purposes
+ */
+export interface WordTransformTestingAPI {
+  /** Current animation phase */
+  phase: AnimationPhase;
+  /** Current edit plan between words */
+  editPlan: EditPlan | null;
+  /** Whether animation is currently running */
+  isAnimating: boolean;
+  /** Current letters from source word in DOM */
+  sourceLetters: string[];
+  /** Current letters from target word in DOM */
+  targetLetters: string[];
+  /** Start the animation sequence */
+  startAnimation: () => void;
+  /** Number of completed animations in current phase */
+  completedAnimations: number;
+  /** Total number of animations expected in current phase */
+  totalAnimationsInPhase: number;
+}
+
+/**
  * WordTransform component that orchestrates the animation sequence between a misspelled
  * word and its correct spelling using Letter components.
  */
-const WordTransform: React.FC<WordTransformProps> = ({
+const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformProps>(({
   misspelling,
   correct,
   speedMultiplier = 1,
@@ -224,8 +253,9 @@ const WordTransform: React.FC<WordTransformProps> = ({
   onAnimationStart,
   onAnimationComplete,
   onPhaseChange,
-  cancelOnPropsChange = true
-}) => {
+  cancelOnPropsChange = true,
+  debugMode = false
+}, ref) => {
   // Set up reducer for animation state management
   const [state, dispatch] = useReducer(animationReducer, initialState);
   
@@ -459,6 +489,26 @@ const WordTransform: React.FC<WordTransformProps> = ({
     }
   };
 
+  // Expose testing API via ref
+  useImperativeHandle(ref, (): WordTransformTestingAPI => ({
+    phase: state.phase,
+    editPlan: state.editPlan,
+    isAnimating: state.isAnimating,
+    sourceLetters: state.sourceLetters,
+    targetLetters: state.targetLetters,
+    startAnimation,
+    completedAnimations: state.completedAnimations,
+    totalAnimationsInPhase: state.totalAnimationsInPhase
+  }), [
+    state.phase, 
+    state.editPlan, 
+    state.isAnimating, 
+    state.sourceLetters, 
+    state.targetLetters,
+    state.completedAnimations,
+    state.totalAnimationsInPhase
+  ]);
+
   // Render letters based on current animation phase
   const renderLetters = () => {
     // Early return if no edit plan is available or inputs are empty
@@ -471,37 +521,89 @@ const WordTransform: React.FC<WordTransformProps> = ({
     switch (state.phase) {
       case AnimationPhase.IDLE:
       case AnimationPhase.DELETING:
-      case AnimationPhase.MOVING:
-        // Show source letters (from misspelled word)
         return (
-          <div className={styles.lettersContainer}>
+          <div className={styles.wordContainer}>
+            <AnimatePresence mode="sync">
+              {state.sourceLetters.map((letter, index) => {
+                // Determine if letter is being deleted in the DELETING phase
+                const isDeleted = state.phase === AnimationPhase.DELETING &&
+                  editPlan?.deletions.includes(index);
+                
+                // Set animation state based on phase and deletion status
+                const animationState: LetterAnimationState = isDeleted
+                  ? 'deletion'
+                  : 'normal';
+                
+                // Should only animate letters that are actually being deleted
+                const shouldAnimate = isDeleted && state.isAnimating;
+                
+                // Determine CSS classes - add special class for deleted letters
+                const cssClasses = [
+                  styles.letter,
+                  isDeleted ? styles.deleted : ''
+                ].filter(Boolean).join(' ');
+                
+                // Determine the detailed state for debugging and testing
+                const detailedState = isDeleted ? 'deleted' : 'stable';
+                
+                return (
+                  <Letter 
+                    key={`source-${index}`}
+                    character={letter}
+                    animationState={animationState}
+                    initialIndex={index}
+                    onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
+                    className={cssClasses}
+                    data-extended-state={detailedState}
+                    data-letter-index={index}
+                    data-is-deleted={isDeleted}
+                    data-animation-active={shouldAnimate}
+                    data-debug={debugMode}
+                  />
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        );
+        
+      case AnimationPhase.MOVING:
+        return (
+          <div className={styles.wordContainer}>
             <AnimatePresence mode="sync">
               {state.sourceLetters.map((letter, index) => {
                 // Instead of skipping deleted letters in the moving phase,
-                // we keep them but apply the 'exiting' animation state
-                let animationState: LetterAnimationState = 'normal';
+                // mark them as exiting for proper animations
                 
-                // For deleted letters in moving phase, use 'exiting' state directly
-                if (state.phase === AnimationPhase.MOVING && 
-                    editPlan.deletions.includes(index)) {
-                  animationState = 'exiting';
-                } else {
-                  // For other letters, determine state based on current phase
-                  const extendedAnimationState = getLetterAnimationState(
-                    index, 
-                    state.phase,
-                    editPlan
+                // Check if this letter was deleted in previous phase
+                const isDeletedLetter = editPlan?.deletions.includes(index);
+                
+                // If it's a deleted letter, mark as exiting
+                if (isDeletedLetter) {
+                  return (
+                    <Letter 
+                      key={`source-${index}`}
+                      character={letter}
+                      animationState="exiting"
+                      initialIndex={index}
+                      onAnimationComplete={state.isAnimating ? handleLetterAnimationComplete : undefined}
+                      className={styles.deleted}
+                      data-extended-state="exiting"
+                      data-letter-index={index}
+                      data-is-deleted={true}
+                      data-animation-active={state.isAnimating}
+                      data-debug={debugMode}
+                    />
                   );
-                  
-                  // Map extended state to Letter component's animation state
-                  animationState = mapToLetterAnimationState(extendedAnimationState);
                 }
                 
-                // Only animate letters in specific states for the current phase
-                const shouldAnimate = 
-                  (state.phase === AnimationPhase.DELETING && animationState === 'deletion') ||
-                  (state.phase === AnimationPhase.MOVING && 
-                   (animationState === 'movement' || animationState === 'exiting'));
+                // For non-deleted letters, check if they're moved
+                const moveInfo = editPlan?.moves.find(m => m.fromIndex === index);
+                const animationState: LetterAnimationState = moveInfo
+                  ? 'movement'
+                  : 'normal';
+                
+                // Only animate letters that are actually moving
+                const shouldAnimate = !!moveInfo && state.isAnimating;
                 
                 // Determine CSS classes - add special class for true movers
                 // Check if this is a true mover using the original function
@@ -519,8 +621,12 @@ const WordTransform: React.FC<WordTransformProps> = ({
                     initialIndex={index}
                     onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
                     className={cssClasses}
-                    // Add a data attribute to help with testing and debugging
                     data-extended-state={extendedState}
+                    data-letter-index={index}
+                    data-is-moved={!!moveInfo}
+                    data-move-to-index={moveInfo?.toIndex}
+                    data-animation-active={shouldAnimate}
+                    data-debug={debugMode}
                   />
                 );
               })}
@@ -529,26 +635,30 @@ const WordTransform: React.FC<WordTransformProps> = ({
         );
         
       case AnimationPhase.INSERTING:
-      case AnimationPhase.COMPLETE:
-        // Show target letters (from correct word)
         return (
-          <div className={styles.lettersContainer}>
+          <div className={styles.wordContainer}>
             <AnimatePresence mode="sync">
               {state.targetLetters.map((letter, index) => {
-                // Check if this letter is being inserted
-                const isInserted = editPlan.insertions.some(
-                  insertion => insertion.position === index
-                );
+                // Check if this letter is being inserted in the current phase
+                const isInserted = state.phase === AnimationPhase.INSERTING &&
+                  editPlan?.insertions.find(ins => ins.position === index);
                 
-                // Determine animation state based on current phase and insertion status
-                const animationState: LetterAnimationState = 
-                  (state.phase === AnimationPhase.INSERTING && isInserted) 
-                    ? 'insertion' 
-                    : 'normal';
+                // Set animation state based on insertion status
+                const animationState: LetterAnimationState = isInserted
+                  ? 'insertion'
+                  : 'normal';
                 
-                // Only trigger animation completion callback for inserted letters
-                const shouldAnimate = 
-                  state.phase === AnimationPhase.INSERTING && animationState === 'insertion';
+                // Only animate letters that are actually being inserted
+                const shouldAnimate = isInserted && state.isAnimating;
+                
+                // Determine CSS classes - add special class for inserted letters
+                const cssClasses = [
+                  styles.letter,
+                  isInserted ? styles.inserted : ''
+                ].filter(Boolean).join(' ');
+                
+                // Determine the detailed state for debugging and testing
+                const detailedState = isInserted ? 'inserted' : 'stable';
                 
                 return (
                   <Letter 
@@ -557,10 +667,36 @@ const WordTransform: React.FC<WordTransformProps> = ({
                     animationState={animationState}
                     initialIndex={index}
                     onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
-                    className={styles.letter}
+                    className={cssClasses}
+                    data-extended-state={detailedState}
+                    data-letter-index={index}
+                    data-is-inserted={isInserted}
+                    data-animation-active={shouldAnimate}
+                    data-debug={debugMode}
                   />
                 );
               })}
+            </AnimatePresence>
+          </div>
+        );
+        
+      case AnimationPhase.COMPLETE:
+        return (
+          <div className={styles.wordContainer}>
+            <AnimatePresence mode="sync">
+              {state.targetLetters.map((letter, index) => (
+                <Letter 
+                  key={`target-${index}`}
+                  character={letter}
+                  animationState="normal"
+                  initialIndex={index}
+                  className={styles.letter}
+                  data-extended-state="complete"
+                  data-letter-index={index}
+                  data-animation-active={false}
+                  data-debug={debugMode}
+                />
+              ))}
             </AnimatePresence>
           </div>
         );
@@ -578,12 +714,23 @@ const WordTransform: React.FC<WordTransformProps> = ({
       data-phase={state.phase}
       data-testid="word-transform"
       data-colors-enabled={colorsEnabled}
+      data-debug-mode={debugMode}
+      data-animation-active={state.isAnimating}
+      data-edit-plan-loaded={!!state.editPlan}
+      data-animations-progress={`${state.completedAnimations}/${state.totalAnimationsInPhase}`}
     >
-      <div className={styles.wordContainer} id="wordContainer">
+      <div 
+        className={styles.wordContainer} 
+        id="wordContainer"
+        data-testid="word-container"
+      >
         {renderLetters()}
         
         {/* Debug information */}
-        <div className={styles.controlsContainer}>
+        <div 
+          className={styles.controlsContainer}
+          data-testid="controls-container"
+        >
           {state.editPlan && !state.isAnimating && state.phase === AnimationPhase.IDLE && (
             <button 
               onClick={startAnimation}
@@ -595,7 +742,10 @@ const WordTransform: React.FC<WordTransformProps> = ({
           )}
           
           {state.editPlan && (
-            <div className={styles.debugInfo}>
+            <div 
+              className={styles.debugInfo}
+              data-testid="debug-info"
+            >
               <div>Phase: {state.phase}</div>
               <div>Animations: {state.completedAnimations} / {state.totalAnimationsInPhase}</div>
               <div>Edit Plan: {state.editPlan.deletions.length} deletions, {state.editPlan.moves.length} moves, {state.editPlan.insertions.length} insertions</div>
@@ -605,6 +755,9 @@ const WordTransform: React.FC<WordTransformProps> = ({
       </div>
     </div>
   );
-};
+});
+
+// Add display name for better debugging
+WordTransform.displayName = 'WordTransform';
 
 export default WordTransform; 
