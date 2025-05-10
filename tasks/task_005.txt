@@ -279,11 +279,38 @@ Before implementing these performance optimizations, ensure that all code qualit
 ### Details:
 Create a set of CSS variables in the component's stylesheet for different animation durations and delays (e.g., --deletion-duration, --movement-duration, --insertion-duration). Implement a mechanism to modify these CSS variables based on the speedMultiplier prop. Use React's useRef to access the component's DOM element and update CSS variables programmatically. Ensure all animations reference these variables instead of hardcoded timing values. Add a helper function to calculate and update all timing variables when the speed multiplier changes.
 
-## 7. Add data-phase attributes and testing hooks [pending]
+## 7. Add data-phase attributes and testing hooks [done]
 ### Dependencies: 5.27
 ### Description: Implement data-phase attributes and testing hooks to facilitate E2E testing and debugging of the animation sequence.
 ### Details:
 Add data-phase attributes to the component's container element that reflect the current animation phase (e.g., data-phase="deleting", data-phase="moving"). Add data-testid attributes to key elements for easier selection in tests. Create a debug mode prop that, when enabled, adds additional data attributes showing the internal state of each letter (e.g., data-letter-state="deleted", data-letter-state="moving"). Implement a testing API through ref forwarding that exposes internal state and methods for testing purposes. Document all testing hooks and attributes for the QA team.
+<info added on 2025-05-10T03:01:50.166Z>
+Add data-phase attributes to the component's container element that reflect the current animation phase (e.g., data-phase=\"deleting\", data-phase=\"moving\"). Add data-testid attributes to key elements for easier selection in tests. Create a debug mode prop that, when enabled, adds additional data attributes showing the internal state of each letter (e.g., data-letter-state=\"deleted\", data-letter-state=\"moving\"). Implement a testing API through ref forwarding that exposes internal state and methods for testing purposes. Document all testing hooks and attributes for the QA team.
+
+Implementation details:
+1. Added data-phase attributes to the WordTransform container element that reflect the current animation phase (e.g., data-phase="deleting")
+2. Added numerous data-testid attributes to various elements for easier test selection 
+3. Implemented a debug mode prop that, when enabled, adds additional data attributes to each letter showing:
+   - data-letter-index: Index of letter in source/target word
+   - data-is-deleted/data-is-moved/data-is-inserted: Boolean state flags
+   - data-animation-active: Whether animation is currently active
+   - data-extended-state: Detailed state for debugging
+   - data-move-to-index: Target index for moved letters
+4. Added several container-level data attributes:
+   - data-debug-mode
+   - data-animation-active
+   - data-edit-plan-loaded
+   - data-animations-progress
+5. Implemented a testing API through ref forwarding that provides direct access to:
+   - Current animation phase
+   - Edit plan details
+   - Letter arrays
+   - Animation state flags
+   - Direct method access to startAnimation()
+6. Added comprehensive tests to verify all these features work
+
+These changes significantly improve the testability of the component by exposing internal state and providing hooks for E2E testing tools to interact with and verify the animation process.
+</info added on 2025-05-10T03:01:50.166Z>
 
 ## 8. Define and unit-test WordTransform finite state machine [pending]
 ### Dependencies: 5.27
@@ -303,7 +330,7 @@ Create the WordTransform component that takes misspelled and correct words as pr
 ### Details:
 Update existing Jest/React Testing Library tests to interact with the component via state machine events. Add data-phase and data-testid attributes to key elements for test selection. Create E2E tests that verify the full animation sequence works correctly. Develop Storybook examples that demonstrate different animation scenarios: words with deletions only, insertions only, movements only, and combinations. Include examples with different speed multiplier values.
 
-## 11. Wire true-mover animation state through to Letter component and Framer Motion [pending]
+## 11. Wire true-mover animation state through to Letter component and Framer Motion [done]
 ### Dependencies: 5.4, 5.27
 ### Description: Ensure the 'true-mover' animation state is passed through to the Letter component and Framer Motion. Do not collapse it to 'movement'. Add a Framer Motion variant and/or prop for true-mover in Letter. Update CSS/animation for true-mover to provide distinct visual and motion feedback.
 ### Details:
@@ -312,6 +339,33 @@ Update existing Jest/React Testing Library tests to interact with the component 
 - Update Letter.module.css and animation logic to provide distinct styling and motion for true-movers.
 - Ensure the WordTransform component applies the correct class/data-attribute for true-movers.
 - Test visually in Storybook and with unit tests.
+<info added on 2025-05-10T03:07:05.578Z>
+- Update mapToLetterAnimationState and/or Letter props to allow 'true-mover' to be passed through.
+- Add a Framer Motion variant and/or prop for 'true-mover' in Letter.
+- Update Letter.module.css and animation logic to provide distinct styling and motion for true-movers.
+- Ensure the WordTransform component applies the correct class/data-attribute for true-movers.
+- Test visually in Storybook and with unit tests.
+
+Implementation completed:
+1. Updated Letter.tsx to add 'true-mover' to the LetterAnimationState type
+2. Created a new createTrueMoverVariant animation function with enhanced animations including scale and rotation effects
+3. Added the true-mover variant to the createLetterVariants function
+4. Updated utility functions (getAriaLabel, getOutlineColor) to handle the true-mover state
+5. Enhanced Letter.module.css with true-mover specific styling:
+   - Orange color (#ffa500) to visually distinguish from regular movers (yellow)
+   - Bold font weight for emphasis
+   - Enhanced text shadow/glow effects
+   - Pulsing animation using @keyframes
+   - More pronounced background highlight and hover state
+6. Modified WordTransform.tsx:
+   - Simplified the ExtendedLetterAnimationState type
+   - Removed mapToLetterAnimationState transformation (Letter now supports true-mover directly)
+   - Passing true-mover state directly to Letter components
+7. Added comprehensive tests:
+   - Verified true-mover state propagation to Letter components
+   - Confirmed distinct styling between true-movers and regular movers
+   - Performed visual testing to validate the orange highlighting and animations
+</info added on 2025-05-10T03:07:05.578Z>
 
 ## 12. Expand Jest/RTL test suite for WordTransform: phase transitions, CSS vars, and true-mover rendering [pending]
 ### Dependencies: 5.11

@@ -9,8 +9,9 @@ import styles from './Letter.module.css';
  * - insertion: Letter is being added (green)
  * - movement: Letter is changing position (yellow)
  * - exiting: Letter is being removed from the DOM with animation
+ * - true-mover: Special highlight for letters that are key to correcting the spelling
  */
-export type LetterAnimationState = 'normal' | 'deletion' | 'insertion' | 'movement' | 'exiting';
+export type LetterAnimationState = 'normal' | 'deletion' | 'insertion' | 'movement' | 'exiting' | 'true-mover';
 
 /**
  * Props interface for the Letter component
@@ -116,6 +117,30 @@ const createMovementVariant = (shouldReduceMotion: boolean) => ({
 });
 
 /**
+ * Creates variant for the true-mover animation state
+ * Enhanced version of movement with more pronounced animations
+ * 
+ * @param shouldReduceMotion - Whether to reduce motion
+ * @returns Animation variant for the true-mover state
+ */
+const createTrueMoverVariant = (shouldReduceMotion: boolean) => ({
+  // More pronounced scale effect for true movers
+  scale: shouldReduceMotion ? 1 : [1, 1.25, 1],
+  // Add subtle rotation for emphasis
+  rotate: shouldReduceMotion ? 0 : [0, -5, 5, 0],
+  // Enhanced animation for true movers
+  transition: {
+    duration: getDuration(1.2, shouldReduceMotion), // Longer duration
+    // More pronounced bounce effect
+    ease: shouldReduceMotion ? "easeOut" : [0.1, 2.5, 0.3, 1.3],
+    times: shouldReduceMotion ? [0, 1] : [0, 0.3, 0.7, 1],
+    // Add more bounce to emphasize the true mover
+    bounce: 0.7,
+    stiffness: 150
+  }
+});
+
+/**
  * Creates variant for the exiting animation state
  * 
  * @param shouldReduceMotion - Whether to reduce motion
@@ -145,7 +170,8 @@ const createLetterVariants = (shouldReduceMotion: boolean): Variants => {
     deletion: createDeletionVariant(shouldReduceMotion),
     insertion: createInsertionVariant(shouldReduceMotion),
     movement: createMovementVariant(shouldReduceMotion),
-    exiting: createExitingVariant(shouldReduceMotion)
+    exiting: createExitingVariant(shouldReduceMotion),
+    'true-mover': createTrueMoverVariant(shouldReduceMotion)
   };
 };
 
@@ -166,6 +192,8 @@ const getAriaLabel = (character: string, state: LetterAnimationState): string =>
       return `Letter ${character} moving to new position`;
     case 'exiting':
       return `Letter ${character} exiting from display`;
+    case 'true-mover':
+      return `Letter ${character} moving to correct position, key spelling change`;
     default:
       return `Letter ${character}`;
   }
@@ -228,6 +256,7 @@ const getOutlineColor = (animationState: LetterAnimationState): string => {
     case 'insertion': return '#4caf50';
     case 'movement': return '#ffeb3b';
     case 'exiting': return '#ff8c00';
+    case 'true-mover': return '#ffa500'; // Orange for true movers
     default: return '#fff';
   }
 };

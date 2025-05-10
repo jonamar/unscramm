@@ -73,6 +73,32 @@
     transform var(--reorder-duration) ease;
 }
 
+/* True mover state - enhanced version of movement with more prominent styling */
+.true-mover {
+  color: #ffa500; /* Orange for true movers - WCAG AAA compliant on dark backgrounds */
+  /* Enhanced styling with more prominent animations */
+  font-weight: 900; /* Extra bold */
+  text-shadow: 
+    0 0 12px rgba(255, 165, 0, 0.7), /* Outer glow */
+    0 0 4px rgba(255, 165, 0, 0.9), /* Inner glow */
+    0 0 2px rgba(0, 0, 0, 0.8); /* Text outline for contrast */
+  /* More pronounced transition */
+  transition: 
+    color 0.3s ease,
+    opacity var(--reorder-duration) ease,
+    transform var(--reorder-duration) ease,
+    text-shadow 0.5s ease;
+  /* Add a subtle pulsing effect */
+  animation: pulse 2s infinite;
+}
+
+/* Pulse animation for true movers */
+@keyframes pulse {
+  0% { text-shadow: 0 0 12px rgba(255, 165, 0, 0.7), 0 0 4px rgba(255, 165, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8); }
+  50% { text-shadow: 0 0 18px rgba(255, 165, 0, 0.9), 0 0 6px rgba(255, 165, 0, 1), 0 0 2px rgba(0, 0, 0, 0.8); }
+  100% { text-shadow: 0 0 12px rgba(255, 165, 0, 0.7), 0 0 4px rgba(255, 165, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8); }
+}
+
 /* Exiting state for letters being removed from the DOM */
 .exiting {
   color: #ff5252; /* Red for exiting - same as deletions for consistency */
@@ -89,7 +115,8 @@
 /* State-based background highlights for better visibility */
 .deletion::before,
 .insertion::before,
-.movement::before {
+.movement::before,
+.true-mover::before {
   content: '';
   position: absolute;
   top: 0;
@@ -116,9 +143,19 @@
   background-color: #ffeb3b; /* Yellow background */
 }
 
+.true-mover::before {
+  background-color: #ffa500; /* Orange background */
+  opacity: 0.25; /* Slightly more pronounced than other states */
+  box-shadow: 0 0 8px rgba(255, 165, 0, 0.5); /* Add glow effect */
+}
+
 /* Hover effects to enhance interactivity */
 .letter:hover::before {
   opacity: 0.25;
+}
+
+.true-mover:hover::before {
+  opacity: 0.35; /* More pronounced hover effect for true movers */
 }
 
 /* Enhanced focus states for accessibility */
@@ -140,6 +177,11 @@
 
 .movement:focus-visible {
   outline-color: #ffeb3b; /* Yellow focus for movement state */
+}
+
+.true-mover:focus-visible {
+  outline-color: #ffa500; /* Orange focus for true-mover state */
+  box-shadow: 0 0 0 4px rgba(255, 165, 0, 0.3); /* Enhanced glow for true movers */
 }
 
 /* Support for users with reduced motion preferences */

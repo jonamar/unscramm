@@ -72,7 +72,7 @@ export interface WordTransformProps {
 /**
  * Extends the standard animation states to include a special true-mover state
  */
-type ExtendedLetterAnimationState = LetterAnimationState | 'true-mover';
+type ExtendedLetterAnimationState = LetterAnimationState;
 
 /**
  * State for the animation reducer
@@ -477,16 +477,8 @@ const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformPro
   const mapToLetterAnimationState = (
     extendedState: ExtendedLetterAnimationState
   ): LetterAnimationState => {
-    // Map our extended state to the states supported by the Letter component
-    switch(extendedState) {
-      case 'true-mover':
-        // 'true-mover' is not directly supported by Letter component,
-        // so we map it to the standard 'movement' state
-        return 'movement';
-      default:
-        // Other states can be passed through directly
-        return extendedState as LetterAnimationState;
-    }
+    // No need to map the states since Letter now directly supports 'true-mover'
+    return extendedState;
   };
 
   // Expose testing API via ref
@@ -617,7 +609,7 @@ const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformPro
                   <Letter 
                     key={`source-${index}`}
                     character={letter}
-                    animationState={animationState}
+                    animationState={extendedState}
                     initialIndex={index}
                     onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
                     className={cssClasses}
