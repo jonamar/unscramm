@@ -2,7 +2,6 @@ import React, { act } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import Letter from '../Letter';
 import { jest } from '@jest/globals';
-import { mockAnimationComplete } from '../../__mocks__/framer-motion';
 
 // Mock the Framer Motion hooks
 const mockUseReducedMotion = jest.fn().mockReturnValue(false);

@@ -736,7 +736,7 @@ Next steps:
 - Run the full test suite to ensure all tests still pass with the improved typings
 </info added on 2025-05-10T03:19:46.222Z>
 
-## 29. Prune dead code from components and utilities [pending]
+## 29. Prune dead code from components and utilities [done]
 ### Dependencies: 5.28
 ### Description: Delete unused variables, imports, and stray helper functions no longer invoked throughout the codebase.
 ### Details:
@@ -762,6 +762,22 @@ Next steps:
 - Create a report of all removed code with line counts to document the cleanup effort.
 - Coordinate with the team members working on TypeScript typings (subtask 5.28) to ensure alignment in code cleanup efforts.
 </info added on 2025-05-08T02:24:10.306Z>
+<info added on 2025-05-10T03:33:25.446Z>
+The dead code pruning task has been completed successfully. The following specific changes were made:
+
+1. Removed the redundant `ExtendedLetterAnimationState` type alias from WordTransform.tsx
+2. Removed the unused `mapToLetterAnimationState` function from WordTransform.tsx
+3. Simplified the framer-motion mock by removing unused motion components and unnecessary mock implementations
+4. Removed unused CSS classes `.lettersContainer` and `.letterWrapper` from WordTransform.module.css 
+5. Removed the unused `mockAnimationComplete` export from framer-motion.tsx and its import in Letter.test.tsx
+
+All tests remain passing after the cleanup, and the removed code amounts to approximately 70 lines of unnecessary code.
+
+The following dead code was kept as it might be useful for future development:
+- `findLCSPositionsFromStrings` function in lcs.ts is only used in tests currently, but it's well-implemented, tested, and may be useful for future code.
+
+This cleanup task has successfully reduced code complexity and improved maintainability of the WordTransform component and related utilities. The codebase is now ready for the next subtask of fixing React-specific lint errors.
+</info added on 2025-05-10T03:33:25.446Z>
 
 ## 30. Fix React-specific lint errors [pending]
 ### Dependencies: 5.29

@@ -70,11 +70,6 @@ export interface WordTransformProps {
 }
 
 /**
- * Extends the standard animation states to include a special true-mover state
- */
-type ExtendedLetterAnimationState = LetterAnimationState;
-
-/**
  * State for the animation reducer
  */
 interface AnimationState {
@@ -433,9 +428,9 @@ const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformPro
     letterIndex: number, 
     phase: AnimationPhase,
     editPlan: EditPlan
-  ): ExtendedLetterAnimationState => {
+  ): LetterAnimationState => {
     // Default animation state is 'normal'
-    let animationState: ExtendedLetterAnimationState = 'normal';
+    let animationState: LetterAnimationState = 'normal';
     
     switch (phase) {
       case AnimationPhase.DELETING:
@@ -471,14 +466,6 @@ const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformPro
     }
     
     return animationState;
-  };
-
-  // Map extended animation state to standard Letter component animation state
-  const mapToLetterAnimationState = (
-    extendedState: ExtendedLetterAnimationState
-  ): LetterAnimationState => {
-    // No need to map the states since Letter now directly supports 'true-mover'
-    return extendedState;
   };
 
   // Expose testing API via ref

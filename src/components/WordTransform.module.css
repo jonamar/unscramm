@@ -24,18 +24,6 @@
   width: 100%;
 }
 
-.lettersContainer {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  min-height: 4rem;
-  position: relative;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
 .letter {
   margin: 0 0.2rem;
 }
@@ -154,12 +142,6 @@
   border-radius: inherit;
 }
 
-/* Space to separate letters slightly */
-.letterWrapper {
-  margin: 0 1px;
-  position: relative;
-}
-
 /* Support for reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .wordTransform {
@@ -176,9 +158,5 @@
   .wordContainer {
     min-height: 3rem;
     padding: 0.3rem;
-  }
-  
-  .letterWrapper {
-    margin: 0 0.5px;
   }
 } 
