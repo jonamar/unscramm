@@ -357,7 +357,7 @@ This is a high-priority performance fix that addresses unnecessary re-renders in
 - Add test cases that verify animations reset when cancelOnPropsChange is true and props change.
 - Update documentation to clearly explain the behavior of the cancelOnPropsChange flag.
 
-## 15. Fix stale edit plan on empty inputs [pending]
+## 15. Fix stale edit plan on empty inputs [done]
 ### Dependencies: 5.2, 5.3
 ### Description: Correct the issue where empty misspelling or correct inputs result in null from useMemo but don't clear state.editPlan, leaving stale letters on screen.
 ### Details:
@@ -367,6 +367,22 @@ This is a high-priority performance fix that addresses unnecessary re-renders in
 - Add test cases for empty input transitions (from valid words to empty and vice versa).
 - Update the component to visually reflect empty state without showing stale letters.
 - Add defensive checks to prevent rendering letters when inputs are empty.
+<info added on 2025-05-10T02:46:48.646Z>
+- Add explicit CLEAR action to clear the edit plan when inputs become empty.
+- Modify the useMemo for edit plan to handle empty inputs correctly.
+- Ensure the reducer properly handles the CLEAR action to reset the edit plan.
+- Add test cases for empty input transitions (from valid words to empty and vice versa).
+- Update the component to visually reflect empty state without showing stale letters.
+- Add defensive checks to prevent rendering letters when inputs are empty.
+
+Implementation details:
+1. Added a new 'CLEAR' action to the AnimationAction type to handle empty input cases.
+2. Updated the animationReducer to handle the 'CLEAR' action, which resets the edit plan and related state.
+3. Modified the input handling effect to dispatch 'CLEAR' when either misspelling or correct props are empty.
+4. Added defensive checks in the renderLetters function to prevent rendering when inputs are empty.
+5. Created comprehensive test cases to verify empty input transitions and edit plan clearing behavior.
+6. This fix ensures that the component properly clears any stale letters when inputs become empty, providing a consistent user experience and avoiding the display of outdated or incorrect animations.
+</info added on 2025-05-10T02:46:48.646Z>
 
 ## 16. Fix CSS variable lookup for per-component overrides [pending]
 ### Dependencies: 5.6

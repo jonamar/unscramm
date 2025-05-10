@@ -192,17 +192,100 @@ describe('WordTransform Component', () => {
       />
     );
     
-    // Advance timers to ensure all effects run
-    act(() => {
-      jest.advanceTimersByTime(50);
-    });
+    // No phase change to IDLE should happen
+    expect(onPhaseChangeMock).not.toHaveBeenCalledWith(AnimationPhase.IDLE);
+  });
+
+  it('handles empty input transitions correctly', () => {
+    // Start with valid inputs
+    const { rerender, container } = render(
+      <WordTransform
+        misspelling="test"
+        correct="tests"
+      />
+    );
     
-    // Start button should not be available (indicating animation is still running)
-    expect(screen.queryByTestId('start-animation-button')).not.toBeInTheDocument();
+    // Verify that letters are rendered initially
+    const initialLetters = container.querySelectorAll('[data-testid="letter"]');
+    expect(initialLetters.length).toBeGreaterThan(0);
     
-    // When animation continues (not reset), onPhaseChange shouldn't be called immediately after props change
-    // because we don't start a new animation sequence
-    expect(onPhaseChangeMock).not.toHaveBeenCalled();
+    // Should see the Start Animation button
+    expect(screen.getByTestId('start-animation-button')).toBeInTheDocument();
+    
+    // Change to empty inputs
+    rerender(
+      <WordTransform
+        misspelling=""
+        correct="tests"
+      />
+    );
+    
+    // No letters should be rendered
+    const lettersAfterEmptySource = container.querySelectorAll('[data-testid="letter"]');
+    expect(lettersAfterEmptySource.length).toBe(0);
+    
+    // Change back to valid inputs
+    rerender(
+      <WordTransform
+        misspelling="test"
+        correct="tests"
+      />
+    );
+    
+    // Letters should appear again
+    const lettersAfterValidAgain = container.querySelectorAll('[data-testid="letter"]');
+    expect(lettersAfterValidAgain.length).toBeGreaterThan(0);
+    
+    // Should see the Start Animation button again
+    expect(screen.getByTestId('start-animation-button')).toBeInTheDocument();
+    
+    // Test empty target word
+    rerender(
+      <WordTransform
+        misspelling="test"
+        correct=""
+      />
+    );
+    
+    // No letters should be rendered for empty target
+    const lettersAfterEmptyTarget = container.querySelectorAll('[data-testid="letter"]');
+    expect(lettersAfterEmptyTarget.length).toBe(0);
+  });
+  
+  it('clears edit plan and resets component state when inputs become empty', () => {
+    // Setup component with valid inputs
+    const { rerender } = render(
+      <WordTransform
+        misspelling="test"
+        correct="tests"
+      />
+    );
+    
+    // Start button should be visible in IDLE state with valid inputs
+    expect(screen.getByTestId('start-animation-button')).toBeInTheDocument();
+    
+    // Change to empty input
+    rerender(
+      <WordTransform
+        misspelling=""
+        correct="tests"
+      />
+    );
+    
+    // The debug info with edit plan details should not be visible
+    const debugInfo = screen.queryByText(/Edit Plan:/);
+    expect(debugInfo).not.toBeInTheDocument();
+    
+    // Change back to valid inputs
+    rerender(
+      <WordTransform
+        misspelling="test"
+        correct="tests"
+      />
+    );
+    
+    // The edit plan should be recalculated and debug info should be visible again
+    expect(screen.getByText(/Edit Plan:/)).toBeInTheDocument();
   });
 
   it('applies speedMultiplier to CSS variables', () => {

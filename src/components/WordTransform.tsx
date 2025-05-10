@@ -97,7 +97,8 @@ type AnimationAction =
   | { type: 'START_PHASE'; payload: { phase: AnimationPhase; total: number } }
   | { type: 'ANIMATION_COMPLETE' }
   | { type: 'COMPLETE_PHASE' }
-  | { type: 'RESET' };
+  | { type: 'RESET' }
+  | { type: 'CLEAR' };
 
 /**
  * Initial state for the animation reducer
@@ -194,6 +195,16 @@ function animationReducer(state: AnimationState, action: AnimationAction): Anima
       
     case 'RESET':
       return initialState;
+    
+    case 'CLEAR':
+      // Clear edit plan and reset but keep basic state structure
+      return {
+        ...initialState,
+        // Maintains the reference to initialState but clears the editPlan
+        editPlan: null,
+        sourceLetters: [],
+        targetLetters: []
+      };
       
     default:
       return state;
@@ -231,7 +242,14 @@ const WordTransform: React.FC<WordTransformProps> = ({
   
   // Initialize with words when props change
   useEffect(() => {
-    if (misspelling !== '' && correct !== '' && memoizedEditPlan) {
+    // Case 1: Both inputs are empty or one is empty - clear state
+    if (misspelling === '' || correct === '') {
+      dispatch({ type: 'CLEAR' });
+      return;
+    }
+    
+    // Case 2: Both inputs are valid and we have an edit plan
+    if (memoizedEditPlan) {
       // Reset animation if props change during animation and cancelOnPropsChange is true
       if (state.isAnimating && cancelOnPropsChange) {
         dispatch({ type: 'RESET' });
@@ -443,8 +461,8 @@ const WordTransform: React.FC<WordTransformProps> = ({
 
   // Render letters based on current animation phase
   const renderLetters = () => {
-    // Early return if no edit plan is available
-    if (!state.editPlan) return null;
+    // Early return if no edit plan is available or inputs are empty
+    if (!state.editPlan || misspelling === '' || correct === '') return null;
     
     // Use a non-null assertion for clarity in this scope 
     // We've already checked that state.editPlan is not null
