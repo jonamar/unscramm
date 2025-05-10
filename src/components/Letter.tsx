@@ -8,8 +8,9 @@ import styles from './Letter.module.css';
  * - deletion: Letter is being removed (red)
  * - insertion: Letter is being added (green)
  * - movement: Letter is changing position (yellow)
+ * - exiting: Letter is being removed from the DOM with animation
  */
-export type LetterAnimationState = 'normal' | 'deletion' | 'insertion' | 'movement';
+export type LetterAnimationState = 'normal' | 'deletion' | 'insertion' | 'movement' | 'exiting';
 
 /**
  * Props interface for the Letter component
@@ -88,6 +89,17 @@ const createLetterVariants = (shouldReduceMotion: boolean): Variants => {
         // Make true movers stand out with longer animation
         stiffness: 120
       }
+    },
+    // New exit animation variant for letters being removed from the DOM
+    exiting: {
+      opacity: 0,
+      scale: shouldReduceMotion ? 0.8 : [1, 0.8, 0.6],
+      y: shouldReduceMotion ? 10 : [0, 10, 15],
+      transition: {
+        duration: getDuration(0.5),
+        ease: "easeOut",
+        times: shouldReduceMotion ? [0, 1] : [0, 0.7, 1]
+      }
     }
   };
 };
@@ -130,6 +142,7 @@ const getAriaLive = (state: LetterAnimationState): 'off' | 'polite' => {
  * - Character additions (insertions)
  * - Character removals (deletions)
  * - Character movements
+ * - Character exits (when removed from DOM)
  * 
  * Features:
  * - Smooth Framer Motion animations with customizable durations

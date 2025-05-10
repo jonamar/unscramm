@@ -30,6 +30,7 @@
   --add-duration: 0.5s;
   --remove-duration: 0.4s;
   --reorder-duration: 0.8s;
+  --exit-duration: 0.5s;
 }
 
 /* Animation state styling */
@@ -63,12 +64,26 @@
 }
 
 .movement {
-  color: #ffeb3b; /* Yellow for moves - WCAG AAA compliant on dark backgrounds */
+  color: #ffeb3b; /* Yellow for movements - WCAG AAA compliant on dark backgrounds */
   /* Styling will be enhanced with Framer Motion animations */
   text-shadow: 0 0 8px rgba(255, 235, 59, 0.5), 0 0 2px rgba(0, 0, 0, 0.8);
   transition: 
     color 0.3s ease,
-    transform var(--reorder-duration) cubic-bezier(0.1, 2, 0.3, 1); /* Exaggerated cubic-bezier */
+    opacity var(--reorder-duration) ease,
+    transform var(--reorder-duration) ease;
+}
+
+/* Exiting state for letters being removed from the DOM */
+.exiting {
+  color: #ff5252; /* Red for exiting - same as deletions for consistency */
+  opacity: 0.6;
+  pointer-events: none; /* Prevent interaction with letters that are exiting */
+  transition: 
+    color 0.3s ease,
+    opacity var(--exit-duration) ease,
+    transform var(--exit-duration) ease;
+  /* Optional: add a subtle glow effect as letters fade out */
+  text-shadow: 0 0 8px rgba(255, 82, 82, 0.7), 0 0 2px rgba(0, 0, 0, 0.8);
 }
 
 /* State-based background highlights for better visibility */

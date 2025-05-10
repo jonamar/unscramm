@@ -300,7 +300,8 @@ const WordTransform: React.FC<WordTransformProps> = ({
         shouldSkip: (total: number) => total === 0,
       },
       [AnimationPhase.MOVING]: {
-        getTotal: () => state.editPlan?.moves.length || 0,
+        // Include deleted letters as part of the moving animations so their exit animations are counted
+        getTotal: () => (state.editPlan?.moves.length || 0) + (state.editPlan?.deletions.length || 0),
         shouldSkip: (total: number) => total === 0,
       },
       [AnimationPhase.INSERTING]: {
@@ -456,32 +457,40 @@ const WordTransform: React.FC<WordTransformProps> = ({
         // Show source letters (from misspelled word)
         return (
           <div className={styles.lettersContainer}>
-            <AnimatePresence>
+            <AnimatePresence mode="sync">
               {state.sourceLetters.map((letter, index) => {
-                // Skip deleted letters in moving phase
+                // Instead of skipping deleted letters in the moving phase,
+                // we keep them but apply the 'exiting' animation state
+                let animationState: LetterAnimationState = 'normal';
+                
+                // For deleted letters in moving phase, use 'exiting' state directly
                 if (state.phase === AnimationPhase.MOVING && 
                     editPlan.deletions.includes(index)) {
-                  return null;
+                  animationState = 'exiting';
+                } else {
+                  // For other letters, determine state based on current phase
+                  const extendedAnimationState = getLetterAnimationState(
+                    index, 
+                    state.phase,
+                    editPlan
+                  );
+                  
+                  // Map extended state to Letter component's animation state
+                  animationState = mapToLetterAnimationState(extendedAnimationState);
                 }
-                
-                const extendedAnimationState = getLetterAnimationState(
-                  index, 
-                  state.phase,
-                  editPlan
-                );
-                
-                const animationState = mapToLetterAnimationState(extendedAnimationState);
                 
                 // Only animate letters in specific states for the current phase
                 const shouldAnimate = 
                   (state.phase === AnimationPhase.DELETING && animationState === 'deletion') ||
                   (state.phase === AnimationPhase.MOVING && 
-                   (extendedAnimationState === 'movement' || extendedAnimationState === 'true-mover'));
+                   (animationState === 'movement' || animationState === 'exiting'));
                 
                 // Determine CSS classes - add special class for true movers
+                // Check if this is a true mover using the original function
+                const extendedState = getLetterAnimationState(index, state.phase, editPlan);
                 const cssClasses = [
                   styles.letter,
-                  extendedAnimationState === 'true-mover' ? styles.trueMover : ''
+                  extendedState === 'true-mover' ? styles.trueMover : ''
                 ].filter(Boolean).join(' ');
                 
                 return (
@@ -493,7 +502,7 @@ const WordTransform: React.FC<WordTransformProps> = ({
                     onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
                     className={cssClasses}
                     // Add a data attribute to help with testing and debugging
-                    data-extended-state={extendedAnimationState}
+                    data-extended-state={extendedState}
                   />
                 );
               })}
@@ -506,7 +515,7 @@ const WordTransform: React.FC<WordTransformProps> = ({
         // Show target letters (from correct word)
         return (
           <div className={styles.lettersContainer}>
-            <AnimatePresence>
+            <AnimatePresence mode="sync">
               {state.targetLetters.map((letter, index) => {
                 // Check if this letter is being inserted
                 const isInserted = editPlan.insertions.some(

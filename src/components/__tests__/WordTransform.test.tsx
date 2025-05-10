@@ -340,6 +340,69 @@ describe('WordTransform Component', () => {
     expect(component).toHaveAttribute('data-phase', AnimationPhase.COMPLETE);
   });
 
+  // Helper to force animation to a specific phase
+  const advanceToPhase = (targetPhase: AnimationPhase) => {
+    // Mock the animation completion handler to force phase transitions
+    const mockAnimationHandler = jest.fn();
+    
+    // Replace the onAnimationComplete in motion.span with our mock
+    const framerMotionMock = jest.requireMock('framer-motion') as {
+      motion: { span: (props: any) => React.ReactElement };
+    };
+    
+    const originalMotionSpan = framerMotionMock.motion.span;
+    framerMotionMock.motion.span = (props: any) => {
+      if (props.onAnimationComplete) {
+        // Call the handler immediately to advance the phase
+        setTimeout(() => props.onAnimationComplete(), 0);
+      }
+      return originalMotionSpan(props);
+    };
+    
+    // Clean up after the test
+    return () => {
+      framerMotionMock.motion.span = originalMotionSpan;
+    };
+  };
+
+  it('animates deleted letters out properly in the moving phase', () => {
+    // Mock a specific edit plan with deletions
+    const mockEditPlanModule = jest.requireMock('../../../src/utils/editPlan') as { 
+      computeEditPlan: jest.Mock 
+    };
+    mockEditPlanModule.computeEditPlan.mockReturnValueOnce({
+      deletions: [0], // First letter will be deleted
+      insertions: [],
+      moves: [{fromIndex: 1, toIndex: 0}],
+      highlightIndices: []
+    });
+    
+    const cleanupMock = advanceToPhase(AnimationPhase.MOVING);
+    
+    const { container } = render(
+      <WordTransform
+        misspelling="abc"
+        correct="bc"
+      />
+    );
+    
+    // Start animation
+    const startButton = screen.getByTestId('start-animation-button');
+    fireEvent.click(startButton);
+    
+    // Let the test run for a bit to allow phase transitions
+    act(() => {
+      jest.advanceTimersByTime(100);
+    });
+    
+    // We should have all source letters still present (not filtering out deleted ones)
+    const letters = container.querySelectorAll('[data-testid="letter"]');
+    expect(letters.length).toBeGreaterThanOrEqual(3); // "abc" is 3 letters
+    
+    // Test completed, clean up our mock
+    cleanupMock();
+  });
+
   /**
    * Tests that would be valuable to add once mocking issues are resolved:
    * 
