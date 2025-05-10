@@ -433,7 +433,7 @@
             8
           ],
           "details": "Create the WordTransform component that takes misspelled and correct words as props. Replace any existing useReducer/useEffect logic with useMachine(wordTransformMachine). Use the algorithm utilities from Task 2 to compute the edit plan. Render Letter components based on the current animation phase. Implement event handlers to send('START') on animation start, send('DONE_PHASE') when Letter animations complete, and send('RESET') to restart. Map the machine's current state to visual feedback and control props. Support a speed multiplier prop that affects animation duration.",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Use React Testing Library to test component rendering in different states. Mock the state machine for predictable testing. Verify proper Letter component rendering and prop passing based on machine state."
         },
         {
