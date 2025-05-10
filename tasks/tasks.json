@@ -702,13 +702,63 @@
       "id": 6,
       "title": "Develop Controls component and user interface",
       "description": "Create the Controls component with text inputs, buttons, and speed slider for user interaction.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         3
       ],
       "priority": "medium",
-      "details": "Implement the Controls component with: 1) Text inputs for 'misspelling' and 'correct' words with clear labels and placeholders, 2) Play and Reset buttons, 3) Shuffle button that uses the WordPairService, 4) Speed slider for adjusting animation speed (0.5x-2x). Style the component according to the dark theme specifications in styleguide.md. Ensure all controls are properly sized for both desktop and mobile use. Implement form validation to prevent empty submissions or excessively long words.",
-      "testStrategy": "Test the Controls component with React Testing Library, verifying all interactive elements work as expected. Test form validation, button states, and integration with the WordPairService. Verify responsive behavior at different viewport sizes."
+      "details": "Implement the Controls component with: 1) Text inputs for 'misspelling' and 'correct' words with clear labels, placeholders, and validation, 2) Play and Reset buttons, 3) Shuffle button that uses the WordPairService, 4) Speed slider for adjusting animation speed (0.5x-2x). Style the component with a clean, modern design according to the dark theme specifications in styleguide.md. Ensure all controls are properly sized for both desktop and mobile use. Implement form validation to prevent empty submissions or excessively long words. Provide visual feedback for different states (playing, shuffle enabled). Ensure full keyboard accessibility and tab navigation.",
+      "testStrategy": "Test the Controls component with Jest and React Testing Library, verifying all interactive elements work as expected. Test form validation, button states, and integration with the WordPairService. Verify responsive behavior at different viewport sizes. Create Storybook stories showcasing different states and an interactive demo.",
+      "subtasks": [
+        {
+          "id": "6.1",
+          "title": "Implement input fields with validation",
+          "status": "completed",
+          "description": "Create text input fields for misspelled and correct word pairs with proper validation"
+        },
+        {
+          "id": "6.2",
+          "title": "Implement control buttons",
+          "status": "completed",
+          "description": "Add Play, Shuffle, and Reset buttons with appropriate visual feedback for different states"
+        },
+        {
+          "id": "6.3",
+          "title": "Create speed control slider",
+          "status": "completed",
+          "description": "Implement slider for adjusting animation speed from 0.5x to 2x"
+        },
+        {
+          "id": "6.4",
+          "title": "Implement responsive layout",
+          "status": "completed",
+          "description": "Ensure component works well on both mobile and desktop devices"
+        },
+        {
+          "id": "6.5",
+          "title": "Add keyboard accessibility",
+          "status": "completed",
+          "description": "Implement full keyboard accessibility and proper tab navigation"
+        },
+        {
+          "id": "6.6",
+          "title": "Write unit tests",
+          "status": "completed",
+          "description": "Create comprehensive tests using Jest and React Testing Library"
+        },
+        {
+          "id": "6.7",
+          "title": "Create Storybook stories",
+          "status": "completed",
+          "description": "Develop Storybook stories showcasing different component states and an interactive demo"
+        },
+        {
+          "id": "6.8",
+          "title": "Optimize performance",
+          "status": "completed",
+          "description": "Implement React hooks for state management and proper memoization of callback functions"
+        }
+      ]
     },
     {
       "id": 7,
