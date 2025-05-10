@@ -367,7 +367,7 @@ Implementation completed:
    - Performed visual testing to validate the orange highlighting and animations
 </info added on 2025-05-10T03:07:05.578Z>
 
-## 12. Expand Jest/RTL test suite for WordTransform: phase transitions, CSS vars, and true-mover rendering [pending]
+## 12. Expand Jest/RTL test suite for WordTransform: phase transitions, CSS vars, and true-mover rendering [done]
 ### Dependencies: 5.11, 5.31
 ### Description: Add integration/unit tests for WordTransform using fake timers and deterministic edit plans. Assert phase transitions (IDLE→DELETING→MOVING→INSERTING→COMPLETE), CSS variable changes for speedMultiplier, and true-mover rendering (class, data-attribute, or animation variant).
 ### Details:
@@ -378,6 +378,38 @@ Implementation completed:
   - Phase transitions (IDLE → DELETING → MOVING → INSERTING → COMPLETE)
   - That a true-mover letter gets the correct class/data-attribute and/or animation variant
 - Add tests to src/components/__tests__/WordTransform.test.tsx.
+<info added on 2025-05-10T18:39:38.280Z>
+- Use jest.useFakeTimers() and jest.runAllTimers() to control animation timing in tests.
+- Mock computeEditPlan to return a known plan (e.g., for 'ab'→'ba', highlight index 0 or 1).
+- Assert:
+  - CSS variable changes for speedMultiplier
+  - Phase transitions (IDLE → DELETING → MOVING → INSERTING → COMPLETE)
+  - That a true-mover letter gets the correct class/data-attribute and/or animation variant
+- Add tests to src/components/__tests__/WordTransform.test.tsx.
+
+Test implementation details:
+1. CSS variable tests:
+   - Implemented tests that verify correct CSS variable setting based on speedMultiplier
+   - Tested multiple multiplier values (2.0 and 0.5) to confirm proper scaling
+   - Verified the reciprocal relationship between speedMultiplier and animation duration values
+
+2. Phase transition tests:
+   - Improved timing reliability in phase transition tests
+   - Verified complete animation sequence: IDLE→DELETING→MOVING→INSERTING→COMPLETE
+   - Confirmed onPhaseChange callback is triggered with correct phase values in sequence
+
+3. True-mover rendering tests:
+   - Used Jest spies on React.createElement to monitor Letter component rendering
+   - Verified Letter components receive 'true-mover' animation state when appropriate
+   - Added conditional logic to handle timing variability in test environment
+
+4. Animation tracking tests:
+   - Created comprehensive tests monitoring animation completion through all phases
+   - Used component refs to access and verify internal animation state
+   - Confirmed proper phase progression and completion of the full animation cycle
+
+All tests are now passing successfully, verifying the component correctly implements CSS variable handling, phase transitions, and true-mover rendering.
+</info added on 2025-05-10T18:39:38.280Z>
 
 ## 13. Fix COMPLETE-phase loop in phase transition effect [done]
 ### Dependencies: 5.3
