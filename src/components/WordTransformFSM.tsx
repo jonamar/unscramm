@@ -1,9 +1,10 @@
 import React, { useMemo, useCallback, forwardRef, useImperativeHandle, useRef, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
 import { useMachine } from '@xstate/react';
 import Letter, { LetterAnimationState } from './Letter';
 import { computeEditPlan, EditPlan } from '../utils/editPlan';
 import { createWordTransformMachine, WordTransformPhase } from './wordTransform.machine';
+import SourceLetters from './SourceLetters';
+import TargetLetters from './TargetLetters';
 import styles from './WordTransform.module.css';
 
 /**
@@ -100,10 +101,6 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
   // Use the XState useMachine hook to manage state
   const [state, send] = useMachine(machine);
 
-  // Create refs for source and target letters
-  const sourceLetters = useMemo(() => misspelling.split(''), [misspelling]);
-  const targetLetters = useMemo(() => correct.split(''), [correct]);
-  
   // Track animation completed count for each phase
   const animationCountRef = useRef(0);
   const totalAnimationsRef = useRef(0);
@@ -252,24 +249,15 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
     phase: state.value as WordTransformPhase,
     editPlan,
     isAnimating: state.value !== 'idle' && state.value !== 'complete',
-    sourceLetters,
-    targetLetters,
+    sourceLetters: misspelling.split(''),
+    targetLetters: correct.split(''),
     startAnimation,
     restartAnimation
-  }), [state.value, editPlan, sourceLetters, targetLetters, startAnimation, restartAnimation]);
+  }), [state.value, editPlan, misspelling, correct, startAnimation, restartAnimation]);
   
   // Track the active letter arrays for the current phase
-  const renderableLetters = useMemo(() => {
-    const currentPhase = state.value as WordTransformPhase;
-    
-    // Use source letters for idle, deleting, and moving phases
-    if (currentPhase === 'idle' || currentPhase === 'deleting' || currentPhase === 'moving') {
-      return sourceLetters;
-    }
-    
-    // Use target letters for inserting and complete phases
-    return targetLetters;
-  }, [state.value, sourceLetters, targetLetters]);
+  const sourceLetters = useMemo(() => misspelling.split(''), [misspelling]);
+  const targetLetters = useMemo(() => correct.split(''), [correct]);
   
   // Set CSS variables for animation timing based on speedMultiplier
   const containerStyle = useMemo(() => {
@@ -280,48 +268,6 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
       '--move-duration': `${500 / speedMultiplier}ms`,
     } as React.CSSProperties;
   }, [speedMultiplier]);
-
-  // Render the letters based on the current phase
-  const renderLetters = () => {
-    if (!editPlan || !renderableLetters.length) return null;
-    
-    const currentPhase = state.value as WordTransformPhase;
-    
-    return (
-      <AnimatePresence mode="sync">
-        {renderableLetters.map((letter, index) => {
-          // For inserting phase, we need to determine if this letter was inserted
-          const isInserted = currentPhase === 'inserting' && 
-            editPlan.insertions.some(ins => ins.position === index);
-          
-          // Get the animation state for this letter
-          const animationState = currentPhase === 'inserting' && isInserted 
-            ? 'insertion' 
-            : getLetterAnimationState(index, currentPhase, editPlan);
-          
-          // Only set animation callbacks on letters that are actively animating
-          const needsCallback = 
-            (currentPhase === 'deleting' && animationState === 'deletion') ||
-            (currentPhase === 'moving' && (animationState === 'movement' || animationState === 'true-mover')) ||
-            (currentPhase === 'inserting' && animationState === 'insertion');
-          
-          // Add a class if colors are enabled
-          const letterClass = colorsEnabled ? styles.colorEnabled : '';
-          
-          return (
-            <Letter
-              key={`${letter}-${index}`}
-              character={letter}
-              animationState={animationState}
-              className={letterClass}
-              initialIndex={index}
-              onAnimationComplete={needsCallback ? handleLetterAnimationComplete : undefined}
-            />
-          );
-        })}
-      </AnimatePresence>
-    );
-  };
 
   // Determine current phase for data attribute and CSS
   const currentPhase = state.value as WordTransformPhase;
@@ -337,7 +283,21 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
       data-debug-mode={debugMode ? 'true' : 'false'}
     >
       <div className={styles.lettersContainer}>
-        {renderLetters()}
+        <SourceLetters
+          letters={sourceLetters}
+          phase={currentPhase}
+          editPlan={editPlan}
+          onLetterAnimationComplete={handleLetterAnimationComplete}
+          getLetterAnimationState={getLetterAnimationState}
+          colorsEnabled={colorsEnabled}
+        />
+        <TargetLetters
+          letters={targetLetters}
+          phase={currentPhase}
+          editPlan={editPlan}
+          onLetterAnimationComplete={handleLetterAnimationComplete}
+          colorsEnabled={colorsEnabled}
+        />
       </div>
       
       {currentPhase === 'idle' && (

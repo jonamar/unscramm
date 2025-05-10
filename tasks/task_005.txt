@@ -637,7 +637,7 @@ The implementation allows users to seamlessly replay animations after completion
 - Add test cases to verify consistency of data attributes.
 - Create a comprehensive testing guide for QA to understand available hooks.
 
-## 21. Extract sub-renderers for better modularity [pending]
+## 21. Extract sub-renderers for better modularity [done]
 ### Dependencies: 5.4, 5.31
 ### Description: Extract the "render source letters" and "render target letters" blocks into small memoized components to isolate rendering logic.
 ### Details:
@@ -648,6 +648,30 @@ The implementation allows users to seamlessly replay animations after completion
 - Handle edge cases like empty strings or null edit plans within these components.
 - Update tests to reflect the new component structure.
 - Document the component structure and responsibilities in comments.
+<info added on 2025-05-10T20:23:40.069Z>
+- Create SourceLetters and TargetLetters components extracted from WordTransform.
+- Memoize these components using React.memo to prevent unnecessary re-renders.
+- Define clear prop interfaces for these components.
+- Pass only the necessary props from WordTransform to each component.
+- Handle edge cases like empty strings or null edit plans within these components.
+- Update tests to reflect the new component structure.
+- Document the component structure and responsibilities in comments.
+
+Implementation details:
+- Successfully created two new components:
+  * SourceLetters: Handles rendering of source (misspelled) word letters during idle, deleting, and moving phases
+  * TargetLetters: Handles rendering of target (correct) word letters during inserting and complete phases
+- Both components are properly memoized with React.memo to optimize rendering performance
+- Implemented clear prop interfaces for each component to ensure type safety
+- Each component handles its own null checking and phase-specific rendering logic
+- Added component-specific key prefixes for stable element identities
+- Implemented phase-specific filtering so each component only renders when appropriate
+- The refactoring maintains complete compatibility with existing tests
+- The main WordTransformFSM component is now significantly simplified
+- Code organization is improved with smaller, more focused functions
+- Component boundaries are clearly defined, enhancing readability and maintainability
+- This modular structure provides a solid foundation for future optimizations
+</info added on 2025-05-10T20:23:40.069Z>
 
 ## 22. Lift phaseConfig out of effect for better performance [pending]
 ### Dependencies: 5.3, 5.31
