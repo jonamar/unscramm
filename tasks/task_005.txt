@@ -312,7 +312,7 @@ Implementation details:
 These changes significantly improve the testability of the component by exposing internal state and providing hooks for E2E testing tools to interact with and verify the animation process.
 </info added on 2025-05-10T03:01:50.166Z>
 
-## 8. Define and unit-test WordTransform finite state machine [pending]
+## 8. Define and unit-test WordTransform finite state machine [done]
 ### Dependencies: 5.28, 5.31
 ### Description: Create a finite state machine for the WordTransform component that manages the animation sequence states and transitions.
 ### Details:
