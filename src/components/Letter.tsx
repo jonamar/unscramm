@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, memo } from 'react';
-import { motion, Variants, usePresence, useReducedMotion } from 'framer-motion';
+import { motion, Variants, usePresence, useReducedMotion, AnimationDefinition } from 'framer-motion';
 import styles from './Letter.module.css';
 
 /**
@@ -262,17 +262,17 @@ const getOutlineColor = (animationState: LetterAnimationState): string => {
 };
 
 /**
- * Creates the animation completion handler function
+ * Creates an animation completion handler 
  * 
- * @param onAnimationComplete - Callback to run when animation completes
- * @param animationTimeoutRef - Ref to store timeout ID
+ * @param onAnimationComplete - Callback to invoke when animation completes
+ * @param animationTimeoutRef - Reference to store timeout for cleanup
  * @returns Handler function for the onAnimationComplete event
  */
 const createAnimationCompleteHandler = (
   onAnimationComplete?: () => void,
   animationTimeoutRef?: React.MutableRefObject<NodeJS.Timeout | null>
 ) => {
-  return (definition: any) => {
+  return (definition: AnimationDefinition) => {
     // Skip if no callback provided
     if (!onAnimationComplete) return;
     
@@ -371,10 +371,7 @@ const Letter: React.FC<LetterProps> = memo(({
   const letterClasses = createClassNames(animationState, !!shouldReduceMotion, className);
 
   // Create animation completion handler
-  const handleAnimationComplete = createAnimationCompleteHandler(
-    onAnimationComplete,
-    animationTimeoutRef
-  );
+  const handleAnimationComplete = createAnimationCompleteHandler(onAnimationComplete, animationTimeoutRef);
 
   return (
     <motion.span 

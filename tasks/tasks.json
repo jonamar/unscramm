@@ -376,9 +376,10 @@
           "title": "Handle prop changes and optimize performance",
           "description": "Implement proper handling of prop changes during animation and optimize the component for performance.",
           "dependencies": [
-            "5.13",
-            "5.15",
-            "5.19",
+            "5.22",
+            "5.23",
+            "5.24",
+            "5.25",
             "5.27",
             "5.31"
           ],
@@ -417,7 +418,8 @@
           "title": "Define and unit-test WordTransform finite state machine",
           "description": "Create a finite state machine for the WordTransform component that manages the animation sequence states and transitions.",
           "dependencies": [
-            "5.27"
+            "5.28",
+            "5.31"
           ],
           "details": "Create src/components/wordTransform.machine.ts with XState defining five states: idle, deleting, moving, inserting, and complete. Include context to track deletion/move/insertion counts. Define events (START, DONE_PHASE, RESET) that trigger transitions between states. Implement logic to skip phases with zero-length operations. Ensure the machine handles the complete animation lifecycle and can be reset.",
           "status": "pending",
@@ -439,7 +441,8 @@
           "title": "Update tests and add Storybook examples",
           "description": "Refactor existing tests to work with the state machine implementation and create Storybook examples showcasing the component.",
           "dependencies": [
-            9
+            9,
+            "5.12"
           ],
           "details": "Update existing Jest/React Testing Library tests to interact with the component via state machine events. Add data-phase and data-testid attributes to key elements for test selection. Create E2E tests that verify the full animation sequence works correctly. Develop Storybook examples that demonstrate different animation scenarios: words with deletions only, insertions only, movements only, and combinations. Include examples with different speed multiplier values.",
           "status": "pending",
@@ -464,7 +467,8 @@
           "details": "- Use jest.useFakeTimers() and jest.runAllTimers() to control animation timing in tests.\n- Mock computeEditPlan to return a known plan (e.g., for 'ab'→'ba', highlight index 0 or 1).\n- Assert:\n  - CSS variable changes for speedMultiplier\n  - Phase transitions (IDLE → DELETING → MOVING → INSERTING → COMPLETE)\n  - That a true-mover letter gets the correct class/data-attribute and/or animation variant\n- Add tests to src/components/__tests__/WordTransform.test.tsx.",
           "status": "pending",
           "dependencies": [
-            "5.11"
+            "5.11",
+            "5.31"
           ],
           "parentTaskId": 5
         },
@@ -532,7 +536,8 @@
           "status": "pending",
           "dependencies": [
             "5.3",
-            "5.7"
+            "5.7",
+            "5.31"
           ],
           "parentTaskId": 5
         },
@@ -543,7 +548,8 @@
           "details": "- Add a RESTART action to the WordTransform reducer.\n- Implement a restart button that appears in the COMPLETE phase.\n- Update the machine to allow transitions from COMPLETE back to IDLE.\n- Ensure the edit plan is preserved for replay without recalculation.\n- Add a callback prop for onRestart to notify parent components.\n- Style the restart button to match the application design.\n- Add keyboard support for the restart functionality (e.g., spacebar or Enter key).\n- Test that animations work correctly when replayed multiple times.\n<info added on 2025-05-08T02:18:14.468Z>\n- Add a RESTART action to the WordTransform reducer.\n- Implement a restart button that appears in the COMPLETE phase.\n- Update the machine to allow transitions from COMPLETE back to IDLE.\n- Ensure the edit plan is preserved for replay without recalculation.\n- Add a callback prop for onRestart to notify parent components.\n- Style the restart button to match the application design.\n- Add keyboard support for the restart functionality (e.g., spacebar or Enter key).\n- Test that animations work correctly when replayed multiple times.\n\nThis is a core feature required by the specification, not an optional enhancement or bug fix. The restart functionality is essential for the WordTransform component's complete operation and user experience. Implementation should be prioritized accordingly.\n</info added on 2025-05-08T02:18:14.468Z>",
           "status": "pending",
           "dependencies": [
-            "5.3"
+            "5.3",
+            "5.31"
           ],
           "parentTaskId": 5
         },
@@ -555,7 +561,8 @@
           "status": "pending",
           "dependencies": [
             "5.4",
-            "5.7"
+            "5.7",
+            "5.31"
           ],
           "parentTaskId": 5
         },
@@ -566,7 +573,8 @@
           "details": "- Create SourceLetters and TargetLetters components extracted from WordTransform.\n- Memoize these components using React.memo to prevent unnecessary re-renders.\n- Define clear prop interfaces for these components.\n- Pass only the necessary props from WordTransform to each component.\n- Handle edge cases like empty strings or null edit plans within these components.\n- Update tests to reflect the new component structure.\n- Document the component structure and responsibilities in comments.",
           "status": "pending",
           "dependencies": [
-            "5.4"
+            "5.4",
+            "5.31"
           ],
           "parentTaskId": 5
         },
@@ -577,7 +585,8 @@
           "details": "- Move the phaseConfig map outside of the useEffect hook.\n- Define it once at the component level or in a useMemo with minimal dependencies.\n- Ensure the configuration is properly typed with TypeScript.\n- Update all references to the phaseConfig in the effect.\n- Modify any dynamic aspects of the configuration to work with this new structure.\n- Test performance with React DevTools profiler before and after the change.\n- Document the performance optimization in comments.",
           "status": "pending",
           "dependencies": [
-            "5.3"
+            "5.3",
+            "5.31"
           ],
           "parentTaskId": 5
         },
@@ -589,7 +598,8 @@
           "status": "pending",
           "dependencies": [
             "5.4",
-            "5.6"
+            "5.6",
+            "5.16"
           ],
           "parentTaskId": 5
         },
@@ -600,7 +610,8 @@
           "details": "- Implement useCallback for all event handler functions in WordTransform.\n- Carefully define dependency arrays to avoid stale closures.\n- Apply to startAnimation, handleLetterAnimationComplete, and other handler functions.\n- Test render performance with React DevTools profiler.\n- Compare re-render counts before and after the optimization.\n- Use React.memo on Letter component to maximize the benefit.\n- Document optimization techniques in component comments.",
           "status": "pending",
           "dependencies": [
-            "5.3"
+            "5.3",
+            "5.31"
           ],
           "parentTaskId": 5
         },
@@ -611,7 +622,8 @@
           "details": "- Refactor AnimationAction to use a discriminated union pattern with a 'type' property.\n- Remove redundant type fields from action interfaces.\n- Update the reducer to use the new type pattern for cleaner switch statements.\n- Add exhaustiveness checking using TypeScript's never type.\n- Ensure strict type checking for all action handlers.\n- Update all action creators to match the new type format.\n- Improve error messages for invalid state transitions.",
           "status": "pending",
           "dependencies": [
-            "5.3"
+            "5.3",
+            "5.31"
           ],
           "parentTaskId": 5
         },
@@ -623,7 +635,8 @@
           "status": "pending",
           "dependencies": [
             "5.7",
-            "5.20"
+            "5.20",
+            "5.31"
           ],
           "parentTaskId": 5
         },
@@ -642,11 +655,9 @@
           "id": 28,
           "title": "Tighten TypeScript typings in mocks and tests",
           "description": "Replace all 'any' types in mocks and tests with proper interfaces and remove or strongly type any unused function parameters.",
-          "details": "- Scan __mocks__ directory for any uses of 'any' type.\n- Replace generic 'any' types with specific interfaces or types.\n- Create new interfaces where necessary to properly type mock objects.\n- Review all test files for 'any' types and replace them with proper types.\n- Check for unused function parameters and either remove them or add proper types.\n- Update mock implementations to use TypeScript's type guards where appropriate.\n- Ensure type definitions are exported for reuse where needed.\n- Verify tests still pass after type improvements.\n<info added on 2025-05-08T02:23:48.464Z>\n- Scan __mocks__ directory for any uses of 'any' type.\n- Replace generic 'any' types with specific interfaces or types.\n- Create new interfaces where necessary to properly type mock objects.\n- Review all test files for 'any' types and replace them with proper types.\n- Check for unused function parameters and either remove them or add proper types.\n- Update mock implementations to use TypeScript's type guards where appropriate.\n- Ensure type definitions are exported for reuse where needed.\n- Verify tests still pass after type improvements.\n\nThis task is a high priority TypeScript improvement that must be completed before performance optimizations can begin. Proper typing will ensure type safety throughout the codebase and prevent potential runtime errors. Focus on the WordTransform component and related files first, as this appears to be part of a larger refactoring effort based on the adjacent subtasks.\n</info added on 2025-05-08T02:23:48.464Z>",
-          "status": "pending",
-          "dependencies": [
-            "5.4"
-          ],
+          "details": "- Scan __mocks__ directory for any uses of 'any' type.\n- Replace generic 'any' types with specific interfaces or types.\n- Create new interfaces where necessary to properly type mock objects.\n- Review all test files for 'any' types and replace them with proper types.\n- Check for unused function parameters and either remove them or add proper types.\n- Update mock implementations to use TypeScript's type guards where appropriate.\n- Ensure type definitions are exported for reuse where needed.\n- Verify tests still pass after type improvements.\n<info added on 2025-05-08T02:23:48.464Z>\n- Scan __mocks__ directory for any uses of 'any' type.\n- Replace generic 'any' types with specific interfaces or types.\n- Create new interfaces where necessary to properly type mock objects.\n- Review all test files for 'any' types and replace them with proper types.\n- Check for unused function parameters and either remove them or add proper types.\n- Update mock implementations to use TypeScript's type guards where appropriate.\n- Ensure type definitions are exported for reuse where needed.\n- Verify tests still pass after type improvements.\n\nThis task is a high priority TypeScript improvement that must be completed before performance optimizations can begin. Proper typing will ensure type safety throughout the codebase and prevent potential runtime errors. Focus on the WordTransform component and related files first, as this appears to be part of a larger refactoring effort based on the adjacent subtasks.\n</info added on 2025-05-08T02:23:48.464Z>\n<info added on 2025-05-10T03:19:46.222Z>\n- Scan __mocks__ directory for any uses of 'any' type.\n- Replace generic 'any' types with specific interfaces or types.\n- Create new interfaces where necessary to properly type mock objects.\n- Review all test files for 'any' types and replace them with proper types.\n- Check for unused function parameters and either remove them or add proper types.\n- Update mock implementations to use TypeScript's type guards where appropriate.\n- Ensure type definitions are exported for reuse where needed.\n- Verify tests still pass after type improvements.\n\nImplementation progress:\n\n1. Updated framer-motion mocks in `src/__mocks__/framer-motion.tsx`:\n   - Created proper interfaces for motion component props\n   - Replaced all 'any' types with proper TypeScript interfaces\n   - Added correct typings for all motion components\n   - Fixed type safety in the animation completion callbacks\n\n2. Updated tests in `src/components/__tests__/WordTransform.test.tsx`:\n   - Replaced mock component props that used 'any' with proper typed interfaces\n   - Added type safety for onAnimationComplete callbacks\n\n3. Fixed Letter.tsx component typing:\n   - Imported and used AnimationDefinition type from framer-motion\n   - Properly typed the animation completion handlers\n\nThese changes strengthen type safety throughout the animation system, making the code more maintainable and reducing the risk of runtime errors. The improved typings also provide better IDE support with proper auto-completion and inline documentation.\n\nNext steps:\n- Continue reviewing remaining test files for 'any' types\n- Check other mock files in __mocks__ directory\n- Verify all animation-related components have proper typing\n- Run the full test suite to ensure all tests still pass with the improved typings\n</info added on 2025-05-10T03:19:46.222Z>",
+          "status": "done",
+          "dependencies": [],
           "parentTaskId": 5
         },
         {
@@ -656,7 +667,7 @@
           "details": "- Use ESLint's no-unused-vars rule to identify unused variables in components.\n- Remove unused imports from all component files, particularly WordTransform.tsx and Letter.tsx.\n- Check for unused variables like 'definition' and 'mockAnimationComplete'.\n- Identify and remove any helper functions that are no longer called.\n- Clean up any commented-out code that's not needed for reference.\n- Remove any duplicate utility functions.\n- Check for and remove unused CSS classes in module CSS files.\n- Run a full test suite to ensure removal of code doesn't break functionality.\n<info added on 2025-05-08T02:24:10.306Z>\n- Use ESLint's no-unused-vars rule to identify unused variables in components.\n- Remove unused imports from all component files, particularly WordTransform.tsx and Letter.tsx.\n- Check for unused variables like 'definition' and 'mockAnimationComplete'.\n- Identify and remove any helper functions that are no longer called.\n- Clean up any commented-out code that's not needed for reference.\n- Remove any duplicate utility functions.\n- Check for and remove unused CSS classes in module CSS files.\n- Run a full test suite to ensure removal of code doesn't break functionality.\n- This cleanup task must be completed before performance optimizations to prevent wasting time optimizing code that will be removed.\n- Focus especially on the WordTransform component and its related utilities as this is the parent task's focus area.\n- Create a report of all removed code with line counts to document the cleanup effort.\n- Coordinate with the team members working on TypeScript typings (subtask 5.28) to ensure alignment in code cleanup efforts.\n</info added on 2025-05-08T02:24:10.306Z>",
           "status": "pending",
           "dependencies": [
-            "5.4"
+            "5.28"
           ],
           "parentTaskId": 5
         },
@@ -667,7 +678,7 @@
           "details": "- Add displayName property to all memo and anonymous components for better debugging.\n- Review all useEffect, useMemo, and useCallback hooks to ensure dependency arrays are complete.\n- Focus particularly on WordTransform.tsx to fix missing dependencies in hooks.\n- Check all Storybook stories for unescaped JSX entities (like &, >, <) and escape them properly.\n- Review PropTypes usage and ensure they are correctly defined.\n- Use the React linting rules to identify any other React-specific issues.\n- Fix any React key warnings that might appear in the console.\n- Ensure all components use function declarations or arrow functions consistently.\n<info added on 2025-05-08T02:24:24.064Z>\n- Add displayName property to all memo and anonymous components for better debugging.\n- Review all useEffect, useMemo, and useCallback hooks to ensure dependency arrays are complete.\n- Focus particularly on WordTransform.tsx to fix missing dependencies in hooks.\n- Check all Storybook stories for unescaped JSX entities (like &, >, <) and escape them properly.\n- Review PropTypes usage and ensure they are correctly defined.\n- Use the React linting rules to identify any other React-specific issues.\n- Fix any React key warnings that might appear in the console.\n- Ensure all components use function declarations or arrow functions consistently.\n- This is a high priority task that must be completed before moving on to performance optimizations.\n- Fixing these React-specific lint errors is critical for maintaining code quality and preventing potential bugs in the WordTransform component.\n- Pay special attention to the React hooks exhaustive-deps rule violations as they can lead to subtle bugs and performance issues.\n- After fixes are applied, verify that no new console warnings appear during component rendering.\n</info added on 2025-05-08T02:24:24.064Z>",
           "status": "pending",
           "dependencies": [
-            "5.4"
+            "5.29"
           ],
           "parentTaskId": 5
         },

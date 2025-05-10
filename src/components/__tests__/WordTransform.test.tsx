@@ -52,11 +52,23 @@ jest.mock('../../../src/utils/editPlan', () => ({
 // Mock the Framer Motion hooks
 jest.mock('framer-motion', () => ({
   motion: {
-    div: (props: any) => <div {...props} />,
-    span: (props: any) => {
+    div: (props: React.HTMLAttributes<HTMLDivElement> & { 
+      onAnimationComplete?: () => void,
+      variants?: Record<string, unknown>,
+      animate?: string | Record<string, unknown>
+    }) => <div {...props} />,
+    span: (props: React.HTMLAttributes<HTMLSpanElement> & {
+      onAnimationComplete?: () => void,
+      variants?: Record<string, unknown>,
+      animate?: string | Record<string, unknown>
+    }) => {
       // Simulate animation completion in tests
       if (props.onAnimationComplete) {
-        setTimeout(() => props.onAnimationComplete(), 10);
+        setTimeout(() => {
+          if (props.onAnimationComplete) {
+            props.onAnimationComplete();
+          }
+        }, 10);
       }
       return <span {...props} />;
     },
@@ -539,16 +551,28 @@ describe('WordTransform Component', () => {
     
     // Replace the onAnimationComplete in motion.span with our mock
     const framerMotionMock = jest.requireMock('framer-motion') as {
-      motion: { span: (props: any) => React.ReactElement };
+      motion: { span: (props: React.HTMLAttributes<HTMLSpanElement> & {
+        onAnimationComplete?: () => void,
+        variants?: Record<string, unknown>,
+        animate?: string | Record<string, unknown>
+      }) => React.ReactElement };
     };
     
     const originalMotionSpan = framerMotionMock.motion.span;
-    framerMotionMock.motion.span = (props: any) => {
+    framerMotionMock.motion.span = (props: React.HTMLAttributes<HTMLSpanElement> & {
+      onAnimationComplete?: () => void,
+      variants?: Record<string, unknown>,
+      animate?: string | Record<string, unknown>
+    }) => {
       if (props.onAnimationComplete) {
         // Call the handler immediately to advance the phase
-        setTimeout(() => props.onAnimationComplete(), 0);
+        setTimeout(() => {
+          if (props.onAnimationComplete) {
+            props.onAnimationComplete();
+          }
+        }, 0);
       }
-      return originalMotionSpan(props);
+      return <span {...props}>Mocked letter</span>;
     };
     
     // Clean up after the test
