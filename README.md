@@ -17,6 +17,9 @@ So far it's painstaking work but very informative. I've yet to produce a useable
 # Install dependencies
 npm install
 
+# Initialize port configuration
+npm run ports:init
+
 # Start the development server
 npm run dev
 
@@ -36,6 +39,29 @@ npm run start
 # Build Storybook as a static site
 npm run build-storybook
 ```
+
+### Port Management System
+
+The project includes a port management system to prevent conflicts during development:
+
+```bash
+# Initialize port configuration
+npm run ports:init
+
+# View configured ports
+npm run ports:list
+
+# Check port availability
+./scripts/check-and-run.sh 8000 "python -m http.server 8000"
+```
+
+Key features:
+- Prevents port conflicts between services
+- Provides helpful error messages when ports are in use
+- Protects system-critical ports (Ollama, Open WebUI)
+- Automatically suggests alternative ports
+
+For detailed documentation, see [PORT_MANAGEMENT.md](PORT_MANAGEMENT.md).
 
 ### Performance Optimizations
 
