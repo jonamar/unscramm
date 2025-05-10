@@ -33,6 +33,106 @@ export interface LetterProps {
 }
 
 /**
+ * Returns appropriate animation duration based on environment and motion preferences
+ * 
+ * @param baseValue - The default animation duration in seconds
+ * @param shouldReduceMotion - Whether animations should be reduced
+ * @returns Adjusted animation duration
+ */
+const getDuration = (baseValue: number, shouldReduceMotion: boolean): number => 
+  shouldReduceMotion || process.env.NODE_ENV === 'test' ? 0.001 : baseValue;
+
+/**
+ * Creates variant for the normal (default) letter state
+ * 
+ * @param shouldReduceMotion - Whether to reduce motion
+ * @returns Animation variant for the normal state
+ */
+const createNormalVariant = (shouldReduceMotion: boolean) => ({
+  opacity: 1,
+  scale: 1,
+  y: 0,
+  transition: {
+    duration: getDuration(0.3, shouldReduceMotion),
+    ease: "easeInOut"
+  }
+});
+
+/**
+ * Creates variant for the deletion animation state
+ * 
+ * @param shouldReduceMotion - Whether to reduce motion
+ * @returns Animation variant for the deletion state
+ */
+const createDeletionVariant = (shouldReduceMotion: boolean) => ({
+  opacity: 0,
+  scale: shouldReduceMotion ? 1 : [1, 0.8],
+  y: shouldReduceMotion ? 0 : [0, 10],
+  transition: {
+    duration: getDuration(0.4, shouldReduceMotion),
+    ease: "easeOut",
+    times: shouldReduceMotion ? [0, 1] : [0, 1]
+  }
+});
+
+/**
+ * Creates variant for the insertion animation state
+ * 
+ * @param shouldReduceMotion - Whether to reduce motion
+ * @returns Animation variant for the insertion state
+ */
+const createInsertionVariant = (shouldReduceMotion: boolean) => ({
+  opacity: shouldReduceMotion ? [0, 1] : [0, 1, 1],
+  scale: shouldReduceMotion ? 1 : [1.3, 1.1, 1],
+  y: shouldReduceMotion ? 0 : [0, -5, 0],
+  transition: {
+    duration: getDuration(0.5, shouldReduceMotion),
+    ease: "easeOut",
+    times: shouldReduceMotion ? [0, 1] : [0, 0.6, 1],
+    // Add a slight bounce for insertions
+    bounce: 0.2
+  }
+});
+
+/**
+ * Creates variant for the movement animation state
+ * 
+ * @param shouldReduceMotion - Whether to reduce motion
+ * @returns Animation variant for the movement state
+ */
+const createMovementVariant = (shouldReduceMotion: boolean) => ({
+  scale: shouldReduceMotion ? 1 : [1, 1.1, 1],
+  // Enhanced animation for movement
+  transition: {
+    duration: getDuration(0.8, shouldReduceMotion),
+    // Use an exaggerated bounce effect
+    ease: shouldReduceMotion ? "easeOut" : [0.1, 2.3, 0.36, 1.2], 
+    times: shouldReduceMotion ? [0, 1] : [0, 0.4, 1],
+    // Add a little more bounce to emphasize the movement
+    bounce: 0.5,
+    // Make true movers stand out with longer animation
+    stiffness: 120
+  }
+});
+
+/**
+ * Creates variant for the exiting animation state
+ * 
+ * @param shouldReduceMotion - Whether to reduce motion
+ * @returns Animation variant for the exiting state
+ */
+const createExitingVariant = (shouldReduceMotion: boolean) => ({
+  opacity: 0,
+  scale: shouldReduceMotion ? 0.8 : [1, 0.8, 0.6],
+  y: shouldReduceMotion ? 10 : [0, 10, 15],
+  transition: {
+    duration: getDuration(0.5, shouldReduceMotion),
+    ease: "easeOut",
+    times: shouldReduceMotion ? [0, 1] : [0, 0.7, 1]
+  }
+});
+
+/**
  * Creates animation variants with appropriate timings, adjusting for test environment
  * and user's reduced motion preferences
  * 
@@ -40,67 +140,12 @@ export interface LetterProps {
  * @returns Animation variants object for Framer Motion
  */
 const createLetterVariants = (shouldReduceMotion: boolean): Variants => {
-  // Use minimal duration when in test environment or when user prefers reduced motion
-  const getDuration = (baseValue: number) => 
-    shouldReduceMotion || process.env.NODE_ENV === 'test' ? 0.001 : baseValue;
-
   return {
-    normal: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: {
-        duration: getDuration(0.3),
-        ease: "easeInOut"
-      }
-    },
-    deletion: {
-      opacity: 0,
-      scale: shouldReduceMotion ? 1 : [1, 0.8],
-      y: shouldReduceMotion ? 0 : [0, 10],
-      transition: {
-        duration: getDuration(0.4),
-        ease: "easeOut",
-        times: shouldReduceMotion ? [0, 1] : [0, 1]
-      }
-    },
-    insertion: {
-      opacity: shouldReduceMotion ? [0, 1] : [0, 1, 1],
-      scale: shouldReduceMotion ? 1 : [1.3, 1.1, 1],
-      y: shouldReduceMotion ? 0 : [0, -5, 0],
-      transition: {
-        duration: getDuration(0.5),
-        ease: "easeOut",
-        times: shouldReduceMotion ? [0, 1] : [0, 0.6, 1],
-        // Add a slight bounce for insertions
-        bounce: 0.2
-      }
-    },
-    movement: {
-      scale: shouldReduceMotion ? 1 : [1, 1.1, 1],
-      // Enhanced animation for movement
-      transition: {
-        duration: getDuration(0.8),
-        // Use an exaggerated bounce effect
-        ease: shouldReduceMotion ? "easeOut" : [0.1, 2.3, 0.36, 1.2], 
-        times: shouldReduceMotion ? [0, 1] : [0, 0.4, 1],
-        // Add a little more bounce to emphasize the movement
-        bounce: 0.5,
-        // Make true movers stand out with longer animation
-        stiffness: 120
-      }
-    },
-    // New exit animation variant for letters being removed from the DOM
-    exiting: {
-      opacity: 0,
-      scale: shouldReduceMotion ? 0.8 : [1, 0.8, 0.6],
-      y: shouldReduceMotion ? 10 : [0, 10, 15],
-      transition: {
-        duration: getDuration(0.5),
-        ease: "easeOut",
-        times: shouldReduceMotion ? [0, 1] : [0, 0.7, 1]
-      }
-    }
+    normal: createNormalVariant(shouldReduceMotion),
+    deletion: createDeletionVariant(shouldReduceMotion),
+    insertion: createInsertionVariant(shouldReduceMotion),
+    movement: createMovementVariant(shouldReduceMotion),
+    exiting: createExitingVariant(shouldReduceMotion)
   };
 };
 
@@ -119,6 +164,8 @@ const getAriaLabel = (character: string, state: LetterAnimationState): string =>
       return `Letter ${character} being added`;
     case 'movement':
       return `Letter ${character} moving to new position`;
+    case 'exiting':
+      return `Letter ${character} exiting from display`;
     default:
       return `Letter ${character}`;
   }
@@ -133,6 +180,88 @@ const getAriaLabel = (character: string, state: LetterAnimationState): string =>
 const getAriaLive = (state: LetterAnimationState): 'off' | 'polite' => {
   // Use polite for state changes, off for normal state
   return state !== 'normal' ? 'polite' : 'off';
+};
+
+/**
+ * Generates data attributes for testing and accessibility
+ * 
+ * @param animationState - Current animation state of the letter
+ * @param initialIndex - Optional index for the letter (if tracking position)
+ * @returns Object containing all required data attributes
+ */
+const createDataAttributes = (animationState: LetterAnimationState, initialIndex?: number) => ({
+  "data-testid": "letter", 
+  "data-state": animationState,
+  ...(initialIndex !== undefined && { "data-index": initialIndex }),
+});
+
+/**
+ * Creates CSS class list for the letter based on its state and settings
+ * 
+ * @param animationState - Current animation state
+ * @param shouldReduceMotion - Whether reduced motion is active
+ * @param customClass - Optional additional class name
+ * @returns Space-separated string of class names
+ */
+const createClassNames = (
+  animationState: LetterAnimationState, 
+  shouldReduceMotion: boolean, 
+  customClass?: string
+): string => {
+  return [
+    styles.letter,
+    styles[animationState],
+    shouldReduceMotion && styles.reducedMotion,
+    customClass
+  ].filter(Boolean).join(' ');
+};
+
+/**
+ * Returns the appropriate outline color based on animation state
+ * 
+ * @param animationState - Current animation state of the letter
+ * @returns CSS color value for the outline
+ */
+const getOutlineColor = (animationState: LetterAnimationState): string => {
+  switch (animationState) {
+    case 'deletion': return '#ff5252';
+    case 'insertion': return '#4caf50';
+    case 'movement': return '#ffeb3b';
+    case 'exiting': return '#ff8c00';
+    default: return '#fff';
+  }
+};
+
+/**
+ * Creates the animation completion handler function
+ * 
+ * @param onAnimationComplete - Callback to run when animation completes
+ * @param animationTimeoutRef - Ref to store timeout ID
+ * @returns Handler function for the onAnimationComplete event
+ */
+const createAnimationCompleteHandler = (
+  onAnimationComplete?: () => void,
+  animationTimeoutRef?: React.MutableRefObject<NodeJS.Timeout | null>
+) => {
+  return (definition: any) => {
+    // Skip if no callback provided
+    if (!onAnimationComplete) return;
+    
+    // Clear any existing timeout
+    if (animationTimeoutRef?.current) {
+      clearTimeout(animationTimeoutRef.current);
+    }
+    
+    // Set new timeout with the callback
+    if (animationTimeoutRef) {
+      animationTimeoutRef.current = setTimeout(() => {
+        onAnimationComplete();
+      }, 0);
+    } else {
+      // Fallback if no ref provided
+      setTimeout(onAnimationComplete, 0);
+    }
+  };
 };
 
 /**
@@ -206,30 +335,17 @@ const Letter: React.FC<LetterProps> = memo(({
     };
   }, [isPresent, safeToRemove]);
 
-  // Determine the outline color based on animation state
-  const getOutlineColor = () => {
-    switch (animationState) {
-      case 'deletion': return '#ff5252';
-      case 'insertion': return '#4caf50';
-      case 'movement': return '#ffeb3b';
-      default: return '#fff';
-    }
-  };
+  // Generate data attributes for testing and accessibility
+  const dataProps = createDataAttributes(animationState, initialIndex);
 
-  // Generate dataProp based on initialIndex existence
-  const dataProps = {
-    "data-testid": "letter", 
-    "data-state": animationState,
-    ...(initialIndex !== undefined && { "data-index": initialIndex }),
-  };
+  // Construct dynamic className based on state and settings
+  const letterClasses = createClassNames(animationState, !!shouldReduceMotion, className);
 
-  // Construct dynamic className
-  const letterClasses = [
-    styles.letter,
-    styles[animationState],
-    shouldReduceMotion && styles.reducedMotion,
-    className
-  ].filter(Boolean).join(' ');
+  // Create animation completion handler
+  const handleAnimationComplete = createAnimationCompleteHandler(
+    onAnimationComplete,
+    animationTimeoutRef
+  );
 
   return (
     <motion.span 
@@ -238,20 +354,7 @@ const Letter: React.FC<LetterProps> = memo(({
       initial="normal"
       animate={animationState}
       variants={letterVariants}
-      onAnimationComplete={(definition) => {
-        // Ensure we clean up any previous timeouts
-        if (animationTimeoutRef.current) {
-          clearTimeout(animationTimeoutRef.current);
-        }
-        
-        // Call the callback if provided
-        if (onAnimationComplete) {
-          // Slightly delay the callback to ensure DOM updates are complete
-          animationTimeoutRef.current = setTimeout(() => {
-            onAnimationComplete();
-          }, 0);
-        }
-      }}
+      onAnimationComplete={handleAnimationComplete}
       layout={!disableLayoutAnimation}
       
       // Accessibility attributes
@@ -264,13 +367,18 @@ const Letter: React.FC<LetterProps> = memo(({
       aria-hidden={animationState === 'deletion' ? true : undefined}
       style={{
         // Ensure focus outline matches the current state color
-        outlineColor: getOutlineColor()
+        outlineColor: getOutlineColor(animationState)
       }}
     >
       {character}
     </motion.span>
   );
 });
+
+/**
+ * Add displayName for better debugging in React DevTools
+ */
+Letter.displayName = 'Letter';
 
 /**
  * Memoized version of the Letter component to prevent unnecessary re-renders.
