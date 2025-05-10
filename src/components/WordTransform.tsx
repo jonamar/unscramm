@@ -1,4 +1,4 @@
-import React, { useReducer, useEffect, useRef, useMemo, useImperativeHandle } from 'react';
+import React, { useReducer, useEffect, useRef, useMemo, useImperativeHandle, useCallback, forwardRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import Letter, { LetterAnimationState } from './Letter';
 import { computeEditPlan, EditPlan } from '../utils/editPlan';
@@ -236,10 +236,9 @@ export interface WordTransformTestingAPI {
 }
 
 /**
- * WordTransform component that orchestrates the animation sequence between a misspelled
- * word and its correct spelling using Letter components.
+ * Main component that animates the transformation from a misspelled word to its correct spelling
  */
-const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformProps>(({
+const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
   misspelling,
   correct,
   speedMultiplier = 1,
@@ -406,13 +405,13 @@ const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformPro
   }, [state.phase, state.editPlan, handlePhaseChange, onAnimationComplete]);
 
   // Start animation function
-  const startAnimation = () => {
+  const startAnimation = useCallback(() => {
     if (onAnimationStart) {
       onAnimationStart();
     }
     
     dispatch({ type: 'START_ANIMATION' });
-  };
+  }, [onAnimationStart]);
 
   // Callback handler for letter animation completions
   const handleLetterAnimationComplete = () => {
@@ -485,7 +484,8 @@ const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformPro
     state.sourceLetters, 
     state.targetLetters,
     state.completedAnimations,
-    state.totalAnimationsInPhase
+    state.totalAnimationsInPhase,
+    startAnimation
   ]);
 
   // Render letters based on current animation phase
@@ -577,9 +577,6 @@ const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformPro
                 
                 // For non-deleted letters, check if they're moved
                 const moveInfo = editPlan?.moves.find(m => m.fromIndex === index);
-                const animationState: LetterAnimationState = moveInfo
-                  ? 'movement'
-                  : 'normal';
                 
                 // Only animate letters that are actually moving
                 const shouldAnimate = !!moveInfo && state.isAnimating;
@@ -736,7 +733,7 @@ const WordTransform = React.forwardRef<WordTransformTestingAPI, WordTransformPro
   );
 });
 
-// Add display name for better debugging
+// Add displayName for better debugging in React DevTools
 WordTransform.displayName = 'WordTransform';
 
 export default WordTransform; 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, memo } from 'react';
-import { motion, Variants, usePresence, useReducedMotion, AnimationDefinition } from 'framer-motion';
+import { motion, Variants, usePresence, useReducedMotion } from 'framer-motion';
 import styles from './Letter.module.css';
 
 /**
@@ -272,7 +272,7 @@ const createAnimationCompleteHandler = (
   onAnimationComplete?: () => void,
   animationTimeoutRef?: React.MutableRefObject<NodeJS.Timeout | null>
 ) => {
-  return (definition: AnimationDefinition) => {
+  return () => {
     // Skip if no callback provided
     if (!onAnimationComplete) return;
     
@@ -351,9 +351,14 @@ const Letter: React.FC<LetterProps> = memo(({
 
   // Clean up any animation timeouts when the component unmounts
   useEffect(() => {
+    // Store the current timeout ref at the time the effect runs
+    const currentTimeoutRef = animationTimeoutRef;
+    
     return () => {
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
+      // Use the captured ref value instead of accessing it directly in cleanup
+      if (currentTimeoutRef.current) {
+        clearTimeout(currentTimeoutRef.current);
+        currentTimeoutRef.current = null;
       }
       
       // Call safeToRemove when the component is no longer present

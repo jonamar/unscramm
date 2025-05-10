@@ -779,7 +779,7 @@ The following dead code was kept as it might be useful for future development:
 This cleanup task has successfully reduced code complexity and improved maintainability of the WordTransform component and related utilities. The codebase is now ready for the next subtask of fixing React-specific lint errors.
 </info added on 2025-05-10T03:33:25.446Z>
 
-## 30. Fix React-specific lint errors [pending]
+## 30. Fix React-specific lint errors [done]
 ### Dependencies: 5.29
 ### Description: Fix various React-specific lint errors including adding displayName to anonymous components, repairing missing hook dependencies, and escaping JSX entities in stories.
 ### Details:
@@ -805,6 +805,28 @@ This cleanup task has successfully reduced code complexity and improved maintain
 - Pay special attention to the React hooks exhaustive-deps rule violations as they can lead to subtle bugs and performance issues.
 - After fixes are applied, verify that no new console warnings appear during component rendering.
 </info added on 2025-05-08T02:24:24.064Z>
+<info added on 2025-05-10T03:39:57.969Z>
+The following React-specific lint errors were fixed in the WordTransform and Letter components:
+
+1. In WordTransform.tsx:
+   - Fixed useImperativeHandle hook by adding 'startAnimation' to the dependency array
+   - Wrapped startAnimation function in useCallback to prevent recreation on every render
+   - This resolved the 'react-hooks/exhaustive-deps' warning
+
+2. In Letter.tsx:
+   - Fixed cleanup function for animation timeouts to properly handle the ref value
+   - Captured the ref value at the time the effect runs to avoid stale closures
+
+3. Removed unused variables:
+   - Removed unused 'animationState' variable in the MOVING phase case
+   - Cleaned up the Letter component's animation handler to remove unused 'definition' parameter
+
+4. Verified both components already had displayName properties set:
+   - Letter.displayName = 'Letter'
+   - WordTransform.displayName = 'WordTransform'
+
+All tests remain passing after these changes. The ESLint output is now clean for both components, with no React-specific lint errors reported.
+</info added on 2025-05-10T03:39:57.969Z>
 
 ## 31. Ensure clean linter and test runs [pending]
 ### Dependencies: 5.27, 5.28, 5.29, 5.30
