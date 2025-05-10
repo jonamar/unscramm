@@ -3,7 +3,7 @@
 # Status: done
 # Dependencies: None
 # Priority: high
-# Description: Resolve the Storybook startup failure by updating the configuration to use Vite instead of webpack5, ensuring compatibility with React 19 and the experimental-nextjs-vite framework for proper component visualization. Additionally, fix PostCSS configuration issues causing component rendering problems.
+# Description: Resolve the Storybook startup failure by updating the configuration to use Vite instead of webpack5, ensuring compatibility with React 19 and the experimental-nextjs-vite framework for proper component visualization. Additionally, fix PostCSS configuration issues causing component rendering problems by installing and properly configuring the dedicated @tailwindcss/postcss package.
 # Details:
 1. Document the current error message and Storybook version being used in the project.
 2. Identify the root cause: The configuration in `.storybook/main.ts` was using webpack5 as the builder, which is not compatible with React 19 and the experimental-nextjs-vite framework.
@@ -14,9 +14,22 @@
 4. Verify that the application is running correctly with the updated configuration.
 5. After fixing the Storybook startup issue, address the component rendering problem:
    - Identify the PostCSS configuration error causing infinite scrollers instead of proper component rendering
-   - Fix the `postcss.config.mjs` file by changing plugins from string format (`"@tailwindcss/postcss"`) to properly imported objects
-   - Ensure Tailwind CSS is correctly imported and configured
-6. Note that no additional dependencies need to be installed as the project is already using the experimental-nextjs-vite framework, which is compatible with React 19.
+   - The specific error message indicated: "[plugin:vite:css] looks like you're trying to use `tailwindcss` directly as a PostCSS plugin. The correct plugin has moved to a separate package..."
+   - Install the correct PostCSS plugin packages: `npm install -D @tailwindcss/postcss autoprefixer`
+   - Update the `postcss.config.mjs` file to use proper imports:
+     ```js
+     import tailwindcss from '@tailwindcss/postcss';
+     import autoprefixer from 'autoprefixer';
+     
+     export default {
+       plugins: [
+         tailwindcss,
+         autoprefixer,
+       ]
+     };
+     ```
+   - This change follows current best practices for using Tailwind CSS with PostCSS, requiring the dedicated `@tailwindcss/postcss` package rather than directly using `tailwindcss` as a plugin
+6. Note that no additional dependencies need to be installed for the Vite configuration as the project is already using the experimental-nextjs-vite framework, which is compatible with React 19.
 7. Document the changes made to both the Storybook and PostCSS configurations for future reference.
 8. Note that there are still some issues with the test runner, but these are related to the test-runner configuration rather than the core Storybook setup and would require a separate task.
 
@@ -33,6 +46,7 @@
 10. Document the resolution process and update the project's README or development setup guide with the new Vite configuration details and PostCSS configuration requirements.
 11. Create a small test story if needed to verify that new components can be properly added and visualized with correct styling.
 12. Note any test-runner issues encountered but do not attempt to fix them as part of this task.
+13. Specifically verify that the "Invalid PostCSS Plugin" error is resolved and no infinite scrolling indicators appear in Storybook.
 
 # Subtasks:
 ## 11.1. Fix Storybook configuration to use Vite instead of webpack5 [done]
@@ -62,6 +76,18 @@
 ## 13.3. Document configuration changes and verify component rendering [done]
 ### Dependencies: None
 ### Description: Document all changes made to both Storybook and PostCSS configurations, and verify that components now render correctly with proper CSS styling in Storybook.
+### Details:
+
+
+## 11.4. Install and configure dedicated @tailwindcss/postcss package [done]
+### Dependencies: None
+### Description: Install the correct PostCSS plugin packages (`npm install -D @tailwindcss/postcss autoprefixer`) and update the PostCSS configuration to use proper imports to resolve the "Invalid PostCSS Plugin" error that was causing infinite scrolling indicators.
+### Details:
+
+
+## 11.5. Verify fix for "Invalid PostCSS Plugin" error [done]
+### Dependencies: None
+### Description: Test the updated configuration to confirm that the "Invalid PostCSS Plugin" error is fully resolved and components display correctly without infinite scrolling indicators in Storybook.
 ### Details:
 
 
