@@ -759,6 +759,17 @@
       "priority": "low",
       "details": "Finalize the PWA implementation: 1) Complete the service worker configuration for offline capability, 2) Optimize the app manifest for proper installation experience, 3) Implement caching strategies for assets and dictionary data, 4) Add install prompts and offline indicators. Conduct comprehensive testing across multiple devices, browsers, and network conditions. Fix any issues found during testing. Prepare the application for deployment with proper build configuration and environment variables.",
       "testStrategy": "Test PWA features with Lighthouse. Verify offline functionality by testing with network throttling and airplane mode. Test installation process on various devices. Run the full Cypress E2E test suite. Conduct final manual QA across different viewports and devices."
+    },
+    {
+      "id": 11,
+      "title": "Fix Storybook Dependency Issue with Missing @storybook/builder-webpack5",
+      "description": "Resolve the Storybook startup failure by updating the configuration to use Vite instead of webpack5, ensuring compatibility with React 19 and the experimental-nextjs-vite framework for proper component visualization.",
+      "status": "done",
+      "dependencies": [],
+      "priority": "high",
+      "details": "1. Document the current error message and Storybook version being used in the project.\n2. Identify the root cause: The configuration in `.storybook/main.ts` was using webpack5 as the builder, which is not compatible with React 19 and the experimental-nextjs-vite framework.\n3. Modify the `.storybook/main.ts` file to:\n   - Remove the webpack5 builder configuration\n   - Add the Vite configuration with `disableTelemetry: true`\n   - Add a `viteFinal` function to extend Vite config if needed\n4. Verify that the application is running correctly with the updated configuration.\n5. Note that no additional dependencies need to be installed as the project is already using the experimental-nextjs-vite framework, which is compatible with React 19.\n6. Document the changes made to the configuration for future reference.\n7. Note that there are still some issues with the test runner, but these are related to the test-runner configuration rather than the core Storybook setup and would require a separate task.",
+      "testStrategy": "1. After implementing the changes, run the Storybook startup command (npm run storybook or yarn storybook) and verify it starts without dependency errors.\n2. Confirm that Storybook is properly using Vite instead of webpack5 in the startup logs.\n3. Verify that all existing stories load correctly in the Storybook interface.\n4. Test navigation between different component stories to ensure the UI is functioning properly.\n5. Check that component interactions (like button clicks, form inputs) work as expected within Storybook.\n6. Test Storybook in different browsers to ensure cross-browser compatibility.\n7. Verify that any addons previously used still function correctly.\n8. Have another team member clone the repository and start Storybook to confirm the fix works in a fresh environment.\n9. Document the resolution process and update the project's README or development setup guide with the new Vite configuration details.\n10. Create a small test story if needed to verify that new components can be properly added and visualized.\n11. Note any test-runner issues encountered but do not attempt to fix them as part of this task.",
+      "subtasks": []
     }
   ],
   "metadata": {

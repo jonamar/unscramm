@@ -19,15 +19,10 @@ const config: StorybookConfig = {
     "../public"
   ],
   "core": {
-    "builder": {
-      "name": "webpack5",
-      "options": {
-        "cache": {
-          "type": "filesystem",
-          "maxAge": 1209600000 // 14 days
-        }
-      }
-    }
+    "disableTelemetry": true
+  },
+  "viteFinal": (config) => {
+    return config;
   }
 };
 export default config;
