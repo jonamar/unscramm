@@ -16,7 +16,8 @@ export type WordTransformPhase = 'idle' | 'deleting' | 'moving' | 'inserting' | 
 export type WordTransformMachineEvent =
   | { type: 'START' }
   | { type: 'DONE_PHASE' }
-  | { type: 'RESET' };
+  | { type: 'RESET' }
+  | { type: 'RESTART' };
 
 /**
  * Context for the state machine
@@ -132,6 +133,10 @@ export const createWordTransformMachine = (input?: WordTransformSetupParams) => 
           RESET: {
             target: 'idle',
             actions: 'resetContext',
+          },
+          RESTART: {
+            target: 'idle',
+            // No need to reset context for replay - we want to keep the same edit plan
           },
         },
       },

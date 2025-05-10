@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { useMemo, useCallback, forwardRef, useImperativeHandle, useRef, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useMachine } from '@xstate/react';
 import Letter, { LetterAnimationState } from './Letter';
@@ -26,6 +26,8 @@ export interface WordTransformProps {
   onAnimationComplete?: () => void;
   /** Optional callback when animation phase changes */
   onPhaseChange?: (phase: WordTransformPhase) => void;
+  /** Optional callback when animation is restarted from complete state */
+  onRestart?: () => void;
   /** 
    * Flag to control behavior when props change during an animation:
    * - true (default): Cancel any in-flight animation and reset to IDLE state
@@ -57,6 +59,8 @@ export interface WordTransformTestingAPI {
   targetLetters: string[];
   /** Start the animation sequence */
   startAnimation: () => void;
+  /** Restart the animation from the complete state */
+  restartAnimation: () => void;
 }
 
 /**
@@ -72,6 +76,7 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
   onAnimationStart,
   onAnimationComplete,
   onPhaseChange,
+  onRestart,
   cancelOnPropsChange = true,
   debugMode = false
 }, ref) => {
@@ -102,6 +107,10 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
   // Track animation completed count for each phase
   const animationCountRef = useRef(0);
   const totalAnimationsRef = useRef(0);
+  
+  // Refs for the buttons to handle keyboard focus
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+  const restartButtonRef = useRef<HTMLButtonElement>(null);
 
   // Function to start the animation sequence
   const startAnimation = useCallback(() => {
@@ -110,9 +119,24 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
     }
     send({ type: 'START' });
   }, [send, onAnimationStart]);
+  
+  // Function to restart the animation from the complete phase
+  const restartAnimation = useCallback(() => {
+    if (onRestart) {
+      onRestart();
+    }
+    send({ type: 'RESTART' });
+    // After restarting, immediately start the animation again
+    setTimeout(() => {
+      send({ type: 'START' });
+      if (onAnimationStart) {
+        onAnimationStart();
+      }
+    }, 0);
+  }, [send, onRestart, onAnimationStart]);
 
   // Reset the animation when words change (if cancelOnPropsChange is true)
-  React.useEffect(() => {
+  useEffect(() => {
     if (cancelOnPropsChange) {
       send({ type: 'RESET' });
       animationCountRef.current = 0;
@@ -121,7 +145,7 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
   }, [misspelling, correct, cancelOnPropsChange, send]);
 
   // Call onPhaseChange when the state machine's state changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (onPhaseChange) {
       onPhaseChange(state.value as WordTransformPhase);
     }
@@ -140,6 +164,44 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
       onAnimationComplete();
     }
   }, [state.value, onPhaseChange, editPlan, onAnimationComplete]);
+  
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const currentPhase = state.value as WordTransformPhase;
+      
+      // Space or Enter key to trigger buttons
+      if (e.key === ' ' || e.key === 'Enter') {
+        if (currentPhase === 'idle' && document.activeElement === startButtonRef.current) {
+          startAnimation();
+          e.preventDefault();
+        } else if (currentPhase === 'complete' && document.activeElement === restartButtonRef.current) {
+          restartAnimation();
+          e.preventDefault();
+        }
+      }
+      
+      // Shortcut keys when no other element has focus
+      if (document.activeElement === document.body) {
+        // 'r' key to restart when in complete phase
+        if (e.key === 'r' && currentPhase === 'complete') {
+          restartAnimation();
+          e.preventDefault();
+        }
+        
+        // 's' key to start when in idle phase
+        if (e.key === 's' && currentPhase === 'idle') {
+          startAnimation();
+          e.preventDefault();
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [state.value, startAnimation, restartAnimation]);
 
   // Called when a letter animation completes
   const handleLetterAnimationComplete = useCallback(() => {
@@ -192,8 +254,9 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
     isAnimating: state.value !== 'idle' && state.value !== 'complete',
     sourceLetters,
     targetLetters,
-    startAnimation
-  }), [state.value, editPlan, sourceLetters, targetLetters, startAnimation]);
+    startAnimation,
+    restartAnimation
+  }), [state.value, editPlan, sourceLetters, targetLetters, startAnimation, restartAnimation]);
   
   // Track the active letter arrays for the current phase
   const renderableLetters = useMemo(() => {
@@ -282,8 +345,36 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
           className={styles.startButton}
           onClick={startAnimation}
           data-testid="start-animation-button"
+          ref={startButtonRef}
+          aria-label="Start animation"
         >
           Start Animation
+        </button>
+      )}
+      
+      {currentPhase === 'complete' && (
+        <button 
+          className={styles.restartButton}
+          onClick={restartAnimation}
+          data-testid="restart-animation-button"
+          ref={restartButtonRef}
+          aria-label="Restart animation"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24" 
+            width="24" 
+            height="24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M3 2v6h6"></path>
+            <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
+          </svg>
+          Replay
         </button>
       )}
       

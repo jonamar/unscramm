@@ -70,6 +70,57 @@
   outline-offset: 2px;
 }
 
+.startButton {
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 1rem;
+}
+
+.startButton:hover {
+  background-color: #303f9f;
+}
+
+.startButton:focus {
+  outline: 2px solid #7986cb;
+  outline-offset: 2px;
+}
+
+.restartButton {
+  background-color: #8bc34a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.restartButton:hover {
+  background-color: #689f38;
+  transform: scale(1.05);
+}
+
+.restartButton:focus {
+  outline: 2px solid #aed581;
+  outline-offset: 2px;
+}
+
+.restartButton svg {
+  margin-right: 0.5rem;
+  font-size: 1.2rem;
+}
+
 .debugInfo {
   font-size: 0.85rem;
   color: #757575;

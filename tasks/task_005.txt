@@ -550,7 +550,7 @@ This is a medium-high priority issue as it directly impacts the user experience.
 This accessibility feature should be prioritized as medium-high importance since it provides critical context for users with visual impairments. Without these announcements, users relying on screen readers would miss the visual transformations happening in the component, creating a significant accessibility gap. This implementation directly supports WCAG 2.1 Success Criterion 4.1.3 (Status Messages) which requires that status messages can be programmatically determined so they can be presented to users of assistive technologies without receiving focus.
 </info added on 2025-05-08T02:18:27.262Z>
 
-## 19. Implement restart/replay functionality [pending]
+## 19. Implement restart/replay functionality [done]
 ### Dependencies: 5.3, 5.31
 ### Description: Add the ability to restart or replay the same transformation after reaching the COMPLETE phase, as required by the spec.
 ### Details:
@@ -574,6 +574,56 @@ This accessibility feature should be prioritized as medium-high importance since
 
 This is a core feature required by the specification, not an optional enhancement or bug fix. The restart functionality is essential for the WordTransform component's complete operation and user experience. Implementation should be prioritized accordingly.
 </info added on 2025-05-08T02:18:14.468Z>
+<info added on 2025-05-10T19:49:28.882Z>
+- Add a RESTART action to the WordTransform reducer.
+- Implement a restart button that appears in the COMPLETE phase.
+- Update the machine to allow transitions from COMPLETE back to IDLE.
+- Ensure the edit plan is preserved for replay without recalculation.
+- Add a callback prop for onRestart to notify parent components.
+- Style the restart button to match the application design.
+- Add keyboard support for the restart functionality (e.g., spacebar or Enter key).
+- Test that animations work correctly when replayed multiple times.
+<info added on 2025-05-08T02:18:14.468Z>
+- Add a RESTART action to the WordTransform reducer.
+- Implement a restart button that appears in the COMPLETE phase.
+- Update the machine to allow transitions from COMPLETE back to IDLE.
+- Ensure the edit plan is preserved for replay without recalculation.
+- Add a callback prop for onRestart to notify parent components.
+- Style the restart button to match the application design.
+- Add keyboard support for the restart functionality (e.g., spacebar or Enter key).
+- Test that animations work correctly when replayed multiple times.
+
+This is a core feature required by the specification, not an optional enhancement or bug fix. The restart functionality is essential for the WordTransform component's complete operation and user experience. Implementation should be prioritized accordingly.
+</info added on 2025-05-08T02:18:14.468Z>
+
+Implementation of the restart/replay functionality has been completed with the following features:
+
+1. State Machine Extensions:
+   - Added RESTART event type to WordTransformMachine
+   - Implemented transition from COMPLETE to IDLE state that preserves context
+   - Successfully maintained the edit plan during restart to avoid recalculation
+
+2. Component Updates:
+   - Added onRestart callback prop to WordTransformFSM for parent notification
+   - Implemented restartAnimation method that dispatches RESTART event
+   - Added a green Replay button with arrow icon that appears only in COMPLETE phase
+   - Implemented keyboard shortcuts: 'r' for restart and 's' for start
+   - Added proper focus management and accessibility attributes
+
+3. UI Enhancements:
+   - Created distinctive green styling for the restart button
+   - Implemented hover and focus states for improved user experience
+   - Added visual arrow icon to indicate restart action
+
+4. Testing and Documentation:
+   - Created comprehensive test suite for restart functionality
+   - Verified callback behavior works as expected
+   - Confirmed keyboard shortcuts function properly
+   - Validated that edit plans are preserved during restart
+   - Added dedicated Storybook example demonstrating the restart functionality
+
+The implementation allows users to seamlessly replay animations after completion without manual intervention or state resets.
+</info added on 2025-05-10T19:49:28.882Z>
 
 ## 20. Make test hooks consistent across source and target letters [pending]
 ### Dependencies: 5.4, 5.7, 5.31

@@ -18,6 +18,7 @@ const meta: Meta<typeof WordTransformFSM> = {
     onAnimationStart: { action: 'animation started' },
     onAnimationComplete: { action: 'animation completed' },
     onPhaseChange: { action: 'phase changed' },
+    onRestart: { action: 'animation restarted' },
   },
 };
 
@@ -98,6 +99,24 @@ export const MoreComplexTransformation: Story = {
     colorsEnabled: true,
     debugMode: true,
     cancelOnPropsChange: true,
+  },
+};
+
+export const WithRestartFunctionality: Story = {
+  args: {
+    misspelling: 'cofee',
+    correct: 'coffee',
+    speedMultiplier: 1,
+    colorsEnabled: true,
+    debugMode: true,
+    cancelOnPropsChange: true,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'This example demonstrates the restart functionality. After the animation completes, a "Replay" button appears that allows restarting the animation. You can also press the "r" key to restart when the animation is complete.',
+      },
+    },
   },
 };
 
