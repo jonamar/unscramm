@@ -1,0 +1,10 @@
+---
+description: Guidelines for managing port assignments and preventing conflicts in development servers
+globs: package.json,.env.ports,scripts/check-and-run.*,scripts/ports.js,scripts/check-ports.js
+alwaysApply: false
+---
+# Port Management Guidelines
+
+## Overview
+
+The project includes a comprehensive port management system to prevent conflicts between development services and protect system-critical ports.
