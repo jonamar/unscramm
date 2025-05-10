@@ -422,7 +422,7 @@
             "5.31"
           ],
           "details": "Create src/components/wordTransform.machine.ts with XState defining five states: idle, deleting, moving, inserting, and complete. Include context to track deletion/move/insertion counts. Define events (START, DONE_PHASE, RESET) that trigger transitions between states. Implement logic to skip phases with zero-length operations. Ensure the machine handles the complete animation lifecycle and can be reset.",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Write pure Jest tests for the state machine that assert correct state transitions, verify phase skipping for zero-length operations, and validate context updates during transitions. Test all possible paths through the state machine."
         },
         {
