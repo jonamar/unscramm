@@ -1,11 +1,61 @@
 # Task ID: 7
 # Title: Integrate components into main application page
-# Status: pending
-# Dependencies: 5, 6
+# Status: in-progress
+# Dependencies: 5, 6, 13
 # Priority: high
 # Description: Assemble the core components into the main application page with proper layout and state management.
 # Details:
-Create the main application page that integrates the WordTransform and Controls components. Implement state management to handle user inputs, animation control, and word pair management. Connect the Controls component to the WordTransform component so user actions trigger appropriate animations. Implement the key user flows described in the PRD: 1) Manual word entry, 2) Shuffle functionality, 3) Play/Reset controls, 4) Speed adjustment. Ensure the layout is responsive according to the breakpoints in styleguide.md.
+This task is a critical blocker preventing a working application. The current page.tsx is just a static placeholder with hardcoded inputs and 'Animation will appear here' text. The sophisticated components built in Tasks 5 & 6 are not being used in the running application. You need to replace the placeholder with a fully functional integration of all components.
 
 # Test Strategy:
 Test the integrated application with end-to-end tests using Cypress. Verify all user flows work correctly. Test responsive behavior across different viewport sizes. Check that state is properly managed between components.
+
+# Subtasks:
+## 7.1. Replace placeholder page.tsx with component integration [pending]
+### Dependencies: None
+### Description: Remove the static placeholder content and import the WordTransform and Controls components. Set up the basic layout structure according to the design.
+### Details:
+
+
+## 7.2. Implement state management [pending]
+### Dependencies: None
+### Description: Create state management to connect the Controls and WordTransform components. This should include state for: current word pair, animation status (playing/paused), animation speed, and any other required states from the PRD.
+### Details:
+
+
+## 7.3. Implement manual word entry flow [pending]
+### Dependencies: None
+### Description: Connect the word input fields from Controls to the state management. Ensure that when users enter new words, the WordTransform component updates accordingly.
+### Details:
+
+
+## 7.4. Implement shuffle functionality [pending]
+### Dependencies: None
+### Description: Connect the shuffle button from Controls to generate random word pairs and update the WordTransform component. Ensure the animation resets when new words are shuffled.
+### Details:
+
+
+## 7.5. Implement play/reset controls [pending]
+### Dependencies: None
+### Description: Connect the play/pause and reset buttons to control the animation state in the WordTransform component. Ensure proper state transitions between playing, paused, and reset states.
+### Details:
+
+
+## 7.6. Implement speed adjustment [pending]
+### Dependencies: None
+### Description: Connect the speed control slider to adjust the animation speed in the WordTransform component. Test different speed settings to ensure smooth transitions.
+### Details:
+
+
+## 7.7. Implement responsive layout [pending]
+### Dependencies: None
+### Description: Apply responsive styling according to the breakpoints defined in styleguide.md. Test the layout at different viewport sizes to ensure proper component arrangement and scaling.
+### Details:
+
+
+## 7.8. Write end-to-end tests [pending]
+### Dependencies: None
+### Description: Create Cypress tests that verify all user flows: manual word entry, shuffle functionality, play/reset controls, and speed adjustment. Test that components interact correctly and state is properly managed.
+### Details:
+
+

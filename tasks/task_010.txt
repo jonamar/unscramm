@@ -1,7 +1,7 @@
 # Task ID: 10
 # Title: Finalize PWA features and conduct comprehensive testing
 # Status: pending
-# Dependencies: 8, 9
+# Dependencies: 8, 9, 15
 # Priority: low
 # Description: Complete the PWA implementation and conduct thorough testing across devices, browsers, and network conditions.
 # Details:

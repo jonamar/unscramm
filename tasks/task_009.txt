@@ -1,7 +1,7 @@
 # Task ID: 9
 # Title: Optimize performance and animation timing
 # Status: pending
-# Dependencies: 7
+# Dependencies: 7, 14
 # Priority: medium
 # Description: Optimize the application to ensure animations start within 50ms of user action and run smoothly across devices.
 # Details:

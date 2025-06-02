@@ -1,7 +1,7 @@
 # Task ID: 8
 # Title: Implement accessibility features
 # Status: pending
-# Dependencies: 7
+# Dependencies: 7, 14
 # Priority: medium
 # Description: Enhance the application with accessibility features to meet WCAG standards and support diverse users.
 # Details:

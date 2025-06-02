@@ -326,7 +326,7 @@
       "id": 5,
       "title": "Implement WordTransform component",
       "description": "Create the WordTransform component that orchestrates the full animation sequence using the Letter components.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [
         2,
         4
@@ -384,7 +384,7 @@
             "5.31"
           ],
           "details": "Decide and implement behavior for when props change mid-animation (restart, complete current animation first, etc.). Add a reset function to cleanly restart animations when words change. Implement memoization using useMemo and useCallback to prevent unnecessary re-renders. Add optional callback props for animation events (onAnimationStart, onPhaseChange, onAnimationComplete). Ensure smooth transitions between all animation phases with no visual glitches. Add final polish including accessibility attributes and responsive behavior.\n<info added on 2025-05-08T02:22:58.503Z>\nDecide and implement behavior for when props change mid-animation (restart, complete current animation first, etc.). Add a reset function to cleanly restart animations when words change. Implement memoization using useMemo and useCallback to prevent unnecessary re-renders. Add optional callback props for animation events (onAnimationStart, onPhaseChange, onAnimationComplete). Ensure smooth transitions between all animation phases with no visual glitches. Add final polish including accessibility attributes and responsive behavior.\n\nBefore implementing these performance optimizations, ensure that all code quality subtasks (5.27-5.31) are completed. These code improvements will establish a solid foundation for the performance work and ensure that the component follows best practices. Once the code quality improvements are in place, proceed with the prop change handling and performance optimizations as outlined above.\n</info added on 2025-05-08T02:22:58.503Z>",
-          "status": "pending",
+          "status": "deferred",
           "testStrategy": "Test the component's behavior when props change during animation. Measure and verify performance using React DevTools. Test with various word lengths to ensure the component handles different scenarios efficiently."
         },
         {
@@ -399,7 +399,7 @@
             "5.31"
           ],
           "details": "Create a set of CSS variables in the component's stylesheet for different animation durations and delays (e.g., --deletion-duration, --movement-duration, --insertion-duration). Implement a mechanism to modify these CSS variables based on the speedMultiplier prop. Use React's useRef to access the component's DOM element and update CSS variables programmatically. Ensure all animations reference these variables instead of hardcoded timing values. Add a helper function to calculate and update all timing variables when the speed multiplier changes.",
-          "status": "pending",
+          "status": "deferred",
           "testStrategy": "Test that CSS variables are correctly set based on the speedMultiplier prop. Verify that animations respond appropriately to changes in the speed multiplier. Check that all animations use the CSS variables rather than hardcoded values."
         },
         {
@@ -511,7 +511,7 @@
           "title": "Fix CSS variable lookup for per-component overrides",
           "description": "Fix the issue where CSS variable lookups read from document.documentElement instead of the component's own .wordTransform element, missing per-component overrides.",
           "details": "- Update CSS variable lookup to use getComputedStyle on the component's own element.\n- Use useRef to track the component's DOM element.\n- Apply the CSS variables directly to the .wordTransform element instead of relying on global variables.\n- Ensure speedMultiplier prop correctly modifies component-level CSS variables.\n- Add support for CSS variable customization via className props.\n- Update test cases to verify CSS variable overrides are correctly applied.\n- Document the CSS variable customization approach in comments.",
-          "status": "pending",
+          "status": "deferred",
           "dependencies": [
             "5.6"
           ],
@@ -533,7 +533,7 @@
           "title": "Add ARIA live region for phase changes",
           "description": "Implement an ARIA live region to announce high-level phase transitions (e.g. \"Deleting 3 letters…\"), improving accessibility beyond individual letter roles. [Updated: 5/7/2025]",
           "details": "- Add an ARIA live region to the WordTransform component.\n- Create informative messages for each animation phase (e.g., \"Deleting 3 letters\", \"Moving 2 letters\", \"Adding 1 letter\").\n- Update the phase change logic to announce appropriate messages.\n- Ensure proper aria-live attribute settings (polite for non-critical updates).\n- Respect user preferences for verbosity and reduced motion.\n- Add internationalization support for the announcement messages.\n- Test with screen readers to verify proper announcements.\n<info added on 2025-05-08T02:18:27.262Z>\n- Add an ARIA live region to the WordTransform component.\n- Create informative messages for each animation phase (e.g., \\\"Deleting 3 letters\\\", \\\"Moving 2 letters\\\", \\\"Adding 1 letter\\\").\n- Update the phase change logic to announce appropriate messages.\n- Ensure proper aria-live attribute settings (polite for non-critical updates).\n- Respect user preferences for verbosity and reduced motion.\n- Add internationalization support for the announcement messages.\n- Test with screen readers to verify proper announcements.\n\nThis accessibility feature should be prioritized as medium-high importance since it provides critical context for users with visual impairments. Without these announcements, users relying on screen readers would miss the visual transformations happening in the component, creating a significant accessibility gap. This implementation directly supports WCAG 2.1 Success Criterion 4.1.3 (Status Messages) which requires that status messages can be programmatically determined so they can be presented to users of assistive technologies without receiving focus.\n</info added on 2025-05-08T02:18:27.262Z>",
-          "status": "pending",
+          "status": "deferred",
           "dependencies": [
             "5.3",
             "5.7",
@@ -558,7 +558,7 @@
           "title": "Make test hooks consistent across source and target letters",
           "description": "Fix inconsistency where data-extended-state is added on source letters but insertion/movement states and data-indices aren't exposed on target letters in the same way.",
           "details": "- Create a helper function to generate consistent data attributes for both source and target letters.\n- Ensure data-extended-state, data-index, and other attributes are applied consistently.\n- Add the missing data-indices on target letters to match source letters.\n- Ensure insertion/movement states are properly exposed on target letters.\n- Document the test hook attributes in component comments.\n- Add test cases to verify consistency of data attributes.\n- Create a comprehensive testing guide for QA to understand available hooks.",
-          "status": "pending",
+          "status": "deferred",
           "dependencies": [
             "5.4",
             "5.7",
@@ -583,7 +583,7 @@
           "title": "Lift phaseConfig out of effect for better performance",
           "description": "Move the phaseConfig map outside of the effect to avoid re-creating it on every phase change, improving performance.",
           "details": "- Move the phaseConfig map outside of the useEffect hook.\n- Define it once at the component level or in a useMemo with minimal dependencies.\n- Ensure the configuration is properly typed with TypeScript.\n- Update all references to the phaseConfig in the effect.\n- Modify any dynamic aspects of the configuration to work with this new structure.\n- Test performance with React DevTools profiler before and after the change.\n- Document the performance optimization in comments.",
-          "status": "pending",
+          "status": "done",
           "dependencies": [
             "5.3",
             "5.31"
@@ -595,7 +595,7 @@
           "title": "Unify animation duration values",
           "description": "Unify duration values by reading from CSS variables via getComputedStyle instead of hard-coding base values in createLetterVariants.",
           "details": "- Update createLetterVariants to read duration values from CSS variables using getComputedStyle.\n- Set up a mechanism to pass the container element to Letter components.\n- Remove hardcoded duration values from Letter component variants.\n- Ensure CSS variables are properly defined and accessible.\n- Synchronize the duration values between CSS and JS.\n- Add fallback values for when CSS variables aren't available.\n- Test performance with this approach to ensure smooth animations.",
-          "status": "pending",
+          "status": "deferred",
           "dependencies": [
             "5.4",
             "5.6",
@@ -608,7 +608,7 @@
           "title": "Cache callbacks with useCallback for reduced re-renders",
           "description": "Wrap startAnimation, handleLetterAnimationComplete in useCallback to reduce re-renders in deeply nested letter lists.",
           "details": "- Implement useCallback for all event handler functions in WordTransform.\n- Carefully define dependency arrays to avoid stale closures.\n- Apply to startAnimation, handleLetterAnimationComplete, and other handler functions.\n- Test render performance with React DevTools profiler.\n- Compare re-render counts before and after the optimization.\n- Use React.memo on Letter component to maximize the benefit.\n- Document optimization techniques in component comments.",
-          "status": "pending",
+          "status": "deferred",
           "dependencies": [
             "5.3",
             "5.31"
@@ -620,7 +620,7 @@
           "title": "Simplify reducer types with discriminated union",
           "description": "Convert AnimationAction union into a proper TypeScript discriminated union to remove duplicated type fields and improve compile-time safety.",
           "details": "- Refactor AnimationAction to use a discriminated union pattern with a 'type' property.\n- Remove redundant type fields from action interfaces.\n- Update the reducer to use the new type pattern for cleaner switch statements.\n- Add exhaustiveness checking using TypeScript's never type.\n- Ensure strict type checking for all action handlers.\n- Update all action creators to match the new type format.\n- Improve error messages for invalid state transitions.",
-          "status": "pending",
+          "status": "deferred",
           "dependencies": [
             "5.3",
             "5.31"
@@ -632,7 +632,7 @@
           "title": "Centralize test hooks with a helper function",
           "description": "Create a helper function that generates consistent data-testid, data-state, and data-index attributes for both source and target letters.",
           "details": "- Create a centralized helper function like getLetterTestProps(letter, index, phase, state).\n- Use this helper consistently for both source and target letters.\n- Return all necessary test attributes in a standard format.\n- Apply these attributes in a consistent manner for both letter types.\n- Document the available test hooks for QA team reference.\n- Add test cases to verify consistent attribute application.\n- Create a type definition for the helper function return value.",
-          "status": "pending",
+          "status": "deferred",
           "dependencies": [
             "5.7",
             "5.20",
@@ -764,14 +764,65 @@
       "id": 7,
       "title": "Integrate components into main application page",
       "description": "Assemble the core components into the main application page with proper layout and state management.",
-      "status": "pending",
+      "status": "in-progress",
       "dependencies": [
         5,
-        6
+        6,
+        "13"
       ],
       "priority": "high",
-      "details": "Create the main application page that integrates the WordTransform and Controls components. Implement state management to handle user inputs, animation control, and word pair management. Connect the Controls component to the WordTransform component so user actions trigger appropriate animations. Implement the key user flows described in the PRD: 1) Manual word entry, 2) Shuffle functionality, 3) Play/Reset controls, 4) Speed adjustment. Ensure the layout is responsive according to the breakpoints in styleguide.md.",
-      "testStrategy": "Test the integrated application with end-to-end tests using Cypress. Verify all user flows work correctly. Test responsive behavior across different viewport sizes. Check that state is properly managed between components."
+      "details": "This task is a critical blocker preventing a working application. The current page.tsx is just a static placeholder with hardcoded inputs and 'Animation will appear here' text. The sophisticated components built in Tasks 5 & 6 are not being used in the running application. You need to replace the placeholder with a fully functional integration of all components.",
+      "testStrategy": "Test the integrated application with end-to-end tests using Cypress. Verify all user flows work correctly. Test responsive behavior across different viewport sizes. Check that state is properly managed between components.",
+      "subtasks": [
+        {
+          "id": "7.1",
+          "title": "Replace placeholder page.tsx with component integration",
+          "description": "Remove the static placeholder content and import the WordTransform and Controls components. Set up the basic layout structure according to the design.",
+          "status": "pending"
+        },
+        {
+          "id": "7.2",
+          "title": "Implement state management",
+          "description": "Create state management to connect the Controls and WordTransform components. This should include state for: current word pair, animation status (playing/paused), animation speed, and any other required states from the PRD.",
+          "status": "pending"
+        },
+        {
+          "id": "7.3",
+          "title": "Implement manual word entry flow",
+          "description": "Connect the word input fields from Controls to the state management. Ensure that when users enter new words, the WordTransform component updates accordingly.",
+          "status": "pending"
+        },
+        {
+          "id": "7.4",
+          "title": "Implement shuffle functionality",
+          "description": "Connect the shuffle button from Controls to generate random word pairs and update the WordTransform component. Ensure the animation resets when new words are shuffled.",
+          "status": "pending"
+        },
+        {
+          "id": "7.5",
+          "title": "Implement play/reset controls",
+          "description": "Connect the play/pause and reset buttons to control the animation state in the WordTransform component. Ensure proper state transitions between playing, paused, and reset states.",
+          "status": "pending"
+        },
+        {
+          "id": "7.6",
+          "title": "Implement speed adjustment",
+          "description": "Connect the speed control slider to adjust the animation speed in the WordTransform component. Test different speed settings to ensure smooth transitions.",
+          "status": "pending"
+        },
+        {
+          "id": "7.7",
+          "title": "Implement responsive layout",
+          "description": "Apply responsive styling according to the breakpoints defined in styleguide.md. Test the layout at different viewport sizes to ensure proper component arrangement and scaling.",
+          "status": "pending"
+        },
+        {
+          "id": "7.8",
+          "title": "Write end-to-end tests",
+          "description": "Create Cypress tests that verify all user flows: manual word entry, shuffle functionality, play/reset controls, and speed adjustment. Test that components interact correctly and state is properly managed.",
+          "status": "pending"
+        }
+      ]
     },
     {
       "id": 8,
@@ -779,7 +830,8 @@
       "description": "Enhance the application with accessibility features to meet WCAG standards and support diverse users.",
       "status": "pending",
       "dependencies": [
-        7
+        7,
+        "14"
       ],
       "priority": "medium",
       "details": "Implement accessibility features throughout the application: 1) Ensure proper keyboard navigation and focus management, 2) Add ARIA attributes to all interactive elements, 3) Implement color-blind friendly palettes as alternative themes, 4) Add screen reader support with descriptive text for animations, 5) Ensure sufficient color contrast according to WCAG standards, 6) Add skip-to-content links and proper heading hierarchy. Test with screen readers and keyboard-only navigation.",
@@ -791,7 +843,8 @@
       "description": "Optimize the application to ensure animations start within 50ms of user action and run smoothly across devices.",
       "status": "pending",
       "dependencies": [
-        7
+        7,
+        "14"
       ],
       "priority": "medium",
       "details": "Implement performance optimizations to meet the 50ms animation start requirement: 1) Use React.memo and useMemo for expensive computations, 2) Implement code-splitting with Next.js dynamic imports, 3) Optimize the animation algorithms for efficiency, 4) Add debouncing to user inputs, 5) Implement proper loading states and feedback, 6) Use the React Profiler to identify and fix performance bottlenecks. Benchmark animation start times and optimize until the 50ms requirement is consistently met.",
@@ -804,7 +857,8 @@
       "status": "pending",
       "dependencies": [
         8,
-        9
+        9,
+        "15"
       ],
       "priority": "low",
       "details": "Finalize the PWA implementation: 1) Complete the service worker configuration for offline capability, 2) Optimize the app manifest for proper installation experience, 3) Implement caching strategies for assets and dictionary data, 4) Add install prompts and offline indicators. Conduct comprehensive testing across multiple devices, browsers, and network conditions. Fix any issues found during testing. Prepare the application for deployment with proper build configuration and environment variables.",
@@ -881,6 +935,46 @@
       "status": "done",
       "dependencies": [],
       "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 13,
+      "title": "Fix LocalWordPairService Dictionary Loading Issues",
+      "description": "Resolve the path resolution and loading issues in the LocalWordPairService that prevent proper access to the wordPairs.json dictionary file in both development and production environments.",
+      "details": "1. Investigate the current implementation of LocalWordPairService to identify the root cause of the \"Failed to load word pairs dictionary: Not Found\" errors.\n\n2. Fix the path resolution issue:\n   - Update the service to correctly reference the dictionary file at `public/data/wordPairs.json` instead of `/data/wordPairs.json`\n   - Implement proper path resolution that works across different environments (development, testing, production)\n   - Consider using Next.js's built-in public folder handling for static assets\n\n3. Implement robust error handling:\n   - Add proper error catching and logging for dictionary loading failures\n   - Implement a fallback mechanism (e.g., default word pairs) in case the dictionary cannot be loaded\n   - Add retry logic if appropriate\n\n4. Update the fetch mechanism:\n   - Use the appropriate Next.js methods for accessing static files\n   - Ensure the fetch is compatible with both client and server-side rendering scenarios\n   - Consider caching strategies to improve performance\n\n5. Refactor the service to handle different environments:\n   - Add environment detection to adjust paths if needed\n   - Ensure the service works in both development and production builds\n   - Document any environment-specific considerations\n\n6. Update any related components or services that might be affected by these changes\n   - Ensure the shuffle functionality properly integrates with the fixed service\n   - Verify that all consumers of the WordPairService interface still work correctly",
+      "testStrategy": "1. Unit Tests:\n   - Create unit tests for the LocalWordPairService that verify it can load the dictionary file\n   - Test error handling by simulating missing or corrupted dictionary files\n   - Verify that the service correctly parses and returns word pairs from the dictionary\n\n2. Integration Tests:\n   - Test the integration between the LocalWordPairService and components that use it\n   - Verify that the shuffle functionality works correctly with the loaded dictionary\n   - Test the service in different rendering contexts (SSR, CSR, etc.)\n\n3. Environment Testing:\n   - Test the service in development environment using `npm run dev`\n   - Test in a production-like environment using `npm run build` followed by `npm run start`\n   - Verify dictionary loading works in both environments\n\n4. Error Scenario Testing:\n   - Test recovery from network failures\n   - Test behavior when the dictionary file is missing or malformed\n   - Verify appropriate error messages are displayed to users\n\n5. Manual Verification:\n   - Check browser console for any loading errors related to the dictionary\n   - Verify the shuffle functionality works end-to-end in the application\n   - Test on different browsers to ensure cross-browser compatibility\n\n6. Performance Testing:\n   - Measure and verify that dictionary loading doesn't impact application startup time\n   - Check that caching mechanisms work as expected",
+      "status": "pending",
+      "dependencies": [
+        3
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 14,
+      "title": "Implement Visual Design from Styleguide",
+      "description": "Apply the proper visual design from styleguide.md to the main application, replacing generic Tailwind classes with the specific design specifications defined in design_guidelines/styleguide.md.",
+      "details": "This task involves implementing the sophisticated neumorphic design specified in the styleguide throughout the application:\n\n1. Color Palette Implementation:\n   - Replace current dark theme with the specific color palette (#111 for background, #181818 for panels)\n   - Create CSS variables for all colors defined in the styleguide for consistent usage\n   - Apply proper color contrasts for accessibility compliance\n\n2. Typography Integration:\n   - Import and configure Istok Web font family (regular, bold, italic variants)\n   - Set up proper font sizing hierarchy as specified in the styleguide\n   - Implement consistent line heights and letter spacing\n   - Create typography utility classes for reuse across components\n\n3. Neumorphic Button Styling:\n   - Replace generic button styles with the neumorphic design\n   - Implement proper shadow effects (inner and outer shadows)\n   - Add hover, active, and focus states with appropriate transitions\n   - Ensure buttons maintain accessibility standards with proper contrast\n\n4. Input Panel Styling:\n   - Apply the specified shadow effects and border treatments\n   - Implement focus states with appropriate visual feedback\n   - Ensure proper padding and spacing within input components\n   - Add any specified animations or transitions for interaction states\n\n5. Layout Implementation:\n   - Enforce 600px max-width constraint for the main content area\n   - Create a centered layout with proper margins\n   - Implement proper spacing between components according to the styleguide\n   - Ensure consistent padding and margin usage throughout the application\n\n6. Responsive Design Implementation:\n   - Configure the breakpoints specified in the styleguide\n   - Test and adjust layouts for each breakpoint\n   - Implement any specific mobile/tablet adaptations mentioned in the styleguide\n   - Ensure touch targets are appropriately sized on mobile devices\n\n7. Create a theme.css or equivalent file that centralizes all design tokens and can be imported globally\n   - Document usage patterns for the design system\n   - Create reusable utility classes for common design patterns\n\n8. Update all existing components to use the new styling:\n   - WordTransform component\n   - Controls component\n   - Letter component\n   - Main application page\n\nThe implementation should maintain all existing functionality while enhancing the visual appearance to match the specified design.",
+      "testStrategy": "1. Visual Inspection:\n   - Compare the implemented design against the styleguide.md specifications\n   - Verify all color values match exactly using browser developer tools\n   - Confirm typography settings (font family, sizes, weights) match the specifications\n   - Validate that neumorphic effects are properly implemented on buttons and panels\n\n2. Responsive Testing:\n   - Test the application at each breakpoint specified in the styleguide\n   - Verify the layout maintains 600px max-width and centers appropriately\n   - Confirm the design adapts correctly at mobile breakpoints\n   - Test on actual devices (phones, tablets) if possible\n\n3. Accessibility Verification:\n   - Run automated accessibility tests to ensure contrast ratios meet WCAG standards\n   - Verify that focus states are clearly visible for keyboard navigation\n   - Test with screen readers to ensure the enhanced styling doesn't impact accessibility\n   - Validate that interactive elements maintain proper touch/click targets\n\n4. Cross-browser Testing:\n   - Verify the design renders consistently across Chrome, Firefox, Safari, and Edge\n   - Check that neumorphic effects and shadows render properly in all supported browsers\n   - Test on both Windows and macOS to ensure font rendering is consistent\n\n5. Performance Testing:\n   - Measure and compare page load times before and after styling changes\n   - Verify that animations and transitions maintain 60fps performance\n   - Check for any CSS bloat or unnecessary style duplication\n\n6. Code Review:\n   - Verify CSS organization follows best practices\n   - Confirm the use of variables/tokens for consistent styling\n   - Check that the implementation uses the most efficient selectors\n   - Ensure no inline styles are used that would override the design system\n\n7. User Testing:\n   - Gather feedback on the new design implementation\n   - Verify that users can still easily interact with all controls\n   - Confirm the design enhances rather than detracts from usability",
+      "status": "pending",
+      "dependencies": [
+        7
+      ],
+      "priority": "medium",
+      "subtasks": []
+    },
+    {
+      "id": 15,
+      "title": "Implement Full PWA Functionality",
+      "description": "Enhance the application with complete Progressive Web App (PWA) capabilities including proper manifest, service worker for offline functionality, and install prompt integration.",
+      "details": "This task involves upgrading the current basic service worker implementation to a fully-featured PWA as specified in the PRD:\n\n1. Web App Manifest Configuration:\n   - Create/update manifest.json with proper app name, short_name, description\n   - Add complete icon set (192x192, 512x512, maskable icons) in PNG format\n   - Configure theme_color and background_color to match the application's design system\n   - Set appropriate display mode (standalone) and orientation preferences\n   - Include scope and start_url properties\n\n2. Service Worker Enhancement:\n   - Implement proper caching strategies using Workbox or similar library\n   - Configure precaching for critical assets (HTML, CSS, JS, fonts, core images)\n   - Set up runtime caching with appropriate strategies for API calls\n   - Implement background sync for offline data submission\n   - Add proper error handling and fallbacks for offline scenarios\n\n3. Install Prompt Integration:\n   - Complete the implementation of InstallPrompt.tsx component\n   - Add logic to detect when the app is installable\n   - Implement proper timing for showing the install prompt (not immediate on first visit)\n   - Add analytics to track install rates and user engagement\n   - Ensure the prompt appears correctly on different browsers and devices\n\n4. Offline Functionality:\n   - Ensure the core spell-checking features work without internet connection\n   - Implement offline fallbacks for any network-dependent features\n   - Add clear user feedback about offline status\n   - Test data persistence between online/offline states\n\n5. PWA Metadata and Configuration:\n   - Add appropriate meta tags in HTML head for web app capability\n   - Configure apple-touch-icon and related iOS-specific metadata\n   - Add splash screen configurations for various devices\n   - Ensure proper favicon implementation across browsers\n\n6. Next.js Configuration:\n   - Update next.config.js with appropriate PWA plugin settings\n   - Configure proper asset caching and handling\n   - Ensure PWA assets are properly included in the build process\n\nThe implementation should follow best practices for PWAs and ensure a seamless user experience regardless of network connectivity.",
+      "testStrategy": "1. Manifest Validation:\n   - Use Chrome DevTools Application tab to verify manifest.json is properly loaded\n   - Validate manifest.json using the PWA Builder validator or similar tools\n   - Verify all required icons are present and properly sized\n   - Check that theme colors match the application design\n\n2. Service Worker Testing:\n   - Use Lighthouse in Chrome DevTools to run PWA audit\n   - Verify service worker registration in Application tab\n   - Test offline functionality by enabling \"Offline\" mode in DevTools\n   - Verify cached resources are being served when offline\n\n3. Install Prompt Testing:\n   - Test on multiple browsers (Chrome, Edge, Firefox, Safari)\n   - Verify install prompt appears appropriately on desktop and mobile\n   - Test the full installation flow on Android and iOS devices\n   - Verify installed app launches correctly with proper splash screen\n\n4. Offline Functionality Verification:\n   - Create a test checklist of core features that must work offline\n   - Disconnect from network and verify each feature works as expected\n   - Test transition between online and offline states\n   - Verify data persistence when going offline and back online\n\n5. Cross-Device Testing:\n   - Test on multiple device types (desktop, tablet, mobile)\n   - Verify PWA installation on Android and iOS devices\n   - Test on different screen sizes to ensure responsive behavior\n   - Verify splash screen appears correctly on mobile devices\n\n6. Performance Testing:\n   - Run Lighthouse PWA audit and achieve score of 90+ \n   - Measure and verify load time improvements with service worker\n   - Test startup time of installed PWA vs browser version\n   - Verify PWA size is reasonable for installation\n\nDocument all test results with screenshots and create a PWA compliance report.",
+      "status": "pending",
+      "dependencies": [
+        7,
+        14
+      ],
+      "priority": "medium",
       "subtasks": []
     }
   ],
