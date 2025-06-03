@@ -19,6 +19,7 @@
   --add-duration: 0.3s;
   --reorder-duration: 1s;
   --letter-shift-duration: 0.3s;
+  --exit-duration: 0.5s;
   
   /* Tailwind theme integration */
   --primary: #6366f1;

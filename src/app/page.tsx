@@ -1,9 +1,65 @@
 "use client";
 
+import React, { useState, useRef } from "react";
 import { InstallPrompt } from "../components/InstallPrompt";
+import WordTransform from "../components/WordTransform";
+import Controls from "../components/Controls";
+import { WordTransformTestingAPI } from "../components/WordTransform";
+import { WordPair } from "../services/wordPairService";
 import Image from "next/image";
 
 export default function Home() {
+  // State for managing the current word pair
+  const [currentWordPair, setCurrentWordPair] = useState<WordPair | undefined>();
+  
+  // State for animation controls
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [isShuffle, setIsShuffle] = useState(false);
+  
+  // Reference to the WordTransform component for programmatic control
+  const wordTransformRef = useRef<WordTransformTestingAPI>(null);
+
+  // Handle play button click
+  const handlePlay = () => {
+    if (currentWordPair && wordTransformRef.current) {
+      setIsPlaying(true);
+      wordTransformRef.current.startAnimation();
+    }
+  };
+
+  // Handle reset button click  
+  const handleReset = () => {
+    setIsPlaying(false);
+    // WordTransform component will handle its own reset when props change
+  };
+
+  // Handle shuffle button click (placeholder for now - will implement in subtask 7.4)
+  const handleShuffle = () => {
+    setIsShuffle(!isShuffle);
+    // TODO: Implement actual shuffle functionality in subtask 7.4
+  };
+
+  // Handle speed change
+  const handleSpeedChange = (newSpeed: number) => {
+    setSpeed(newSpeed);
+  };
+
+  // Handle word pair submission from Controls
+  const handleWordPairSubmit = (misspelling: string, correct: string) => {
+    const newWordPair: WordPair = {
+      misspelling,
+      correct
+    };
+    setCurrentWordPair(newWordPair);
+    setIsPlaying(false); // Reset playing state when new words are entered
+  };
+
+  // Handle animation completion
+  const handleAnimationComplete = () => {
+    setIsPlaying(false);
+  };
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6">
       <InstallPrompt />
@@ -22,49 +78,41 @@ export default function Home() {
           </p>
         </header>
 
+        {/* WordTransform component container */}
         <div className="p-6 rounded-lg border border-gray-800 bg-gray-900 mb-8 min-h-28 flex items-center justify-center">
-          <p className="text-gray-400 text-center">Animation will appear here</p>
+          {currentWordPair ? (
+            <WordTransform
+              ref={wordTransformRef}
+              misspelling={currentWordPair.misspelling}
+              correct={currentWordPair.correct}
+              speedMultiplier={speed}
+              onAnimationComplete={handleAnimationComplete}
+              cancelOnPropsChange={true}
+            />
+          ) : (
+            <p className="text-gray-400 text-center">
+              Enter a word pair below to see the transformation animation
+            </p>
+          )}
         </div>
 
+        {/* Controls component container */}
         <div className="p-6 rounded-lg border border-gray-800 bg-gray-900 mb-8">
-          <div className="space-y-4">
-            <div className="flex flex-col space-y-2">
-              <label htmlFor="misspelled" className="text-sm font-medium text-gray-300">
-                Enter misspelled word:
-              </label>
-              <input
-                id="misspelled"
-                type="text"
-                placeholder="e.g., 'recieve'"
-                className="p-3 rounded-md bg-gray-800 border border-gray-700 focus:border-primary focus:outline-none"
-              />
-            </div>
-
-            <div className="flex flex-col space-y-2">
-              <label htmlFor="correct" className="text-sm font-medium text-gray-300">
-                Enter correct spelling:
-              </label>
-              <input
-                id="correct"
-                type="text"
-                placeholder="e.g., 'receive'"
-                className="p-3 rounded-md bg-gray-800 border border-gray-700 focus:border-primary focus:outline-none"
-              />
-            </div>
-
-            <div className="flex space-x-3 pt-2">
-              <button className="px-4 py-2 bg-primary hover:bg-opacity-90 rounded-md font-medium">
-                Play Animation
-              </button>
-              <button className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-md font-medium">
-                Shuffle Words
-              </button>
-            </div>
-          </div>
+          <Controls
+            speed={speed}
+            isPlaying={isPlaying}
+            currentWordPair={currentWordPair}
+            isShuffle={isShuffle}
+            onPlay={handlePlay}
+            onReset={handleReset}
+            onShuffle={handleShuffle}
+            onSpeedChange={handleSpeedChange}
+            onWordPairSubmit={handleWordPairSubmit}
+          />
         </div>
 
         <div className="text-center text-sm text-gray-500">
-          <p>Phase 1 MVP - Coming Soon</p>
+          <p>Phase 1 MVP - Interactive Animation</p>
         </div>
       </div>
     </main>

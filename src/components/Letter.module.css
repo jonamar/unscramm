@@ -25,14 +25,6 @@
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
 }
 
-/* Define CSS variables for animation durations at the root level for easy updates */
-:root {
-  --add-duration: 0.5s;
-  --remove-duration: 0.4s;
-  --reorder-duration: 0.8s;
-  --exit-duration: 0.5s;
-}
-
 /* Animation state styling */
 .normal {
   /* Default state */
