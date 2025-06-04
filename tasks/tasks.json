@@ -947,7 +947,7 @@
       "id": 13,
       "title": "Fix LocalWordPairService Dictionary Loading Issues",
       "description": "Resolve the path resolution and loading issues in the LocalWordPairService that prevent proper access to the wordPairs.json dictionary file in both development and production environments. This is a blocking issue for the shuffle functionality, which is a core PRD requirement.",
-      "status": "done",
+      "status": "in-progress",
       "dependencies": [
         3
       ],
