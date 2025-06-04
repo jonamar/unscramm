@@ -1,0 +1,67 @@
+# Task ID: 17
+# Title: Clean Up XState Dependency from Package Files
+# Status: done
+# Dependencies: 16
+# Priority: high
+# Description: Remove the XState dependency from package.json and package-lock.json files since it's no longer used after the state machine was converted to React hooks in Task 16.
+# Details:
+This task involves safely removing the XState dependency from the project to reduce bundle size and eliminate potential security vulnerabilities from unused packages:
+
+1. First, verify that Task 16 has been fully completed and all XState imports have been removed from the codebase:
+   - Run a project-wide search for any remaining imports from XState: `import * from 'xstate'` or `import { ... } from 'xstate'`
+   - Check for any remaining references to XState in comments or documentation
+   - Ensure all tests are passing without XState dependencies
+
+2. Remove the XState dependency from package.json:
+   - Open package.json and locate the XState entry in the dependencies section
+   - Remove the line containing "xstate": "^x.x.x" (where x.x.x is the version number)
+   - If there are any XState-related dev dependencies (like @xstate/react or @xstate/test), remove those as well
+
+3. Update package-lock.json by running the appropriate package manager command:
+   - For npm: `npm install`
+   - For yarn: `yarn`
+   - For pnpm: `pnpm install`
+
+4. Verify the dependency has been properly removed:
+   - Confirm package-lock.json no longer contains XState-related entries
+   - Run `npm ls xstate` (or equivalent for your package manager) to ensure it's not installed as a transitive dependency
+
+5. Update any documentation that references XState:
+   - Check README.md and other documentation files for references to XState
+   - Update architecture diagrams or technical documentation to reflect the new React hooks implementation
+
+6. Rebuild the application to verify everything works correctly:
+   - Run the build process: `npm run build`
+   - Verify the build completes successfully without errors
+   - Check the bundle size to confirm it has been reduced
+
+7. Document the dependency removal in the project changelog or release notes.
+
+# Test Strategy:
+To verify the successful removal of the XState dependency:
+
+1. Static Analysis:
+   - Run a codebase search for any remaining imports or references to XState
+   - Use a tool like `depcheck` to verify XState is not listed as a dependency: `npx depcheck`
+   - Examine the package.json file to confirm XState has been removed
+
+2. Build Verification:
+   - Run a clean build of the application: `npm run build`
+   - Verify no build errors related to missing XState dependencies
+   - Compare bundle size before and after the change to confirm reduction:
+     - Use `npm run build -- --analyze` if a bundle analyzer is configured
+     - Or install and use `webpack-bundle-analyzer` to compare bundle sizes
+
+3. Runtime Testing:
+   - Start the application in development mode: `npm run dev`
+   - Test all functionality previously handled by the XState state machine
+   - Verify all state transitions and animations work correctly with the React hooks implementation
+   - Test edge cases that might have been handled by XState's state machine
+
+4. CI/CD Pipeline:
+   - Ensure all automated tests pass in the CI pipeline
+   - Verify that deployment processes complete successfully
+
+5. Performance Testing:
+   - Compare application load times before and after the dependency removal
+   - Measure Time to Interactive (TTI) to verify performance improvements

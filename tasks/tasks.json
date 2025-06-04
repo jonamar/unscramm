@@ -778,19 +778,19 @@
           "id": "7.1",
           "title": "Replace placeholder page.tsx with component integration",
           "description": "Remove the static placeholder content and import the WordTransform and Controls components. Set up the basic layout structure according to the design.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "7.2",
           "title": "Implement state management",
           "description": "Create state management to connect the Controls and WordTransform components. This should include state for: current word pair, animation status (playing/paused), animation speed, and any other required states from the PRD.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "7.3",
           "title": "Implement manual word entry flow",
           "description": "Connect the word input fields from Controls to the state management. Ensure that when users enter new words, the WordTransform component updates accordingly.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "7.4",
@@ -802,13 +802,13 @@
           "id": "7.5",
           "title": "Implement play/reset controls",
           "description": "Connect the play/pause and reset buttons to control the animation state in the WordTransform component. Ensure proper state transitions between playing, paused, and reset states.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "7.6",
           "title": "Implement speed adjustment",
           "description": "Connect the speed control slider to adjust the animation speed in the WordTransform component. Test different speed settings to ensure smooth transitions.",
-          "status": "pending"
+          "status": "done"
         },
         {
           "id": "7.7",
@@ -983,9 +983,36 @@
       "description": "Refactor the WordTransformFSM component to eliminate the XState dependency by reimplementing the state machine logic using native React hooks to resolve compatibility issues with Next.js 15 and React 19.",
       "details": "1. Analyze the current XState implementation in wordTransform.machine.ts:\n   - Document all states, events, transitions, and actions in the current state machine\n   - Map out the complete behavior flow to ensure full feature parity\n\n2. Create a new implementation using React's useReducer hook:\n   - Define a reducer function that handles all state transitions previously managed by XState\n   - Implement a custom hook (e.g., useWordTransformMachine) that encapsulates the state machine logic\n   - Ensure the new hook provides the same API surface as the previous XState implementation\n   - Preserve all existing states: idle, typing, checking, success, error\n\n3. Update the WordTransformFSM component:\n   - Replace XState imports and useMachine hook with the new custom hook\n   - Ensure all component props remain unchanged to maintain backward compatibility\n   - Update any internal logic that relied on XState-specific features\n\n4. Refactor related components that interact with WordTransformFSM:\n   - Identify any components that directly interact with the state machine\n   - Update these components to work with the new hook-based implementation\n   - Ensure event handling and state transitions remain consistent\n\n5. Performance considerations:\n   - Implement memoization where appropriate using useMemo and useCallback\n   - Ensure state updates are optimized to prevent unnecessary re-renders\n\n6. Documentation:\n   - Add detailed comments explaining the state machine logic\n   - Update any existing documentation to reflect the new implementation\n   - Document the rationale for removing XState dependency\n\n7. Migration guide:\n   - Create a brief guide for any future developers explaining how the new implementation maps to the previous XState version",
       "testStrategy": "1. Unit Tests:\n   - Update existing unit tests for wordTransform.machine.ts to test the new reducer and custom hook\n   - Verify all state transitions work correctly by testing each possible event in each state\n   - Test edge cases and error handling to ensure robustness\n   - Use React Testing Library to test the hook implementation in isolation\n\n2. Component Tests:\n   - Update tests for the WordTransformFSM component to work with the new implementation\n   - Verify that the component renders correctly in all possible states\n   - Test all user interactions (typing, submitting, etc.) to ensure they trigger the correct state transitions\n   - Confirm that all callbacks and event handlers work as expected\n\n3. Integration Tests:\n   - Test the WordTransformFSM component within the context of parent components\n   - Verify that data flows correctly between components\n   - Ensure that the component interacts properly with any services or contexts\n\n4. Storybook Updates:\n   - Update all Storybook stories to work with the new implementation\n   - Create stories for each state of the component to visually verify rendering\n   - Add interactive stories that demonstrate state transitions\n\n5. End-to-End Tests:\n   - Run existing E2E tests to verify that the application works correctly with the new implementation\n   - Test the complete user flow to ensure no regressions\n\n6. Performance Testing:\n   - Compare render performance between the old XState implementation and the new hook-based implementation\n   - Verify that there are no memory leaks or performance regressions\n\n7. Browser Compatibility:\n   - Test the implementation across different browsers to ensure consistent behavior\n   - Verify that the implementation works correctly in both development and production builds",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [
         13
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 17,
+      "title": "Clean Up XState Dependency from Package Files",
+      "description": "Remove the XState dependency from package.json and package-lock.json files since it's no longer used after the state machine was converted to React hooks in Task 16.",
+      "details": "This task involves safely removing the XState dependency from the project to reduce bundle size and eliminate potential security vulnerabilities from unused packages:\n\n1. First, verify that Task 16 has been fully completed and all XState imports have been removed from the codebase:\n   - Run a project-wide search for any remaining imports from XState: `import * from 'xstate'` or `import { ... } from 'xstate'`\n   - Check for any remaining references to XState in comments or documentation\n   - Ensure all tests are passing without XState dependencies\n\n2. Remove the XState dependency from package.json:\n   - Open package.json and locate the XState entry in the dependencies section\n   - Remove the line containing \"xstate\": \"^x.x.x\" (where x.x.x is the version number)\n   - If there are any XState-related dev dependencies (like @xstate/react or @xstate/test), remove those as well\n\n3. Update package-lock.json by running the appropriate package manager command:\n   - For npm: `npm install`\n   - For yarn: `yarn`\n   - For pnpm: `pnpm install`\n\n4. Verify the dependency has been properly removed:\n   - Confirm package-lock.json no longer contains XState-related entries\n   - Run `npm ls xstate` (or equivalent for your package manager) to ensure it's not installed as a transitive dependency\n\n5. Update any documentation that references XState:\n   - Check README.md and other documentation files for references to XState\n   - Update architecture diagrams or technical documentation to reflect the new React hooks implementation\n\n6. Rebuild the application to verify everything works correctly:\n   - Run the build process: `npm run build`\n   - Verify the build completes successfully without errors\n   - Check the bundle size to confirm it has been reduced\n\n7. Document the dependency removal in the project changelog or release notes.",
+      "testStrategy": "To verify the successful removal of the XState dependency:\n\n1. Static Analysis:\n   - Run a codebase search for any remaining imports or references to XState\n   - Use a tool like `depcheck` to verify XState is not listed as a dependency: `npx depcheck`\n   - Examine the package.json file to confirm XState has been removed\n\n2. Build Verification:\n   - Run a clean build of the application: `npm run build`\n   - Verify no build errors related to missing XState dependencies\n   - Compare bundle size before and after the change to confirm reduction:\n     - Use `npm run build -- --analyze` if a bundle analyzer is configured\n     - Or install and use `webpack-bundle-analyzer` to compare bundle sizes\n\n3. Runtime Testing:\n   - Start the application in development mode: `npm run dev`\n   - Test all functionality previously handled by the XState state machine\n   - Verify all state transitions and animations work correctly with the React hooks implementation\n   - Test edge cases that might have been handled by XState's state machine\n\n4. CI/CD Pipeline:\n   - Ensure all automated tests pass in the CI pipeline\n   - Verify that deployment processes complete successfully\n\n5. Performance Testing:\n   - Compare application load times before and after the dependency removal\n   - Measure Time to Interactive (TTI) to verify performance improvements",
+      "status": "done",
+      "dependencies": [
+        16
+      ],
+      "priority": "high",
+      "subtasks": []
+    },
+    {
+      "id": 18,
+      "title": "Consolidate WordTransform Implementations",
+      "description": "Resolve dual implementations by consolidating WordTransform.tsx and WordTransformFSM.tsx into a single component, selecting the better implementation and updating all references while ensuring no functionality is lost.",
+      "details": "1. Analyze both implementations:\n   - Compare WordTransform.tsx (original implementation) and WordTransformFSM.tsx (React hooks implementation from Task 16)\n   - Evaluate each based on: performance, maintainability, code clarity, and compatibility with React 19\n   - Document the strengths and weaknesses of each approach\n\n2. Select the superior implementation:\n   - Based on the analysis, the React hooks implementation from Task 16 is likely preferable since it aligns with the project's direction of removing XState dependencies\n   - If the original implementation has features missing in the hooks version, incorporate those features into the selected implementation\n\n3. Consolidation process:\n   - Create a backup branch before making changes\n   - Refactor the chosen implementation to ensure it fully replaces all functionality\n   - Update the component name to be simply \"WordTransform\" regardless of which implementation is chosen\n   - Ensure the component maintains the same props interface for backward compatibility\n\n4. Update references:\n   - Identify all imports and references to both components throughout the codebase\n   - Update all references to use the consolidated component\n   - Pay special attention to the main application page (from Task 7) and any custom hooks that might reference these components\n\n5. Clean up deprecated implementation:\n   - Remove the unused implementation file\n   - Remove associated test files for the deprecated implementation\n   - Remove Storybook stories specific to the deprecated implementation\n   - Update any documentation that references the removed component\n\n6. Verify functionality:\n   - Ensure the consolidated component correctly handles all animation phases (deletions, movements, insertions)\n   - Verify that speed control still works properly\n   - Check that accessibility features are preserved\n\n7. Code quality:\n   - Add comprehensive comments explaining the consolidated implementation\n   - Update TypeScript types as needed\n   - Ensure the code follows project style guidelines",
+      "testStrategy": "1. Unit Testing:\n   - Run existing tests for both components to establish baseline functionality\n   - Update tests for the consolidated component to cover all functionality\n   - Verify that all edge cases are covered (empty strings, identical words, special characters)\n   - Test animation speed control functionality\n\n2. Integration Testing:\n   - Test the consolidated component within the main application\n   - Verify that it interacts correctly with the Controls component\n   - Ensure proper state management between components\n\n3. Visual Regression Testing:\n   - Compare the visual appearance and animation sequence before and after consolidation\n   - Verify that all animation phases (deletions, movements, insertions) work correctly\n   - Test with various word pairs of different lengths and complexity\n\n4. Storybook Testing:\n   - Update or create Storybook stories for the consolidated component\n   - Test different states and configurations in isolation\n   - Verify that the component renders correctly in Storybook\n\n5. Accessibility Testing:\n   - Verify that all accessibility features are preserved\n   - Test with screen readers to ensure animations are properly described\n   - Check keyboard navigation functionality\n\n6. Performance Testing:\n   - Compare rendering performance before and after consolidation\n   - Test with complex word transformations to ensure smooth animations\n   - Verify that there are no memory leaks during repeated animations\n\n7. Browser Compatibility:\n   - Test the consolidated component across different browsers\n   - Verify that animations work consistently across platforms",
+      "status": "pending",
+      "dependencies": [
+        5,
+        16
       ],
       "priority": "high",
       "subtasks": []
