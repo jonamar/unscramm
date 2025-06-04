@@ -30,7 +30,7 @@ Test the integrated application with end-to-end tests using Cypress. Verify all 
 
 
 ## 4. Implement shuffle functionality [pending]
-### Dependencies: None
+### Dependencies: 13
 ### Description: Connect the shuffle button from Controls to generate random word pairs and update the WordTransform component. Ensure the animation resets when new words are shuffled.
 ### Details:
 

@@ -808,7 +808,9 @@
           "title": "Implement shuffle functionality",
           "description": "Connect the shuffle button from Controls to generate random word pairs and update the WordTransform component. Ensure the animation resets when new words are shuffled.",
           "status": "pending",
-          "dependencies": [],
+          "dependencies": [
+            "13"
+          ],
           "parentTaskId": 7
         },
         {
@@ -945,7 +947,7 @@
       "id": 13,
       "title": "Fix LocalWordPairService Dictionary Loading Issues",
       "description": "Resolve the path resolution and loading issues in the LocalWordPairService that prevent proper access to the wordPairs.json dictionary file in both development and production environments. This is a blocking issue for the shuffle functionality, which is a core PRD requirement.",
-      "status": "in-progress",
+      "status": "done",
       "dependencies": [
         3
       ],
