@@ -326,7 +326,7 @@
       "id": 5,
       "title": "Implement WordTransform component",
       "description": "Create the WordTransform component that orchestrates the full animation sequence using the Letter components.",
-      "status": "pending",
+      "status": "done",
       "dependencies": [
         2,
         4
@@ -384,7 +384,7 @@
             "5.31"
           ],
           "details": "Decide and implement behavior for when props change mid-animation (restart, complete current animation first, etc.). Add a reset function to cleanly restart animations when words change. Implement memoization using useMemo and useCallback to prevent unnecessary re-renders. Add optional callback props for animation events (onAnimationStart, onPhaseChange, onAnimationComplete). Ensure smooth transitions between all animation phases with no visual glitches. Add final polish including accessibility attributes and responsive behavior.\n<info added on 2025-05-08T02:22:58.503Z>\nDecide and implement behavior for when props change mid-animation (restart, complete current animation first, etc.). Add a reset function to cleanly restart animations when words change. Implement memoization using useMemo and useCallback to prevent unnecessary re-renders. Add optional callback props for animation events (onAnimationStart, onPhaseChange, onAnimationComplete). Ensure smooth transitions between all animation phases with no visual glitches. Add final polish including accessibility attributes and responsive behavior.\n\nBefore implementing these performance optimizations, ensure that all code quality subtasks (5.27-5.31) are completed. These code improvements will establish a solid foundation for the performance work and ensure that the component follows best practices. Once the code quality improvements are in place, proceed with the prop change handling and performance optimizations as outlined above.\n</info added on 2025-05-08T02:22:58.503Z>",
-          "status": "deferred",
+          "status": "done",
           "testStrategy": "Test the component's behavior when props change during animation. Measure and verify performance using React DevTools. Test with various word lengths to ensure the component handles different scenarios efficiently."
         },
         {
@@ -399,7 +399,7 @@
             "5.31"
           ],
           "details": "Create a set of CSS variables in the component's stylesheet for different animation durations and delays (e.g., --deletion-duration, --movement-duration, --insertion-duration). Implement a mechanism to modify these CSS variables based on the speedMultiplier prop. Use React's useRef to access the component's DOM element and update CSS variables programmatically. Ensure all animations reference these variables instead of hardcoded timing values. Add a helper function to calculate and update all timing variables when the speed multiplier changes.",
-          "status": "deferred",
+          "status": "done",
           "testStrategy": "Test that CSS variables are correctly set based on the speedMultiplier prop. Verify that animations respond appropriately to changes in the speed multiplier. Check that all animations use the CSS variables rather than hardcoded values."
         },
         {
@@ -422,7 +422,7 @@
             "5.31"
           ],
           "details": "Create src/components/wordTransform.machine.ts with XState defining five states: idle, deleting, moving, inserting, and complete. Include context to track deletion/move/insertion counts. Define events (START, DONE_PHASE, RESET) that trigger transitions between states. Implement logic to skip phases with zero-length operations. Ensure the machine handles the complete animation lifecycle and can be reset.",
-          "status": "pending",
+          "status": "done",
           "testStrategy": "Write pure Jest tests for the state machine that assert correct state transitions, verify phase skipping for zero-length operations, and validate context updates during transitions. Test all possible paths through the state machine."
         },
         {
@@ -511,7 +511,7 @@
           "title": "Fix CSS variable lookup for per-component overrides",
           "description": "Fix the issue where CSS variable lookups read from document.documentElement instead of the component's own .wordTransform element, missing per-component overrides.",
           "details": "- Update CSS variable lookup to use getComputedStyle on the component's own element.\n- Use useRef to track the component's DOM element.\n- Apply the CSS variables directly to the .wordTransform element instead of relying on global variables.\n- Ensure speedMultiplier prop correctly modifies component-level CSS variables.\n- Add support for CSS variable customization via className props.\n- Update test cases to verify CSS variable overrides are correctly applied.\n- Document the CSS variable customization approach in comments.",
-          "status": "deferred",
+          "status": "done",
           "dependencies": [
             "5.6"
           ],
@@ -533,7 +533,7 @@
           "title": "Add ARIA live region for phase changes",
           "description": "Implement an ARIA live region to announce high-level phase transitions (e.g. \"Deleting 3 letters…\"), improving accessibility beyond individual letter roles. [Updated: 5/7/2025]",
           "details": "- Add an ARIA live region to the WordTransform component.\n- Create informative messages for each animation phase (e.g., \"Deleting 3 letters\", \"Moving 2 letters\", \"Adding 1 letter\").\n- Update the phase change logic to announce appropriate messages.\n- Ensure proper aria-live attribute settings (polite for non-critical updates).\n- Respect user preferences for verbosity and reduced motion.\n- Add internationalization support for the announcement messages.\n- Test with screen readers to verify proper announcements.\n<info added on 2025-05-08T02:18:27.262Z>\n- Add an ARIA live region to the WordTransform component.\n- Create informative messages for each animation phase (e.g., \\\"Deleting 3 letters\\\", \\\"Moving 2 letters\\\", \\\"Adding 1 letter\\\").\n- Update the phase change logic to announce appropriate messages.\n- Ensure proper aria-live attribute settings (polite for non-critical updates).\n- Respect user preferences for verbosity and reduced motion.\n- Add internationalization support for the announcement messages.\n- Test with screen readers to verify proper announcements.\n\nThis accessibility feature should be prioritized as medium-high importance since it provides critical context for users with visual impairments. Without these announcements, users relying on screen readers would miss the visual transformations happening in the component, creating a significant accessibility gap. This implementation directly supports WCAG 2.1 Success Criterion 4.1.3 (Status Messages) which requires that status messages can be programmatically determined so they can be presented to users of assistive technologies without receiving focus.\n</info added on 2025-05-08T02:18:27.262Z>",
-          "status": "deferred",
+          "status": "done",
           "dependencies": [
             "5.3",
             "5.7",
@@ -558,7 +558,7 @@
           "title": "Make test hooks consistent across source and target letters",
           "description": "Fix inconsistency where data-extended-state is added on source letters but insertion/movement states and data-indices aren't exposed on target letters in the same way.",
           "details": "- Create a helper function to generate consistent data attributes for both source and target letters.\n- Ensure data-extended-state, data-index, and other attributes are applied consistently.\n- Add the missing data-indices on target letters to match source letters.\n- Ensure insertion/movement states are properly exposed on target letters.\n- Document the test hook attributes in component comments.\n- Add test cases to verify consistency of data attributes.\n- Create a comprehensive testing guide for QA to understand available hooks.",
-          "status": "deferred",
+          "status": "done",
           "dependencies": [
             "5.4",
             "5.7",
@@ -595,7 +595,7 @@
           "title": "Unify animation duration values",
           "description": "Unify duration values by reading from CSS variables via getComputedStyle instead of hard-coding base values in createLetterVariants.",
           "details": "- Update createLetterVariants to read duration values from CSS variables using getComputedStyle.\n- Set up a mechanism to pass the container element to Letter components.\n- Remove hardcoded duration values from Letter component variants.\n- Ensure CSS variables are properly defined and accessible.\n- Synchronize the duration values between CSS and JS.\n- Add fallback values for when CSS variables aren't available.\n- Test performance with this approach to ensure smooth animations.",
-          "status": "deferred",
+          "status": "done",
           "dependencies": [
             "5.4",
             "5.6",
@@ -608,7 +608,7 @@
           "title": "Cache callbacks with useCallback for reduced re-renders",
           "description": "Wrap startAnimation, handleLetterAnimationComplete in useCallback to reduce re-renders in deeply nested letter lists.",
           "details": "- Implement useCallback for all event handler functions in WordTransform.\n- Carefully define dependency arrays to avoid stale closures.\n- Apply to startAnimation, handleLetterAnimationComplete, and other handler functions.\n- Test render performance with React DevTools profiler.\n- Compare re-render counts before and after the optimization.\n- Use React.memo on Letter component to maximize the benefit.\n- Document optimization techniques in component comments.",
-          "status": "deferred",
+          "status": "done",
           "dependencies": [
             "5.3",
             "5.31"
@@ -620,7 +620,7 @@
           "title": "Simplify reducer types with discriminated union",
           "description": "Convert AnimationAction union into a proper TypeScript discriminated union to remove duplicated type fields and improve compile-time safety.",
           "details": "- Refactor AnimationAction to use a discriminated union pattern with a 'type' property.\n- Remove redundant type fields from action interfaces.\n- Update the reducer to use the new type pattern for cleaner switch statements.\n- Add exhaustiveness checking using TypeScript's never type.\n- Ensure strict type checking for all action handlers.\n- Update all action creators to match the new type format.\n- Improve error messages for invalid state transitions.",
-          "status": "deferred",
+          "status": "done",
           "dependencies": [
             "5.3",
             "5.31"
@@ -632,7 +632,7 @@
           "title": "Centralize test hooks with a helper function",
           "description": "Create a helper function that generates consistent data-testid, data-state, and data-index attributes for both source and target letters.",
           "details": "- Create a centralized helper function like getLetterTestProps(letter, index, phase, state).\n- Use this helper consistently for both source and target letters.\n- Return all necessary test attributes in a standard format.\n- Apply these attributes in a consistent manner for both letter types.\n- Document the available test hooks for QA team reference.\n- Add test cases to verify consistent attribute application.\n- Create a type definition for the helper function return value.",
-          "status": "deferred",
+          "status": "done",
           "dependencies": [
             "5.7",
             "5.20",
@@ -711,52 +711,60 @@
       "testStrategy": "Test the Controls component with Jest and React Testing Library, verifying all interactive elements work as expected. Test form validation, button states, and integration with the WordPairService. Verify responsive behavior at different viewport sizes. Create Storybook stories showcasing different states and an interactive demo.",
       "subtasks": [
         {
-          "id": "6.1",
+          "id": 1,
           "title": "Implement input fields with validation",
-          "status": "completed",
-          "description": "Create text input fields for misspelled and correct word pairs with proper validation"
+          "status": "done",
+          "description": "Create text input fields for misspelled and correct word pairs with proper validation",
+          "parentTaskId": 6
         },
         {
-          "id": "6.2",
+          "id": 2,
           "title": "Implement control buttons",
-          "status": "completed",
-          "description": "Add Play, Shuffle, and Reset buttons with appropriate visual feedback for different states"
+          "status": "done",
+          "description": "Add Play, Shuffle, and Reset buttons with appropriate visual feedback for different states",
+          "parentTaskId": 6
         },
         {
-          "id": "6.3",
+          "id": 3,
           "title": "Create speed control slider",
-          "status": "completed",
-          "description": "Implement slider for adjusting animation speed from 0.5x to 2x"
+          "status": "done",
+          "description": "Implement slider for adjusting animation speed from 0.5x to 2x",
+          "parentTaskId": 6
         },
         {
-          "id": "6.4",
+          "id": 4,
           "title": "Implement responsive layout",
-          "status": "completed",
-          "description": "Ensure component works well on both mobile and desktop devices"
+          "status": "done",
+          "description": "Ensure component works well on both mobile and desktop devices",
+          "parentTaskId": 6
         },
         {
-          "id": "6.5",
+          "id": 5,
           "title": "Add keyboard accessibility",
-          "status": "completed",
-          "description": "Implement full keyboard accessibility and proper tab navigation"
+          "status": "done",
+          "description": "Implement full keyboard accessibility and proper tab navigation",
+          "parentTaskId": 6
         },
         {
-          "id": "6.6",
+          "id": 6,
           "title": "Write unit tests",
-          "status": "completed",
-          "description": "Create comprehensive tests using Jest and React Testing Library"
+          "status": "done",
+          "description": "Create comprehensive tests using Jest and React Testing Library",
+          "parentTaskId": 6
         },
         {
-          "id": "6.7",
+          "id": 7,
           "title": "Create Storybook stories",
-          "status": "completed",
-          "description": "Develop Storybook stories showcasing different component states and an interactive demo"
+          "status": "done",
+          "description": "Develop Storybook stories showcasing different component states and an interactive demo",
+          "parentTaskId": 6
         },
         {
-          "id": "6.8",
+          "id": 8,
           "title": "Optimize performance",
-          "status": "completed",
-          "description": "Implement React hooks for state management and proper memoization of callback functions"
+          "status": "done",
+          "description": "Implement React hooks for state management and proper memoization of callback functions",
+          "parentTaskId": 6
         }
       ]
     },
@@ -775,52 +783,61 @@
       "testStrategy": "Test the integrated application with end-to-end tests using Cypress. Verify all user flows work correctly. Test responsive behavior across different viewport sizes. Check that state is properly managed between components.",
       "subtasks": [
         {
-          "id": "7.1",
+          "id": 1,
           "title": "Replace placeholder page.tsx with component integration",
           "description": "Remove the static placeholder content and import the WordTransform and Controls components. Set up the basic layout structure according to the design.",
-          "status": "done"
+          "status": "done",
+          "parentTaskId": 7
         },
         {
-          "id": "7.2",
+          "id": 2,
           "title": "Implement state management",
           "description": "Create state management to connect the Controls and WordTransform components. This should include state for: current word pair, animation status (playing/paused), animation speed, and any other required states from the PRD.",
-          "status": "done"
+          "status": "done",
+          "parentTaskId": 7
         },
         {
-          "id": "7.3",
+          "id": 3,
           "title": "Implement manual word entry flow",
           "description": "Connect the word input fields from Controls to the state management. Ensure that when users enter new words, the WordTransform component updates accordingly.",
-          "status": "done"
+          "status": "done",
+          "parentTaskId": 7
         },
         {
-          "id": "7.4",
+          "id": 4,
           "title": "Implement shuffle functionality",
           "description": "Connect the shuffle button from Controls to generate random word pairs and update the WordTransform component. Ensure the animation resets when new words are shuffled.",
-          "status": "pending"
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 7
         },
         {
-          "id": "7.5",
+          "id": 5,
           "title": "Implement play/reset controls",
           "description": "Connect the play/pause and reset buttons to control the animation state in the WordTransform component. Ensure proper state transitions between playing, paused, and reset states.",
-          "status": "done"
+          "status": "done",
+          "parentTaskId": 7
         },
         {
-          "id": "7.6",
+          "id": 6,
           "title": "Implement speed adjustment",
           "description": "Connect the speed control slider to adjust the animation speed in the WordTransform component. Test different speed settings to ensure smooth transitions.",
-          "status": "done"
+          "status": "done",
+          "parentTaskId": 7
         },
         {
-          "id": "7.7",
+          "id": 7,
           "title": "Implement responsive layout",
           "description": "Apply responsive styling according to the breakpoints defined in styleguide.md. Test the layout at different viewport sizes to ensure proper component arrangement and scaling.",
-          "status": "pending"
+          "status": "pending",
+          "parentTaskId": 7
         },
         {
-          "id": "7.8",
+          "id": 8,
           "title": "Write end-to-end tests",
           "description": "Create Cypress tests that verify all user flows: manual word entry, shuffle functionality, play/reset controls, and speed adjustment. Test that components interact correctly and state is properly managed.",
-          "status": "pending"
+          "status": "pending",
+          "parentTaskId": 7
         }
       ]
     },
@@ -875,54 +892,41 @@
       "testStrategy": "1. After implementing the changes, run the Storybook startup command (npm run storybook or yarn storybook) and verify it starts without dependency errors.\n2. Confirm that Storybook is properly using Vite instead of webpack5 in the startup logs.\n3. Verify that all existing stories load correctly in the Storybook interface without infinite scrollers or rendering issues.\n4. Confirm that CSS styling (including Tailwind classes) is properly applied to components in Storybook.\n5. Test navigation between different component stories to ensure the UI is functioning properly.\n6. Check that component interactions (like button clicks, form inputs) work as expected within Storybook.\n7. Test Storybook in different browsers to ensure cross-browser compatibility.\n8. Verify that any addons previously used still function correctly.\n9. Have another team member clone the repository and start Storybook to confirm the fix works in a fresh environment.\n10. Document the resolution process and update the project's README or development setup guide with the new Vite configuration details and PostCSS configuration requirements.\n11. Create a small test story if needed to verify that new components can be properly added and visualized with correct styling.\n12. Note any test-runner issues encountered but do not attempt to fix them as part of this task.\n13. Specifically verify that the \"Invalid PostCSS Plugin\" error is resolved and no infinite scrolling indicators appear in Storybook.",
       "subtasks": [
         {
-          "id": "11.1",
+          "id": 1,
           "title": "Fix Storybook configuration to use Vite instead of webpack5",
           "status": "done",
-          "description": "Modified `.storybook/main.ts` to remove webpack5 builder and configure Vite instead, allowing Storybook to start successfully."
+          "description": "Modified `.storybook/main.ts` to remove webpack5 builder and configure Vite instead, allowing Storybook to start successfully.",
+          "parentTaskId": 11
         },
         {
-          "id": "11.2",
+          "id": 2,
           "title": "Fix PostCSS configuration for proper component rendering",
           "status": "done",
-          "description": "Fix the `postcss.config.mjs` file by changing plugins from string format to properly imported objects, specifically for Tailwind CSS, to resolve the infinite scroller issue and ensure components render correctly with proper styling."
-        },
-        {
-          "id": "11.3",
-          "title": "Document configuration changes and verify component rendering",
-          "status": "done",
-          "description": "Document all changes made to both Storybook and PostCSS configurations, and verify that components now render correctly with proper CSS styling in Storybook."
-        },
-        {
-          "id": 12.3,
-          "title": "Fix PostCSS configuration for proper component rendering",
           "description": "Fix the `postcss.config.mjs` file by changing plugins from string format to properly imported objects, specifically for Tailwind CSS, to resolve the infinite scroller issue and ensure components render correctly with proper styling.",
-          "details": "",
-          "status": "done",
-          "dependencies": [],
           "parentTaskId": 11
         },
         {
-          "id": 13.3,
+          "id": 3,
           "title": "Document configuration changes and verify component rendering",
-          "description": "Document all changes made to both Storybook and PostCSS configurations, and verify that components now render correctly with proper CSS styling in Storybook.",
-          "details": "",
           "status": "done",
-          "dependencies": [],
+          "description": "Document all changes made to both Storybook and PostCSS configurations, and verify that components now render correctly with proper CSS styling in Storybook.",
           "parentTaskId": 11
         },
         {
-          "id": "11.4",
+          "id": 4,
           "title": "Install and configure dedicated @tailwindcss/postcss package",
           "status": "done",
           "description": "Install the correct PostCSS plugin packages (`npm install -D @tailwindcss/postcss autoprefixer`) and update the PostCSS configuration to use proper imports to resolve the \"Invalid PostCSS Plugin\" error that was causing infinite scrolling indicators.",
-          "dependencies": []
+          "dependencies": [],
+          "parentTaskId": 11
         },
         {
-          "id": "11.5",
+          "id": 5,
           "title": "Verify fix for \"Invalid PostCSS Plugin\" error",
           "status": "done",
           "description": "Test the updated configuration to confirm that the \"Invalid PostCSS Plugin\" error is fully resolved and components display correctly without infinite scrolling indicators in Storybook.",
-          "dependencies": []
+          "dependencies": [],
+          "parentTaskId": 11
         }
       ]
     },
@@ -940,14 +944,14 @@
     {
       "id": 13,
       "title": "Fix LocalWordPairService Dictionary Loading Issues",
-      "description": "Resolve the path resolution and loading issues in the LocalWordPairService that prevent proper access to the wordPairs.json dictionary file in both development and production environments.",
-      "details": "1. Investigate the current implementation of LocalWordPairService to identify the root cause of the \"Failed to load word pairs dictionary: Not Found\" errors.\n\n2. Fix the path resolution issue:\n   - Update the service to correctly reference the dictionary file at `public/data/wordPairs.json` instead of `/data/wordPairs.json`\n   - Implement proper path resolution that works across different environments (development, testing, production)\n   - Consider using Next.js's built-in public folder handling for static assets\n\n3. Implement robust error handling:\n   - Add proper error catching and logging for dictionary loading failures\n   - Implement a fallback mechanism (e.g., default word pairs) in case the dictionary cannot be loaded\n   - Add retry logic if appropriate\n\n4. Update the fetch mechanism:\n   - Use the appropriate Next.js methods for accessing static files\n   - Ensure the fetch is compatible with both client and server-side rendering scenarios\n   - Consider caching strategies to improve performance\n\n5. Refactor the service to handle different environments:\n   - Add environment detection to adjust paths if needed\n   - Ensure the service works in both development and production builds\n   - Document any environment-specific considerations\n\n6. Update any related components or services that might be affected by these changes\n   - Ensure the shuffle functionality properly integrates with the fixed service\n   - Verify that all consumers of the WordPairService interface still work correctly",
-      "testStrategy": "1. Unit Tests:\n   - Create unit tests for the LocalWordPairService that verify it can load the dictionary file\n   - Test error handling by simulating missing or corrupted dictionary files\n   - Verify that the service correctly parses and returns word pairs from the dictionary\n\n2. Integration Tests:\n   - Test the integration between the LocalWordPairService and components that use it\n   - Verify that the shuffle functionality works correctly with the loaded dictionary\n   - Test the service in different rendering contexts (SSR, CSR, etc.)\n\n3. Environment Testing:\n   - Test the service in development environment using `npm run dev`\n   - Test in a production-like environment using `npm run build` followed by `npm run start`\n   - Verify dictionary loading works in both environments\n\n4. Error Scenario Testing:\n   - Test recovery from network failures\n   - Test behavior when the dictionary file is missing or malformed\n   - Verify appropriate error messages are displayed to users\n\n5. Manual Verification:\n   - Check browser console for any loading errors related to the dictionary\n   - Verify the shuffle functionality works end-to-end in the application\n   - Test on different browsers to ensure cross-browser compatibility\n\n6. Performance Testing:\n   - Measure and verify that dictionary loading doesn't impact application startup time\n   - Check that caching mechanisms work as expected",
-      "status": "pending",
+      "description": "Resolve the path resolution and loading issues in the LocalWordPairService that prevent proper access to the wordPairs.json dictionary file in both development and production environments. This is a blocking issue for the shuffle functionality, which is a core PRD requirement.",
+      "status": "in-progress",
       "dependencies": [
         3
       ],
       "priority": "high",
+      "details": "1. Investigate the current implementation of LocalWordPairService to identify the root cause of the \"Failed to load word pairs dictionary: Not Found\" errors.\n\n2. Fix the path resolution issue:\n   - Update the service to correctly reference the dictionary file at `public/data/wordPairs.json` instead of `/data/wordPairs.json`\n   - Implement proper path resolution that works across different environments (development, testing, production)\n   - Consider using Next.js's built-in public folder handling for static assets\n\n3. Implement robust error handling:\n   - Add proper error catching and logging for dictionary loading failures\n   - Implement a fallback mechanism (e.g., default word pairs) in case the dictionary cannot be loaded\n   - Add retry logic if appropriate\n\n4. Update the fetch mechanism:\n   - Use the appropriate Next.js methods for accessing static files\n   - Ensure the fetch is compatible with both client and server-side rendering scenarios\n   - Consider caching strategies to improve performance\n\n5. Refactor the service to handle different environments:\n   - Add environment detection to adjust paths if needed\n   - Ensure the service works in both development and production builds\n   - Document any environment-specific considerations\n\n6. Update any related components or services that might be affected by these changes\n   - Ensure the shuffle functionality properly integrates with the fixed service\n   - Verify that all consumers of the WordPairService interface still work correctly\n\n7. Prioritize this fix as it's currently blocking the shuffle functionality, which prevents users from experiencing random word pairs - a core feature in the PRD",
+      "testStrategy": "1. Unit Tests:\n   - Create unit tests for the LocalWordPairService that verify it can load the dictionary file\n   - Test error handling by simulating missing or corrupted dictionary files\n   - Verify that the service correctly parses and returns word pairs from the dictionary\n\n2. Integration Tests:\n   - Test the integration between the LocalWordPairService and components that use it\n   - Verify that the shuffle functionality works correctly with the loaded dictionary\n   - Test the service in different rendering contexts (SSR, CSR, etc.)\n\n3. Environment Testing:\n   - Test the service in development environment using `npm run dev`\n   - Test in a production-like environment using `npm run build` followed by `npm run start`\n   - Verify dictionary loading works in both environments\n\n4. Error Scenario Testing:\n   - Test recovery from network failures\n   - Test behavior when the dictionary file is missing or malformed\n   - Verify appropriate error messages are displayed to users\n\n5. Manual Verification:\n   - Check browser console for any loading errors related to the dictionary\n   - Verify the shuffle functionality works end-to-end in the application\n   - Test on different browsers to ensure cross-browser compatibility\n\n6. Performance Testing:\n   - Measure and verify that dictionary loading doesn't impact application startup time\n   - Check that caching mechanisms work as expected\n\n7. Validation Testing:\n   - Specifically verify that the shuffle functionality works correctly after the fix\n   - Confirm that users can experience random word pairs as intended in the PRD",
       "subtasks": []
     },
     {

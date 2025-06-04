@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Implement WordTransform component
-# Status: pending
+# Status: done
 # Dependencies: 2, 4
 # Priority: high
 # Description: Create the WordTransform component that orchestrates the full animation sequence using the Letter components.
@@ -262,7 +262,7 @@ The implementation of the Letter component rendering and animation system has be
 The Letter component implementation is now complete and ready for integration with the WordTransform component. The rendering system successfully maps the transformation plan to Letter components with appropriate animation attributes, and the staggered animation system provides a smooth, visually appealing transition between states while maintaining accessibility compliance.
 </info added on 2025-05-07T22:59:43.789Z>
 
-## 5. Handle prop changes and optimize performance [deferred]
+## 5. Handle prop changes and optimize performance [done]
 ### Dependencies: 5.22, 5.23, 5.24, 5.25, 5.27, 5.31
 ### Description: Implement proper handling of prop changes during animation and optimize the component for performance.
 ### Details:
@@ -273,7 +273,7 @@ Decide and implement behavior for when props change mid-animation (restart, comp
 Before implementing these performance optimizations, ensure that all code quality subtasks (5.27-5.31) are completed. These code improvements will establish a solid foundation for the performance work and ensure that the component follows best practices. Once the code quality improvements are in place, proceed with the prop change handling and performance optimizations as outlined above.
 </info added on 2025-05-08T02:22:58.503Z>
 
-## 6. Integrate CSS variables for animation timing [deferred]
+## 6. Integrate CSS variables for animation timing [done]
 ### Dependencies: 5.27, 5.28, 5.29, 5.30, 5.31
 ### Description: Set up and integrate CSS variables for animation timing from the stylesheet to ensure consistent animation speeds across the component.
 ### Details:
@@ -312,7 +312,7 @@ Implementation details:
 These changes significantly improve the testability of the component by exposing internal state and providing hooks for E2E testing tools to interact with and verify the animation process.
 </info added on 2025-05-10T03:01:50.166Z>
 
-## 8. Define and unit-test WordTransform finite state machine [pending]
+## 8. Define and unit-test WordTransform finite state machine [done]
 ### Dependencies: 5.28, 5.31
 ### Description: Create a finite state machine for the WordTransform component that manages the animation sequence states and transitions.
 ### Details:
@@ -489,7 +489,7 @@ Implementation details:
 6. This fix ensures that the component properly clears any stale letters when inputs become empty, providing a consistent user experience and avoiding the display of outdated or incorrect animations.
 </info added on 2025-05-10T02:46:48.646Z>
 
-## 16. Fix CSS variable lookup for per-component overrides [deferred]
+## 16. Fix CSS variable lookup for per-component overrides [done]
 ### Dependencies: 5.6
 ### Description: Fix the issue where CSS variable lookups read from document.documentElement instead of the component's own .wordTransform element, missing per-component overrides.
 ### Details:
@@ -527,7 +527,7 @@ This is a medium-high priority issue as it directly impacts the user experience.
 - Add explicit exit variant to the Letter component for deleted letters.\n- Ensure AnimatePresence is properly configured to handle exit animations.\n- Update the filtering logic in the moving phase to maintain letters that are being deleted.\n- Add a specific 'exiting' animation state for letters being removed.\n- Set appropriate exit delay and duration for smooth animation.\n- Test that letters properly animate out instead of abruptly disappearing.\n- Update CSS styling to ensure exit animations are visually pleasing.\n<info added on 2025-05-08T02:18:42.630Z>\n- Add explicit exit variant to the Letter component for deleted letters.\n- Ensure AnimatePresence is properly configured to handle exit animations.\n- Update the filtering logic in the moving phase to maintain letters that are being deleted.\n- Add a specific 'exiting' animation state for letters being removed.\n- Set appropriate exit delay and duration for smooth animation.\n- Test that letters properly animate out instead of abruptly disappearing.\n- Update CSS styling to ensure exit animations are visually pleasing.\n\nThis is a medium-high priority issue as it directly impacts the user experience. The abrupt disappearance of letters creates a jarring visual effect that breaks the smooth flow of the WordTransform component. Users may perceive this as a bug or glitch in the interface, reducing confidence in the application. Implementing proper exit animations will significantly improve the perceived quality and polish of the component.\n</info added on 2025-05-08T02:18:42.630Z>\n\nImplementation completed successfully with the following changes:\n\n1. Added a new 'exiting' animation state to the Letter component specifically designed to handle letters being removed from the DOM\n2. Updated the Letter component with proper exit animations including fade-out and scale effects\n3. Modified the WordTransform component logic to mark deleted letters with the 'exiting' state during the moving phase instead of immediately filtering them out\n4. Added CSS styling for the exiting animation state with appropriate opacity and transform transitions\n5. Configured the AnimatePresence component to use 'mode=\"sync\"' for better coordination of exit animations with other ongoing animations\n6. Updated the phase transition logic to include deleted letters in the moving phase animation count to ensure all animations complete before proceeding\n7. Created and executed a test case to verify that deleted letters properly animate out rather than disappearing abruptly\n\nThe implementation provides a more polished and professional user experience by ensuring smooth visual transitions when letters are removed from the word transformation process.
 </info added on 2025-05-10T02:40:03.445Z>
 
-## 18. Add ARIA live region for phase changes [deferred]
+## 18. Add ARIA live region for phase changes [done]
 ### Dependencies: 5.3, 5.7, 5.31
 ### Description: Implement an ARIA live region to announce high-level phase transitions (e.g. "Deleting 3 letters…"), improving accessibility beyond individual letter roles. [Updated: 5/7/2025]
 ### Details:
@@ -625,7 +625,7 @@ Implementation of the restart/replay functionality has been completed with the f
 The implementation allows users to seamlessly replay animations after completion without manual intervention or state resets.
 </info added on 2025-05-10T19:49:28.882Z>
 
-## 20. Make test hooks consistent across source and target letters [deferred]
+## 20. Make test hooks consistent across source and target letters [done]
 ### Dependencies: 5.4, 5.7, 5.31
 ### Description: Fix inconsistency where data-extended-state is added on source letters but insertion/movement states and data-indices aren't exposed on target letters in the same way.
 ### Details:
@@ -685,7 +685,7 @@ Implementation details:
 - Test performance with React DevTools profiler before and after the change.
 - Document the performance optimization in comments.
 
-## 23. Unify animation duration values [deferred]
+## 23. Unify animation duration values [done]
 ### Dependencies: 5.4, 5.6, 5.16
 ### Description: Unify duration values by reading from CSS variables via getComputedStyle instead of hard-coding base values in createLetterVariants.
 ### Details:
@@ -697,7 +697,7 @@ Implementation details:
 - Add fallback values for when CSS variables aren't available.
 - Test performance with this approach to ensure smooth animations.
 
-## 24. Cache callbacks with useCallback for reduced re-renders [deferred]
+## 24. Cache callbacks with useCallback for reduced re-renders [done]
 ### Dependencies: 5.3, 5.31
 ### Description: Wrap startAnimation, handleLetterAnimationComplete in useCallback to reduce re-renders in deeply nested letter lists.
 ### Details:
@@ -709,7 +709,7 @@ Implementation details:
 - Use React.memo on Letter component to maximize the benefit.
 - Document optimization techniques in component comments.
 
-## 25. Simplify reducer types with discriminated union [deferred]
+## 25. Simplify reducer types with discriminated union [done]
 ### Dependencies: 5.3, 5.31
 ### Description: Convert AnimationAction union into a proper TypeScript discriminated union to remove duplicated type fields and improve compile-time safety.
 ### Details:
@@ -721,7 +721,7 @@ Implementation details:
 - Update all action creators to match the new type format.
 - Improve error messages for invalid state transitions.
 
-## 26. Centralize test hooks with a helper function [deferred]
+## 26. Centralize test hooks with a helper function [done]
 ### Dependencies: 5.7, 5.20, 5.31
 ### Description: Create a helper function that generates consistent data-testid, data-state, and data-index attributes for both source and target letters.
 ### Details:

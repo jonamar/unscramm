@@ -49,43 +49,31 @@
 13. Specifically verify that the "Invalid PostCSS Plugin" error is resolved and no infinite scrolling indicators appear in Storybook.
 
 # Subtasks:
-## 11.1. Fix Storybook configuration to use Vite instead of webpack5 [done]
+## 1. Fix Storybook configuration to use Vite instead of webpack5 [done]
 ### Dependencies: None
 ### Description: Modified `.storybook/main.ts` to remove webpack5 builder and configure Vite instead, allowing Storybook to start successfully.
 ### Details:
 
 
-## 11.2. Fix PostCSS configuration for proper component rendering [done]
+## 2. Fix PostCSS configuration for proper component rendering [done]
 ### Dependencies: None
 ### Description: Fix the `postcss.config.mjs` file by changing plugins from string format to properly imported objects, specifically for Tailwind CSS, to resolve the infinite scroller issue and ensure components render correctly with proper styling.
 ### Details:
 
 
-## 11.3. Document configuration changes and verify component rendering [done]
+## 3. Document configuration changes and verify component rendering [done]
 ### Dependencies: None
 ### Description: Document all changes made to both Storybook and PostCSS configurations, and verify that components now render correctly with proper CSS styling in Storybook.
 ### Details:
 
 
-## 12.3. Fix PostCSS configuration for proper component rendering [done]
-### Dependencies: None
-### Description: Fix the `postcss.config.mjs` file by changing plugins from string format to properly imported objects, specifically for Tailwind CSS, to resolve the infinite scroller issue and ensure components render correctly with proper styling.
-### Details:
-
-
-## 13.3. Document configuration changes and verify component rendering [done]
-### Dependencies: None
-### Description: Document all changes made to both Storybook and PostCSS configurations, and verify that components now render correctly with proper CSS styling in Storybook.
-### Details:
-
-
-## 11.4. Install and configure dedicated @tailwindcss/postcss package [done]
+## 4. Install and configure dedicated @tailwindcss/postcss package [done]
 ### Dependencies: None
 ### Description: Install the correct PostCSS plugin packages (`npm install -D @tailwindcss/postcss autoprefixer`) and update the PostCSS configuration to use proper imports to resolve the "Invalid PostCSS Plugin" error that was causing infinite scrolling indicators.
 ### Details:
 
 
-## 11.5. Verify fix for "Invalid PostCSS Plugin" error [done]
+## 5. Verify fix for "Invalid PostCSS Plugin" error [done]
 ### Dependencies: None
 ### Description: Test the updated configuration to confirm that the "Invalid PostCSS Plugin" error is fully resolved and components display correctly without infinite scrolling indicators in Storybook.
 ### Details:

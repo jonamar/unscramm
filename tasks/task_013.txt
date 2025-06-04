@@ -1,9 +1,9 @@
 # Task ID: 13
 # Title: Fix LocalWordPairService Dictionary Loading Issues
-# Status: pending
+# Status: in-progress
 # Dependencies: 3
 # Priority: high
-# Description: Resolve the path resolution and loading issues in the LocalWordPairService that prevent proper access to the wordPairs.json dictionary file in both development and production environments.
+# Description: Resolve the path resolution and loading issues in the LocalWordPairService that prevent proper access to the wordPairs.json dictionary file in both development and production environments. This is a blocking issue for the shuffle functionality, which is a core PRD requirement.
 # Details:
 1. Investigate the current implementation of LocalWordPairService to identify the root cause of the "Failed to load word pairs dictionary: Not Found" errors.
 
@@ -30,6 +30,8 @@
 6. Update any related components or services that might be affected by these changes
    - Ensure the shuffle functionality properly integrates with the fixed service
    - Verify that all consumers of the WordPairService interface still work correctly
+
+7. Prioritize this fix as it's currently blocking the shuffle functionality, which prevents users from experiencing random word pairs - a core feature in the PRD
 
 # Test Strategy:
 1. Unit Tests:
@@ -60,3 +62,7 @@
 6. Performance Testing:
    - Measure and verify that dictionary loading doesn't impact application startup time
    - Check that caching mechanisms work as expected
+
+7. Validation Testing:
+   - Specifically verify that the shuffle functionality works correctly after the fix
+   - Confirm that users can experience random word pairs as intended in the PRD
