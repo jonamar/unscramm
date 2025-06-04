@@ -1,8 +1,7 @@
 import React, { useMemo, useCallback, forwardRef, useImperativeHandle, useRef, useEffect } from 'react';
-import { useMachine } from '@xstate/react';
-import Letter, { LetterAnimationState } from './Letter';
+import { LetterAnimationState } from './Letter';
 import { computeEditPlan, EditPlan } from '../utils/editPlan';
-import { createWordTransformMachine, WordTransformPhase } from './wordTransform.machine';
+import { useWordTransformMachine, WordTransformPhase } from './wordTransform.machine';
 import SourceLetters from './SourceLetters';
 import TargetLetters from './TargetLetters';
 import styles from './WordTransform.module.css';
@@ -87,19 +86,14 @@ const WordTransformFSM = forwardRef<WordTransformTestingAPI, WordTransformProps>
     return computeEditPlan(misspelling, correct);
   }, [misspelling, correct]);
 
-  // Create the state machine with the correct counts from the edit plan
-  const machine = useMemo(() => {
-    if (!editPlan) return createWordTransformMachine();
-    
-    return createWordTransformMachine({
+  // Use the new React hooks-based state machine
+  const [state, send] = useWordTransformMachine(
+    editPlan ? {
       deletions: editPlan.deletions.length,
       moves: editPlan.moves.length,
       insertions: editPlan.insertions.length
-    });
-  }, [editPlan]);
-
-  // Use the XState useMachine hook to manage state
-  const [state, send] = useMachine(machine);
+    } : undefined
+  );
 
   // Track animation completed count for each phase
   const animationCountRef = useRef(0);

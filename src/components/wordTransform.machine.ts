@@ -1,4 +1,4 @@
-import type { MachineConfig, StateFrom, Actor } from 'xstate';
+import { useReducer, useCallback, useMemo } from 'react';
 
 /**
  * Animation phases for the word transformation sequence
@@ -30,168 +30,139 @@ export type WordTransformMachineContext = {
 };
 
 /**
- * Define the type for setup parameters that will be passed when creating the machine instance
+ * Define the type for setup parameters that will be used to configure the machine
  */
-export type WordTransformSetupParams = {
+export interface WordTransformSetupParams {
   deletions: number;
   moves: number;
   insertions: number;
-};
+}
 
 /**
- * Machine configuration for XState v5
+ * State machine state combining phase and context
  */
-const createMachineConfig = (input?: WordTransformSetupParams): MachineConfig<
-  WordTransformMachineContext,
-  WordTransformMachineEvent
-> => ({
-  id: 'wordTransform',
-  initial: 'idle',
-  context: {
-    deletions: input?.deletions ?? 0,
-    moves: input?.moves ?? 0,
-    insertions: input?.insertions ?? 0,
-  },
-  states: {
-    idle: {
-      on: {
-        START: [
-          {
-            target: 'deleting',
-            guard: ({ context }: { context: WordTransformMachineContext }) => context.deletions > 0,
-          },
-          {
-            target: 'moving',
-            guard: ({ context }: { context: WordTransformMachineContext }) => context.moves > 0 && context.deletions === 0,
-          },
-          {
-            target: 'inserting',
-            guard: ({ context }: { context: WordTransformMachineContext }) => (
-              context.insertions > 0 && 
-              context.moves === 0 && 
-              context.deletions === 0
-            ),
-          },
-          {
-            target: 'complete',
-          },
-        ],
-        RESET: {
-          actions: [
-            ({ context }: { context: WordTransformMachineContext }) => {
-              context.deletions = 0;
-              context.moves = 0;
-              context.insertions = 0;
-            }
-          ],
-        },
-      },
+export interface WordTransformMachineState {
+  phase: WordTransformPhase;
+  context: WordTransformMachineContext;
+}
+
+/**
+ * Reducer function that handles state transitions
+ */
+function wordTransformMachineReducer(
+  state: WordTransformMachineState,
+  event: WordTransformMachineEvent
+): WordTransformMachineState {
+  switch (state.phase) {
+    case 'idle':
+      if (event.type === 'START') {
+        // Start with deleting phase, or skip to moving if no deletions
+        if (state.context.deletions > 0) {
+          return { ...state, phase: 'deleting' };
+        } else if (state.context.moves > 0) {
+          return { ...state, phase: 'moving' };
+        } else if (state.context.insertions > 0) {
+          return { ...state, phase: 'inserting' };
+        } else {
+          // No operations needed, go straight to complete
+          return { ...state, phase: 'complete' };
+        }
+      }
+      break;
+      
+    case 'deleting':
+      if (event.type === 'DONE_PHASE') {
+        // Move to moving phase if there are moves, otherwise to inserting
+        if (state.context.moves > 0) {
+          return { ...state, phase: 'moving' };
+        } else if (state.context.insertions > 0) {
+          return { ...state, phase: 'inserting' };
+        } else {
+          return { ...state, phase: 'complete' };
+        }
+      }
+      break;
+      
+    case 'moving':
+      if (event.type === 'DONE_PHASE') {
+        // Move to inserting phase if there are insertions, otherwise complete
+        if (state.context.insertions > 0) {
+          return { ...state, phase: 'inserting' };
+        } else {
+          return { ...state, phase: 'complete' };
+        }
+      }
+      break;
+      
+    case 'inserting':
+      if (event.type === 'DONE_PHASE') {
+        return { ...state, phase: 'complete' };
+      }
+      break;
+      
+    case 'complete':
+      if (event.type === 'RESTART') {
+        return { ...state, phase: 'idle' };
+      }
+      break;
+  }
+  
+  // Handle RESET event from any state
+  if (event.type === 'RESET') {
+    return { ...state, phase: 'idle' };
+  }
+  
+  // Return current state if no transition applies
+  return state;
+}
+
+/**
+ * Custom hook that provides the same API as the XState machine
+ */
+export function useWordTransformMachine(setupParams?: WordTransformSetupParams) {
+  // Initialize state with the provided parameters or defaults
+  const initialState: WordTransformMachineState = useMemo(() => ({
+    phase: 'idle',
+    context: {
+      deletions: setupParams?.deletions || 0,
+      moves: setupParams?.moves || 0,
+      insertions: setupParams?.insertions || 0,
+    }
+  }), [setupParams?.deletions, setupParams?.moves, setupParams?.insertions]);
+
+  const [state, dispatch] = useReducer(wordTransformMachineReducer, initialState);
+
+  // Provide a send function that matches XState's API
+  const send = useCallback((event: WordTransformMachineEvent) => {
+    dispatch(event);
+  }, []);
+
+  // Return an object that matches XState's useMachine hook API
+  return [
+    {
+      value: state.phase,
+      context: state.context,
     },
-    deleting: {
-      on: {
-        DONE_PHASE: [
-          {
-            target: 'moving',
-            guard: ({ context }: { context: WordTransformMachineContext }) => context.moves > 0,
-          },
-          {
-            target: 'inserting',
-            guard: ({ context }: { context: WordTransformMachineContext }) => context.insertions > 0 && context.moves === 0,
-          },
-          {
-            target: 'complete',
-          },
-        ],
-        RESET: {
-          target: 'idle',
-          actions: [
-            ({ context }: { context: WordTransformMachineContext }) => {
-              context.deletions = 0;
-              context.moves = 0;
-              context.insertions = 0;
-            }
-          ],
-        },
-      },
-    },
-    moving: {
-      on: {
-        DONE_PHASE: [
-          {
-            target: 'inserting',
-            guard: ({ context }: { context: WordTransformMachineContext }) => context.insertions > 0,
-          },
-          {
-            target: 'complete',
-          },
-        ],
-        RESET: {
-          target: 'idle',
-          actions: [
-            ({ context }: { context: WordTransformMachineContext }) => {
-              context.deletions = 0;
-              context.moves = 0;
-              context.insertions = 0;
-            }
-          ],
-        },
-      },
-    },
-    inserting: {
-      on: {
-        DONE_PHASE: {
-          target: 'complete',
-        },
-        RESET: {
-          target: 'idle',
-          actions: [
-            ({ context }: { context: WordTransformMachineContext }) => {
-              context.deletions = 0;
-              context.moves = 0;
-              context.insertions = 0;
-            }
-          ],
-        },
-      },
-    },
-    complete: {
-      on: {
-        RESET: {
-          target: 'idle',
-          actions: [
-            ({ context }: { context: WordTransformMachineContext }) => {
-              context.deletions = 0;
-              context.moves = 0;
-              context.insertions = 0;
-            }
-          ],
-        },
-        RESTART: {
-          target: 'idle',
-          // No need to reset context for replay - we want to keep the same edit plan
-        },
-      },
-    },
-  },
-});
+    send
+  ] as const;
+}
 
 /**
  * Creates a new instance of the machine with the specified initial context
+ * This function maintains compatibility with the previous XState API
  */
 export const createWordTransformMachine = (input?: WordTransformSetupParams) => {
-  // Return the configuration object that can be used with XState v5
-  // This approach avoids direct import of createMachine which has module resolution issues
-  const config = createMachineConfig(input);
-  
-  // Return a minimal compatible interface for now
+  // Return a mock machine object that matches the expected interface
   return {
-    config,
-    // For compatibility with existing tests
     start: () => {},
     send: () => {},
     getSnapshot: () => ({ 
       value: 'idle' as WordTransformPhase, 
-      context: config.context as WordTransformMachineContext 
+      context: { 
+        deletions: input?.deletions || 0, 
+        moves: input?.moves || 0, 
+        insertions: input?.insertions || 0 
+      } 
     }),
   };
 }; 

@@ -320,7 +320,6 @@ describe('WordTransformFSM Component', () => {
     
     // Get the component's style
     const component = screen.getByTestId('word-transform');
-    const styles = window.getComputedStyle(component);
     
     // Check that CSS variables are set correctly
     // Note: getComputedStyle in JSDOM doesn't fully support CSS variables,
@@ -385,7 +384,6 @@ describe('WordTransformFSM Component', () => {
 
   it('renders true-mover letter with correct animation state', () => {
     // Set up jest.spyOn to monitor Letter component rendering
-    const originalRender = React.createElement;
     const renderSpy = jest.spyOn(React, 'createElement');
     
     render(
@@ -415,7 +413,7 @@ describe('WordTransformFSM Component', () => {
       const trueMoverRenders = renderSpy.mock.calls.filter(call => 
         call[0] === Letter && 
         call[1] && 
-        (call[1] as any).animationState === 'true-mover'
+        (call[1] as { animationState?: string }).animationState === 'true-mover'
       );
       
       // Expect at least one Letter to be a true-mover during the moving phase
