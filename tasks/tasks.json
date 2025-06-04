@@ -1022,6 +1022,19 @@
       ],
       "priority": "high",
       "subtasks": []
+    },
+    {
+      "id": 19,
+      "title": "Consolidate Duplicate LocalWordPairService Implementations",
+      "description": "Remove the old stub implementation in src/services/wordService.ts and ensure all imports use the complete implementation from src/services/localWordPairService.ts to eliminate confusion and potential import issues.",
+      "details": "1. Identify all files that import from the stub implementation in src/services/wordService.ts:\n   - Use IDE search functionality to find all imports referencing \"wordService.ts\"\n   - Document each location where the stub is being imported\n\n2. Analyze the current implementation in src/services/localWordPairService.ts:\n   - Ensure it fully implements the WordPairService interface\n   - Verify that all methods are properly implemented with actual functionality\n   - Check that it correctly handles the dictionary loading (fixed in Task 13)\n\n3. Update all import statements across the codebase:\n   - Replace `import { ... } from 'src/services/wordService'` with `import { ... } from 'src/services/localWordPairService'`\n   - Ensure any named imports match the exports from localWordPairService.ts\n   - Update any type references that might be using the interface from wordService.ts\n\n4. If the WordPairService interface is defined in wordService.ts:\n   - Move the interface definition to a new file src/services/types/wordPairService.ts\n   - Update all imports to reference the interface from this new location\n   - Ensure localWordPairService.ts properly implements this interface\n\n5. Remove the stub implementation:\n   - Once all imports are updated, safely delete src/services/wordService.ts\n   - Verify no references to this file remain in the codebase\n\n6. Update any service registration or dependency injection:\n   - If using any DI container or context providers, update the service registration\n   - Ensure the correct implementation is being provided throughout the application\n\n7. Documentation updates:\n   - Update any documentation that references the old stub implementation\n   - Add comments to the localWordPairService.ts file indicating it's the canonical implementation",
+      "testStrategy": "1. Static code analysis:\n   - Run a project-wide search for any remaining imports of \"wordService.ts\" to ensure none were missed\n   - Verify that src/services/wordService.ts has been completely removed\n   - Check that all imports now correctly reference localWordPairService.ts\n\n2. Compilation verification:\n   - Run a full TypeScript compilation (tsc) to ensure no type errors exist\n   - Verify that the build process completes without errors related to missing imports\n\n3. Runtime testing:\n   - Execute all existing unit tests that involve word pair functionality\n   - Verify that all features dependent on the WordPairService continue to work correctly\n   - Test specifically the functionality that was previously using the stub implementation\n\n4. Integration testing:\n   - Test the application end-to-end to ensure all word pair related features work correctly\n   - Verify that dictionary loading works properly in both development and production environments\n   - Test edge cases like error handling and fallback behavior\n\n5. Regression testing:\n   - Ensure that the fixes from Task 13 (dictionary loading) still work correctly\n   - Verify that no new issues have been introduced by the consolidation\n\n6. Code review:\n   - Have another developer review the changes to ensure all references have been properly updated\n   - Verify that the interface implementation in localWordPairService.ts is complete",
+      "status": "pending",
+      "dependencies": [
+        13
+      ],
+      "priority": "medium",
+      "subtasks": []
     }
   ],
   "metadata": {
