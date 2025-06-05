@@ -38,6 +38,8 @@ const Controls: React.FC<ControlsProps> = ({
   isPlaying = false,
   currentWordPair,
   isShuffle = false,
+  isShuffleLoading = false,
+  shuffleError = null,
   onPlay,
   onReset,
   onShuffle,
@@ -165,9 +167,9 @@ const Controls: React.FC<ControlsProps> = ({
             type="button"
             className={styles.shuffleButton}
             onClick={onShuffle}
-            disabled={isPlaying}
+            disabled={isPlaying || isShuffleLoading}
           >
-            {isShuffle ? 'Shuffle On' : 'Shuffle Off'}
+            {isShuffleLoading ? 'Loading...' : isShuffle ? 'Shuffle On' : 'Shuffle Off'}
           </button>
           
           <button
@@ -179,6 +181,13 @@ const Controls: React.FC<ControlsProps> = ({
             Reset
           </button>
         </div>
+
+        {/* Error message display */}
+        {shuffleError && (
+          <div className={styles.errorMessage}>
+            ⚠️ {shuffleError}
+          </div>
+        )}
       </form>
     </div>
   );
