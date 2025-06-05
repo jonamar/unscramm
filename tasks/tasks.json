@@ -954,7 +954,50 @@
       "priority": "high",
       "details": "1. Investigate the current implementation of LocalWordPairService to identify the root cause of the \"Failed to load word pairs dictionary: Not Found\" errors.\n\n2. Fix the path resolution issue:\n   - Update the service to correctly reference the dictionary file at `public/data/wordPairs.json` instead of `/data/wordPairs.json`\n   - Implement proper path resolution that works across different environments (development, testing, production)\n   - Consider using Next.js's built-in public folder handling for static assets\n\n3. Implement robust error handling:\n   - Add proper error catching and logging for dictionary loading failures\n   - Implement a fallback mechanism (e.g., default word pairs) in case the dictionary cannot be loaded\n   - Add retry logic if appropriate\n\n4. Update the fetch mechanism:\n   - Use the appropriate Next.js methods for accessing static files\n   - Ensure the fetch is compatible with both client and server-side rendering scenarios\n   - Consider caching strategies to improve performance\n\n5. Refactor the service to handle different environments:\n   - Add environment detection to adjust paths if needed\n   - Ensure the service works in both development and production builds\n   - Document any environment-specific considerations\n\n6. Update any related components or services that might be affected by these changes\n   - Ensure the shuffle functionality properly integrates with the fixed service\n   - Verify that all consumers of the WordPairService interface still work correctly\n\n7. Prioritize this fix as it's currently blocking the shuffle functionality, which prevents users from experiencing random word pairs - a core feature in the PRD",
       "testStrategy": "1. Unit Tests:\n   - Create unit tests for the LocalWordPairService that verify it can load the dictionary file\n   - Test error handling by simulating missing or corrupted dictionary files\n   - Verify that the service correctly parses and returns word pairs from the dictionary\n\n2. Integration Tests:\n   - Test the integration between the LocalWordPairService and components that use it\n   - Verify that the shuffle functionality works correctly with the loaded dictionary\n   - Test the service in different rendering contexts (SSR, CSR, etc.)\n\n3. Environment Testing:\n   - Test the service in development environment using `npm run dev`\n   - Test in a production-like environment using `npm run build` followed by `npm run start`\n   - Verify dictionary loading works in both environments\n\n4. Error Scenario Testing:\n   - Test recovery from network failures\n   - Test behavior when the dictionary file is missing or malformed\n   - Verify appropriate error messages are displayed to users\n\n5. Manual Verification:\n   - Check browser console for any loading errors related to the dictionary\n   - Verify the shuffle functionality works end-to-end in the application\n   - Test on different browsers to ensure cross-browser compatibility\n\n6. Performance Testing:\n   - Measure and verify that dictionary loading doesn't impact application startup time\n   - Check that caching mechanisms work as expected\n\n7. Validation Testing:\n   - Specifically verify that the shuffle functionality works correctly after the fix\n   - Confirm that users can experience random word pairs as intended in the PRD",
-      "subtasks": []
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Diagnose Path Resolution Issues in LocalWordPairService",
+          "description": "Investigate the current implementation to identify why the service fails to load the wordPairs.json dictionary file, focusing on path resolution problems across environments.",
+          "dependencies": [],
+          "details": "1. Review the current file path construction in LocalWordPairService\n2. Check how the service attempts to access the dictionary file\n3. Identify environment differences between development and production\n4. Document the exact error scenarios and their root causes\n5. Create a test case that reproduces the 'Not Found' error\n<info added on 2025-06-05T12:28:00.120Z>\nDISCOVERED:\n- Dictionary file is accessible at /data/wordPairs.json\n- File loads correctly with HTTP 200 status\n- Contains 16 word pairs as expected\n- JSON structure is valid with metadata and wordPairs array\n- Each word pair has misspelling and correct fields\n- Issue is likely in the JavaScript service implementation or browser-side loading\n\nNEXT STEPS:\n- Test shuffle functionality in browser console to identify specific error\n</info added on 2025-06-05T12:28:00.120Z>",
+          "status": "done",
+          "testStrategy": "Create a simple test harness that attempts to load the dictionary in different environments and logs detailed error information"
+        },
+        {
+          "id": 2,
+          "title": "Implement Correct Path Resolution Strategy",
+          "description": "Update the service to properly resolve and access the wordPairs.json file using Next.js best practices for static asset handling.",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Modify the path resolution to use the correct public folder reference\n2. Update from '/data/wordPairs.json' to 'public/data/wordPairs.json'\n3. Implement environment-aware path resolution that works in both development and production\n4. Use Next.js's built-in methods for accessing public assets\n5. Add environment detection logic to adjust paths if needed",
+          "status": "pending",
+          "testStrategy": "Test the updated path resolution in both development and production environments to verify the file can be successfully loaded"
+        },
+        {
+          "id": 3,
+          "title": "Add Robust Error Handling and Fallback Mechanism",
+          "description": "Enhance the service with proper error handling, logging, and fallback mechanisms to ensure the application remains functional even when dictionary loading fails.",
+          "dependencies": [
+            2
+          ],
+          "details": "1. Implement try/catch blocks around dictionary loading operations\n2. Add detailed error logging with contextual information\n3. Create a minimal default word pairs array to use as fallback\n4. Implement a retry mechanism with configurable attempts\n5. Add warning notifications when falling back to default data\n6. Ensure errors are properly propagated to monitoring systems",
+          "status": "pending",
+          "testStrategy": "Test error scenarios by temporarily moving or renaming the dictionary file and verifying the fallback mechanism activates correctly"
+        },
+        {
+          "id": 4,
+          "title": "Optimize Fetch Mechanism and Update Dependent Components",
+          "description": "Refine the dictionary fetch implementation for performance and compatibility, then update any components that depend on the WordPairService.",
+          "dependencies": [
+            3
+          ],
+          "details": "1. Implement caching for the dictionary to avoid repeated fetches\n2. Ensure the fetch mechanism is compatible with both client and server-side rendering\n3. Update the shuffle functionality to properly integrate with the fixed service\n4. Verify all components using WordPairService interface still work correctly\n5. Add loading states to handle the asynchronous dictionary loading\n6. Document the updated service implementation for other developers",
+          "status": "pending",
+          "testStrategy": "Create integration tests that verify the shuffle functionality works end-to-end with the updated service, and performance tests to ensure dictionary loading is optimized"
+        }
+      ]
     },
     {
       "id": 14,

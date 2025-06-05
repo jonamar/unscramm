@@ -66,3 +66,59 @@
 7. Validation Testing:
    - Specifically verify that the shuffle functionality works correctly after the fix
    - Confirm that users can experience random word pairs as intended in the PRD
+
+# Subtasks:
+## 1. Diagnose Path Resolution Issues in LocalWordPairService [done]
+### Dependencies: None
+### Description: Investigate the current implementation to identify why the service fails to load the wordPairs.json dictionary file, focusing on path resolution problems across environments.
+### Details:
+1. Review the current file path construction in LocalWordPairService
+2. Check how the service attempts to access the dictionary file
+3. Identify environment differences between development and production
+4. Document the exact error scenarios and their root causes
+5. Create a test case that reproduces the 'Not Found' error
+<info added on 2025-06-05T12:28:00.120Z>
+DISCOVERED:
+- Dictionary file is accessible at /data/wordPairs.json
+- File loads correctly with HTTP 200 status
+- Contains 16 word pairs as expected
+- JSON structure is valid with metadata and wordPairs array
+- Each word pair has misspelling and correct fields
+- Issue is likely in the JavaScript service implementation or browser-side loading
+
+NEXT STEPS:
+- Test shuffle functionality in browser console to identify specific error
+</info added on 2025-06-05T12:28:00.120Z>
+
+## 2. Implement Correct Path Resolution Strategy [pending]
+### Dependencies: 13.1
+### Description: Update the service to properly resolve and access the wordPairs.json file using Next.js best practices for static asset handling.
+### Details:
+1. Modify the path resolution to use the correct public folder reference
+2. Update from '/data/wordPairs.json' to 'public/data/wordPairs.json'
+3. Implement environment-aware path resolution that works in both development and production
+4. Use Next.js's built-in methods for accessing public assets
+5. Add environment detection logic to adjust paths if needed
+
+## 3. Add Robust Error Handling and Fallback Mechanism [pending]
+### Dependencies: 13.2
+### Description: Enhance the service with proper error handling, logging, and fallback mechanisms to ensure the application remains functional even when dictionary loading fails.
+### Details:
+1. Implement try/catch blocks around dictionary loading operations
+2. Add detailed error logging with contextual information
+3. Create a minimal default word pairs array to use as fallback
+4. Implement a retry mechanism with configurable attempts
+5. Add warning notifications when falling back to default data
+6. Ensure errors are properly propagated to monitoring systems
+
+## 4. Optimize Fetch Mechanism and Update Dependent Components [pending]
+### Dependencies: 13.3
+### Description: Refine the dictionary fetch implementation for performance and compatibility, then update any components that depend on the WordPairService.
+### Details:
+1. Implement caching for the dictionary to avoid repeated fetches
+2. Ensure the fetch mechanism is compatible with both client and server-side rendering
+3. Update the shuffle functionality to properly integrate with the fixed service
+4. Verify all components using WordPairService interface still work correctly
+5. Add loading states to handle the asynchronous dictionary loading
+6. Document the updated service implementation for other developers
+

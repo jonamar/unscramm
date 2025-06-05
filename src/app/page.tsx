@@ -6,6 +6,7 @@ import WordTransform from "../components/WordTransform";
 import Controls from "../components/Controls";
 import { WordTransformTestingAPI } from "../components/WordTransform";
 import { WordPair } from "../services/wordPairService";
+import { LocalWordPairService } from "../services/localWordPairService";
 import Image from "next/image";
 
 export default function Home() {
@@ -19,6 +20,9 @@ export default function Home() {
   
   // Reference to the WordTransform component for programmatic control
   const wordTransformRef = useRef<WordTransformTestingAPI>(null);
+  
+  // Service for loading random word pairs
+  const wordPairService = useRef(new LocalWordPairService()).current;
 
   // Handle play button click
   const handlePlay = () => {
@@ -34,10 +38,26 @@ export default function Home() {
     // WordTransform component will handle its own reset when props change
   };
 
-  // Handle shuffle button click (placeholder for now - will implement in subtask 7.4)
-  const handleShuffle = () => {
-    setIsShuffle(!isShuffle);
-    // TODO: Implement actual shuffle functionality in subtask 7.4
+  // Handle shuffle button click - load a random word pair when shuffle is toggled on
+  const handleShuffle = async () => {
+    const newShuffleState = !isShuffle;
+    setIsShuffle(newShuffleState);
+    
+    // If turning shuffle on, load a random word pair
+    if (newShuffleState) {
+      try {
+        const randomPair = await wordPairService.getRandomPair();
+        setCurrentWordPair(randomPair);
+        setIsPlaying(false); // Reset playing state when new words are loaded
+      } catch (error) {
+        console.error('Failed to load random word pair:', error);
+        // If shuffle fails, turn it back off
+        setIsShuffle(false);
+        
+        // Optionally show user-friendly error message
+        alert('Failed to load random word pair. Please try again or enter words manually.');
+      }
+    }
   };
 
   // Handle speed change
