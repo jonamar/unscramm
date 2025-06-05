@@ -17,12 +17,14 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [isShuffle, setIsShuffle] = useState(false);
+  const [isShuffleLoading, setIsShuffleLoading] = useState(false);
+  const [shuffleError, setShuffleError] = useState<string | null>(null);
   
   // Reference to the WordTransform component for programmatic control
   const wordTransformRef = useRef<WordTransformTestingAPI>(null);
   
-  // Service for loading random word pairs
-  const wordPairService = useRef(new LocalWordPairService()).current;
+  // Create a local instance of the word pair service
+  const wordPairService = new LocalWordPairService();
 
   // Handle play button click
   const handlePlay = () => {
@@ -45,18 +47,26 @@ export default function Home() {
     
     // If turning shuffle on, load a random word pair
     if (newShuffleState) {
+      setIsShuffleLoading(true);
+      setShuffleError(null);
+      
       try {
         const randomPair = await wordPairService.getRandomPair();
         setCurrentWordPair(randomPair);
         setIsPlaying(false); // Reset playing state when new words are loaded
+        console.log('Shuffle successful:', randomPair);
       } catch (error) {
         console.error('Failed to load random word pair:', error);
+        setShuffleError('Failed to load random word pair. Please try again.');
+        
         // If shuffle fails, turn it back off
         setIsShuffle(false);
-        
-        // Optionally show user-friendly error message
-        alert('Failed to load random word pair. Please try again or enter words manually.');
+      } finally {
+        setIsShuffleLoading(false);
       }
+    } else {
+      // Turning shuffle off - clear any error state
+      setShuffleError(null);
     }
   };
 
@@ -119,14 +129,16 @@ export default function Home() {
         {/* Controls component container */}
         <div className="p-6 rounded-lg border border-gray-800 bg-gray-900 mb-8">
           <Controls
-            speed={speed}
             isPlaying={isPlaying}
+            speed={speed}
             currentWordPair={currentWordPair}
             isShuffle={isShuffle}
+            isShuffleLoading={isShuffleLoading}
+            shuffleError={shuffleError}
             onPlay={handlePlay}
             onReset={handleReset}
-            onShuffle={handleShuffle}
             onSpeedChange={handleSpeedChange}
+            onShuffle={handleShuffle}
             onWordPairSubmit={handleWordPairSubmit}
           />
         </div>

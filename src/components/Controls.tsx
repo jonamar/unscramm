@@ -13,6 +13,10 @@ export interface ControlsProps {
   currentWordPair?: WordPair;
   /** Whether to enable shuffle mode */
   isShuffle?: boolean;
+  /** Whether shuffle operation is loading */
+  isShuffleLoading?: boolean;
+  /** Error message from shuffle operation */
+  shuffleError?: string | null;
   /** Handler for when play button is clicked */
   onPlay?: () => void;
   /** Handler for when reset button is clicked */
