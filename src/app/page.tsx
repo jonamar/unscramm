@@ -91,25 +91,25 @@ export default function Home() {
   };
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6">
+    <main className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
       <InstallPrompt />
-      <div className="max-w-3xl w-full">
-        <header className="text-center mb-10">
+      <div className="max-w-3xl w-full px-4 sm:px-6">
+        <header className="text-center mb-6 sm:mb-8 lg:mb-10">
           <Image 
             src="/unscramm-logo.svg" 
             alt="Unscramm Logo" 
             width={200} 
             height={60} 
             priority
-            className="mx-auto mb-2"
+            className="mx-auto mb-2 w-40 h-auto sm:w-48 md:w-52 lg:w-56"
           />
-          <p className="text-xl text-gray-400">
+          <p className="text-lg sm:text-xl text-gray-400">
             Visualize and correct spelling errors
           </p>
         </header>
 
         {/* WordTransform component container */}
-        <div className="p-6 rounded-lg border border-gray-800 bg-gray-900 mb-8 min-h-28 flex items-center justify-center">
+        <div className="p-4 sm:p-6 rounded-lg border border-gray-800 bg-gray-900 mb-6 sm:mb-8 min-h-20 sm:min-h-28 flex items-center justify-center">
           {currentWordPair ? (
             <WordTransform
               ref={wordTransformRef}
@@ -120,14 +120,14 @@ export default function Home() {
               cancelOnPropsChange={true}
             />
           ) : (
-            <p className="text-gray-400 text-center">
+            <p className="text-gray-400 text-center text-sm sm:text-base px-2">
               Enter a word pair below to see the transformation animation
             </p>
           )}
         </div>
 
         {/* Controls component container */}
-        <div className="p-6 rounded-lg border border-gray-800 bg-gray-900 mb-8">
+        <div className="p-4 sm:p-6 rounded-lg border border-gray-800 bg-gray-900 mb-6 sm:mb-8">
           <Controls
             isPlaying={isPlaying}
             speed={speed}
@@ -143,7 +143,7 @@ export default function Home() {
           />
         </div>
 
-        <div className="text-center text-sm text-gray-500">
+        <div className="text-center text-xs sm:text-sm text-gray-500">
           <p>Phase 1 MVP - Interactive Animation</p>
         </div>
       </div>

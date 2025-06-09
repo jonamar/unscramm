@@ -186,6 +186,14 @@
 
 /* Responsive styles */
 @media (max-width: 600px) {
+  .controlsContainer {
+    padding: 0.75rem;
+  }
+  
+  .form {
+    gap: 1rem;
+  }
+  
   .buttonGroup {
     flex-direction: column;
     width: 100%;
@@ -193,6 +201,18 @@
   
   .playButton, .shuffleButton, .resetButton {
     width: 100%;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .textInput {
+    padding: 12px 8px;
+    font-size: 0.95rem;
+  }
+  
+  .label {
+    font-size: 0.85rem;
   }
 }
 
@@ -204,5 +224,42 @@
   
   .label {
     font-size: 0.8rem;
+  }
+  
+  .controlsContainer {
+    padding: 0.5rem;
+  }
+  
+  .form {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 350px) {
+  .playButton, .shuffleButton, .resetButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+  
+  .buttonGroup {
+    gap: 0.5rem;
+  }
+  
+  .textInput {
+    padding: 10px 6px;
+  }
+}
+
+@media (max-height: 600px) {
+  .controlsContainer {
+    padding: 0.5rem;
+  }
+  
+  .form {
+    gap: 0.75rem;
+  }
+  
+  .inputGroup {
+    gap: 0.25rem;
   }
 } 
