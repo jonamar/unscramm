@@ -76,3 +76,98 @@
 7. Browser Compatibility:
    - Test the consolidated component across different browsers
    - Verify that animations work consistently across platforms
+
+# Subtasks:
+## 1. Analyze and Compare Both WordTransform Implementations [done]
+### Dependencies: None
+### Description: Conduct a thorough analysis of both WordTransform.tsx and WordTransformFSM.tsx implementations to determine which one should be kept.
+### Details:
+1. Create a comparison document listing features of both implementations
+2. Evaluate each implementation based on performance metrics (render times, memory usage)
+3. Assess code maintainability and clarity by reviewing component structure
+4. Check compatibility with React 19 features and best practices
+5. Document any unique functionality in either implementation that must be preserved
+6. Make a clear recommendation on which implementation to keep with justification
+<info added on 2025-06-09T21:47:21.156Z>
+ARCHITECTURAL ANALYSIS COMPLETE:
+
+WordTransformFSM (349 lines) is significantly better than WordTransform (738 lines).
+
+WordTransformFSM Advantages:
+- 53% smaller codebase
+- Cleaner separation of concerns with custom hooks-based state machine
+- Uses composition with SourceLetters/TargetLetters components vs monolithic approach
+- Already aligned with project goal of removing XState dependencies
+- More focused readable component logic
+- Better testing API
+- Enhanced keyboard navigation
+
+WordTransform Issues:
+- Complex useReducer with 738 lines of tightly coupled logic
+- Monolithic component doing too many things
+- More complex phase transition logic embedded in component
+- Harder to test due to size and complexity
+
+Recommendation: WordTransformFSM is architecturally superior for consolidation.
+</info added on 2025-06-09T21:47:21.156Z>
+
+## 2. Consolidate to Single Implementation with Full Feature Set [in-progress]
+### Dependencies: 18.1
+### Description: Based on the analysis, enhance the selected implementation to incorporate any missing features from the other version.
+### Details:
+1. Create a new branch for the consolidation work
+2. Start with the superior implementation identified in subtask 1
+3. Incorporate any missing features or functionality from the other implementation
+4. Ensure the component maintains the same props interface for backward compatibility
+5. Rename the component to simply 'WordTransform' regardless of which base implementation was chosen
+6. Add comprehensive comments explaining the implementation decisions
+7. Update TypeScript types as needed
+<info added on 2025-06-09T21:51:02.242Z>
+CONSOLIDATION COMPLETE: Successfully replaced WordTransform.tsx (738 lines) with WordTransformFSM.tsx (349 lines) as the new WordTransform.tsx. 
+
+Key changes:
+- Renamed original to WordTransform.legacy.tsx as backup
+- Copied WordTransformFSM to WordTransform.tsx
+- Updated API to match legacy version exactly including completedAnimations and totalAnimationsInPhase
+- Fixed component name and displayName
+- Maintained all props compatibility
+- Reduced codebase by approximately 389 lines
+- Application tested and loading correctly on localhost:6002
+
+The FSM (Finite State Machine) implementation was chosen as the superior version due to its cleaner architecture and significantly reduced code size while maintaining full functionality.
+</info added on 2025-06-09T21:51:02.242Z>
+
+## 3. Update All Component References Throughout Codebase [pending]
+### Dependencies: 18.2
+### Description: Identify and update all imports and references to either WordTransform implementation to use the new consolidated component.
+### Details:
+1. Use IDE search tools to find all imports of both 'WordTransform' and 'WordTransformFSM'
+2. Update each import statement to reference the new consolidated component
+3. Pay special attention to the main application page from Task 7
+4. Check any custom hooks that might reference these components
+5. Verify that props passed to the component in each instance are compatible with the consolidated interface
+6. Run the TypeScript compiler to catch any type errors after updates
+
+## 4. Remove Deprecated Implementation and Associated Files [pending]
+### Dependencies: 18.3
+### Description: Clean up the codebase by removing the unused implementation and all associated files.
+### Details:
+1. Remove the unused implementation file (either WordTransform.tsx or WordTransformFSM.tsx)
+2. Remove associated test files for the deprecated implementation
+3. Remove or update Storybook stories specific to the deprecated implementation
+4. Update any documentation that references the removed component
+5. Check for any utility functions or hooks that were only used by the removed implementation and remove if no longer needed
+6. Ensure no dead code or imports remain
+
+## 5. Verify Full Functionality and Performance [pending]
+### Dependencies: 18.4
+### Description: Conduct comprehensive testing to ensure the consolidated component maintains all required functionality and performs well.
+### Details:
+1. Test all animation phases (deletions, movements, insertions) work correctly
+2. Verify that speed control functions properly at different settings
+3. Check that accessibility features are preserved
+4. Test edge cases like very long words or rapid consecutive transformations
+5. Measure performance metrics to ensure no regression compared to original implementations
+6. Verify the component works correctly in all contexts where it's used in the application
+7. Document any minor behavioral differences between the original and consolidated implementations
+

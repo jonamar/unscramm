@@ -1,39 +1,10 @@
-import React, { useReducer, useEffect, useRef, useMemo, useImperativeHandle, useCallback, forwardRef } from 'react';
-import { AnimatePresence } from 'framer-motion';
-import Letter, { LetterAnimationState } from './Letter';
+import React, { useMemo, useCallback, forwardRef, useImperativeHandle, useRef, useEffect } from 'react';
+import { LetterAnimationState } from './Letter';
 import { computeEditPlan, EditPlan } from '../utils/editPlan';
+import { useWordTransformMachine, WordTransformPhase } from './wordTransform.machine';
+import SourceLetters from './SourceLetters';
+import TargetLetters from './TargetLetters';
 import styles from './WordTransform.module.css';
-
-/**
- * Animation phases for the word transformation sequence
- * 
- * Phase Transition Diagram:
- * 
- * ┌─────────┐    START     ┌──────────┐   IF NO DELETIONS   ┌─────────┐   IF NO MOVES   ┌───────────┐   ALWAYS   ┌───────────┐
- * │  IDLE   │──────────────▶ DELETING │───────────────────▶│ MOVING  │────────────────▶│ INSERTING │───────────▶│ COMPLETE  │
- * └─────────┘              └──────────┘                    └─────────┘                 └───────────┘            └───────────┘
- *     ▲                                                                                                               │
- *     │                                                                                                               │
- *     └───────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
- *                                               RESET (on new words)
- * 
- * Events that trigger transitions:
- * - START: User clicks "Start Animation" button
- * - All transitions: When all animations in the current phase are complete
- * - IF NO X: Immediate skip when a phase has no animations to perform
- * - RESET: When words change and cancelOnPropsChange is true
- * 
- * Note: The COMPLETE phase is a terminal state that prevents further animations or re-renders.
- * It will not loop back to itself unnecessarily, improving performance for complex UIs with
- * multiple WordTransform components.
- */
-export enum AnimationPhase {
-  IDLE = 'idle',
-  DELETING = 'deleting',
-  MOVING = 'moving',
-  INSERTING = 'inserting',
-  COMPLETE = 'complete'
-}
 
 /**
  * WordTransform component props
@@ -54,7 +25,9 @@ export interface WordTransformProps {
   /** Optional callback when animation completes */
   onAnimationComplete?: () => void;
   /** Optional callback when animation phase changes */
-  onPhaseChange?: (phase: AnimationPhase) => void;
+  onPhaseChange?: (phase: WordTransformPhase) => void;
+  /** Optional callback when animation is restarted from complete state */
+  onRestart?: () => void;
   /** 
    * Flag to control behavior when props change during an animation:
    * - true (default): Cancel any in-flight animation and reset to IDLE state
@@ -70,155 +43,12 @@ export interface WordTransformProps {
 }
 
 /**
- * State for the animation reducer
- */
-interface AnimationState {
-  /** Current animation phase */
-  phase: AnimationPhase;
-  /** Current edit plan between the words */
-  editPlan: EditPlan | null;
-  /** Source word characters */
-  sourceLetters: string[];
-  /** Target word characters */
-  targetLetters: string[];
-  /** Flag to track if animation is in progress */
-  isAnimating: boolean;
-  /** Counter to track how many animations have completed in current phase */
-  completedAnimations: number;
-  /** Total animations expected in current phase */
-  totalAnimationsInPhase: number;
-}
-
-/**
- * Actions for the animation reducer
- */
-type AnimationAction =
-  | { type: 'INITIALIZE'; payload: { sourceWord: string; targetWord: string; editPlan: EditPlan } }
-  | { type: 'START_ANIMATION' }
-  | { type: 'START_PHASE'; payload: { phase: AnimationPhase; total: number } }
-  | { type: 'ANIMATION_COMPLETE' }
-  | { type: 'COMPLETE_PHASE' }
-  | { type: 'RESET' }
-  | { type: 'CLEAR' };
-
-/**
- * Initial state for the animation reducer
- */
-const initialState: AnimationState = {
-  phase: AnimationPhase.IDLE,
-  editPlan: null,
-  sourceLetters: [],
-  targetLetters: [],
-  isAnimating: false,
-  completedAnimations: 0,
-  totalAnimationsInPhase: 0
-};
-
-/**
- * Phase transition map - defines the next phase for each current phase
- */
-const PHASE_TRANSITIONS: Record<AnimationPhase, AnimationPhase | null> = {
-  [AnimationPhase.IDLE]: AnimationPhase.DELETING,
-  [AnimationPhase.DELETING]: AnimationPhase.MOVING,
-  [AnimationPhase.MOVING]: AnimationPhase.INSERTING,
-  [AnimationPhase.INSERTING]: AnimationPhase.COMPLETE,
-  [AnimationPhase.COMPLETE]: null // Terminal state
-};
-
-/**
- * Interface for phase-specific behavior configuration
- */
-interface PhaseConfig {
-  getTotal: () => number;
-  shouldSkip: (total: number) => boolean;
-  onEnter?: () => void;
-}
-
-/**
- * Reducer function for animation state management
- */
-function animationReducer(state: AnimationState, action: AnimationAction): AnimationState {
-  switch (action.type) {
-    case 'INITIALIZE':
-      const { sourceWord, targetWord, editPlan } = action.payload;
-      const sourceLetters = sourceWord.split('');
-      const targetLetters = targetWord.split('');
-      
-      return {
-        ...state,
-        phase: AnimationPhase.IDLE,
-        editPlan,
-        sourceLetters,
-        targetLetters,
-        isAnimating: false,
-        completedAnimations: 0,
-        totalAnimationsInPhase: 0
-      };
-      
-    case 'START_ANIMATION':
-      return {
-        ...state,
-        phase: AnimationPhase.DELETING,
-        isAnimating: true,
-        completedAnimations: 0
-      };
-      
-    case 'START_PHASE':
-      return {
-        ...state,
-        phase: action.payload.phase,
-        completedAnimations: 0,
-        totalAnimationsInPhase: action.payload.total
-      };
-      
-    case 'ANIMATION_COMPLETE':
-      const newCompletedCount = state.completedAnimations + 1;
-      return {
-        ...state,
-        completedAnimations: newCompletedCount
-      };
-      
-    case 'COMPLETE_PHASE': {
-      // Determine next phase using the transition map
-      const nextPhase = PHASE_TRANSITIONS[state.phase];
-      
-      // If there's no next phase (we're at the end), stay in current phase
-      if (nextPhase === null) {
-        return state;
-      }
-      
-      return {
-        ...state,
-        phase: nextPhase,
-        completedAnimations: 0
-      };
-    }
-      
-    case 'RESET':
-      return initialState;
-    
-    case 'CLEAR':
-      // Clear edit plan and reset but keep basic state structure
-      return {
-        ...initialState,
-        // Maintains the reference to initialState but clears the editPlan
-        editPlan: null,
-        sourceLetters: [],
-        targetLetters: []
-      };
-      
-    default:
-      return state;
-  }
-}
-
-/**
  * Testing API interface for WordTransform component
  * Exposes internal state and methods for testing purposes
  */
 export interface WordTransformTestingAPI {
   /** Current animation phase */
-  phase: AnimationPhase;
+  phase: WordTransformPhase;
   /** Current edit plan between words */
   editPlan: EditPlan | null;
   /** Whether animation is currently running */
@@ -229,6 +59,8 @@ export interface WordTransformTestingAPI {
   targetLetters: string[];
   /** Start the animation sequence */
   startAnimation: () => void;
+  /** Restart the animation from the complete state */
+  restartAnimation: () => void;
   /** Number of completed animations in current phase */
   completedAnimations: number;
   /** Total number of animations expected in current phase */
@@ -237,6 +69,7 @@ export interface WordTransformTestingAPI {
 
 /**
  * Main component that animates the transformation from a misspelled word to its correct spelling
+ * This implementation uses XState to manage the animation state machine
  */
 const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
   misspelling,
@@ -247,493 +80,277 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
   onAnimationStart,
   onAnimationComplete,
   onPhaseChange,
+  onRestart,
   cancelOnPropsChange = true,
   debugMode = false
 }, ref) => {
-  // Set up reducer for animation state management
-  const [state, dispatch] = useReducer(animationReducer, initialState);
-  
-  // Reference to container element for CSS variables
-  const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Memoize the edit plan calculation to prevent expensive O(n²) recalculations
-  const memoizedEditPlan = useMemo(() => {
-    if (misspelling !== '' && correct !== '') {
-      return computeEditPlan(misspelling, correct);
-    }
-    return null;
+  // Compute the edit plan between the misspelled and correct words
+  const editPlan = useMemo(() => {
+    if (!misspelling || !correct) return null;
+    return computeEditPlan(misspelling, correct);
   }, [misspelling, correct]);
+
+  // Use the new React hooks-based state machine
+  const [state, send] = useWordTransformMachine(
+    editPlan ? {
+      deletions: editPlan.deletions.length,
+      moves: editPlan.moves.length,
+      insertions: editPlan.insertions.length
+    } : undefined
+  );
+
+  // Track animation completed count for each phase
+  const animationCountRef = useRef(0);
+  const totalAnimationsRef = useRef(0);
   
-  // Initialize with words when props change
-  useEffect(() => {
-    // Case 1: Both inputs are empty or one is empty - clear state
-    if (misspelling === '' || correct === '') {
-      dispatch({ type: 'CLEAR' });
-      return;
-    }
-    
-    // Case 2: Both inputs are valid and we have an edit plan
-    if (memoizedEditPlan) {
-      // Reset animation if props change during animation and cancelOnPropsChange is true
-      if (state.isAnimating && cancelOnPropsChange) {
-        dispatch({ type: 'RESET' });
-        
-        // Then initialize with new words
-        dispatch({
-          type: 'INITIALIZE',
-          payload: { 
-            sourceWord: misspelling, 
-            targetWord: correct,
-            editPlan: memoizedEditPlan
-          }
-        });
-      } else if (!state.isAnimating) {
-        // If not animating, always initialize with new words regardless of cancelOnPropsChange
-        dispatch({
-          type: 'INITIALIZE',
-          payload: { 
-            sourceWord: misspelling, 
-            targetWord: correct,
-            editPlan: memoizedEditPlan
-          }
-        });
-      }
-      // When cancelOnPropsChange is false and animation is in progress,
-      // we don't dispatch INITIALIZE to allow the current animation to complete
-    }
-  }, [misspelling, correct, cancelOnPropsChange, memoizedEditPlan, state.isAnimating]);
-  
-  // Update CSS variables for animation timing based on speed multiplier
-  useEffect(() => {
-    if (containerRef.current) {
-      const container = containerRef.current;
-      
-      // Get base values from CSS custom properties
-      const computedStyle = getComputedStyle(document.documentElement);
-      const removeBase = parseFloat(computedStyle.getPropertyValue('--remove-duration') || '0.4s');
-      const addBase = parseFloat(computedStyle.getPropertyValue('--add-duration') || '0.3s');
-      const reorderBase = parseFloat(computedStyle.getPropertyValue('--reorder-duration') || '1.0s');
-      
-      // Apply speed multiplier (faster = smaller values)
-      container.style.setProperty('--remove-duration', `${removeBase / speedMultiplier}s`);
-      container.style.setProperty('--add-duration', `${addBase / speedMultiplier}s`);
-      container.style.setProperty('--reorder-duration', `${reorderBase / speedMultiplier}s`);
-    }
-  }, [speedMultiplier]);
+  // Refs for the buttons to handle keyboard focus
+  const startButtonRef = useRef<HTMLButtonElement>(null);
+  const restartButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Memoize animation phase handlers to avoid unnecessary renders
-  const handlePhaseChange = useMemo(() => {
-    return (phase: AnimationPhase) => {
-      if (onPhaseChange) {
-        onPhaseChange(phase);
-      }
-    };
-  }, [onPhaseChange]);
-
-  // Effect to handle phase transitions and total animations tracking
-  useEffect(() => {
-    // Skip for initial render or if no edit plan
-    if (!state.editPlan) return;
-
-    // Configure phase-specific behavior
-    const phaseConfig: Record<Exclude<AnimationPhase, AnimationPhase.IDLE>, PhaseConfig> = {
-      [AnimationPhase.DELETING]: {
-        getTotal: () => state.editPlan?.deletions.length || 0,
-        shouldSkip: (total: number) => total === 0,
-      },
-      [AnimationPhase.MOVING]: {
-        // Include deleted letters as part of the moving animations so their exit animations are counted
-        getTotal: () => (state.editPlan?.moves.length || 0) + (state.editPlan?.deletions.length || 0),
-        shouldSkip: (total: number) => total === 0,
-      },
-      [AnimationPhase.INSERTING]: {
-        getTotal: () => state.editPlan?.insertions.length || 0,
-        shouldSkip: (total: number) => total === 0,
-      },
-      [AnimationPhase.COMPLETE]: {
-        getTotal: () => 0,
-        shouldSkip: () => true, // Always skip for COMPLETE phase to prevent unnecessary START_PHASE
-        onEnter: () => {
-          if (onAnimationComplete) {
-            onAnimationComplete();
-          }
-        }
-      }
-    };
-
-    // Skip AnimationPhase.IDLE as it's handled separately
-    if (state.phase !== AnimationPhase.IDLE) {
-      const config = phaseConfig[state.phase as Exclude<AnimationPhase, AnimationPhase.IDLE>];
-      
-      if (!config) return;
-
-      // Get total animations for this phase
-      const totalAnimationsInPhase = config.getTotal();
-      
-      // If this phase has an onEnter callback, call it 
-      if (config.onEnter) {
-        config.onEnter();
-      }
-      
-      // Special handling for COMPLETE phase - don't dispatch anything to prevent unnecessary re-renders
-      if (state.phase === AnimationPhase.COMPLETE) {
-        // COMPLETE phase is a terminal state, so we don't dispatch any further actions
-        // This prevents the unnecessary re-render loop in COMPLETE phase
-        return;
-      }
-      
-      // For other phases, check if we should skip or start the phase
-      if (config.shouldSkip(totalAnimationsInPhase)) {
-        dispatch({ type: 'COMPLETE_PHASE' });
-      } else {
-        // Otherwise start the phase with the calculated number of animations
-        dispatch({ 
-          type: 'START_PHASE', 
-          payload: { 
-            phase: state.phase, 
-            total: totalAnimationsInPhase 
-          } 
-        });
-      }
-    }
-
-    // Notify of phase change
-    handlePhaseChange(state.phase);
-    
-    // Remove state.isAnimating from the dependency array to prevent unwanted reruns
-    // This is safe because we only care about phase changes and editPlan changes
-  }, [state.phase, state.editPlan, handlePhaseChange, onAnimationComplete]);
-
-  // Start animation function
+  // Function to start the animation sequence
   const startAnimation = useCallback(() => {
     if (onAnimationStart) {
       onAnimationStart();
     }
-    
-    dispatch({ type: 'START_ANIMATION' });
-  }, [onAnimationStart]);
-
-  // Callback handler for letter animation completions
-  const handleLetterAnimationComplete = () => {
-    if (state.completedAnimations + 1 >= state.totalAnimationsInPhase) {
-      dispatch({ type: 'COMPLETE_PHASE' });
-    } else {
-      dispatch({ type: 'ANIMATION_COMPLETE' });
-    }
-  };
+    send({ type: 'START' });
+  }, [send, onAnimationStart]);
   
-  // Determine letter animation state based on current phase and letter properties
-  const getLetterAnimationState = (
-    letterIndex: number, 
-    phase: AnimationPhase,
-    editPlan: EditPlan
+  // Function to restart the animation from the complete phase
+  const restartAnimation = useCallback(() => {
+    if (onRestart) {
+      onRestart();
+    }
+    send({ type: 'RESTART' });
+    // After restarting, immediately start the animation again
+    setTimeout(() => {
+      send({ type: 'START' });
+      if (onAnimationStart) {
+        onAnimationStart();
+      }
+    }, 0);
+  }, [send, onRestart, onAnimationStart]);
+
+  // Reset the animation when words change (if cancelOnPropsChange is true)
+  useEffect(() => {
+    if (cancelOnPropsChange) {
+      send({ type: 'RESET' });
+      animationCountRef.current = 0;
+      totalAnimationsRef.current = 0;
+    }
+  }, [misspelling, correct, cancelOnPropsChange, send]);
+
+  // Call onPhaseChange when the state machine's state changes
+  useEffect(() => {
+    if (onPhaseChange) {
+      onPhaseChange(state.value as WordTransformPhase);
+    }
+    
+    // Reset animation count when phase changes
+    animationCountRef.current = 0;
+    
+    // Set the total animations for the current phase
+    if (state.value === 'deleting') {
+      totalAnimationsRef.current = editPlan?.deletions.length || 0;
+    } else if (state.value === 'moving') {
+      totalAnimationsRef.current = editPlan?.moves.length || 0;
+    } else if (state.value === 'inserting') {
+      totalAnimationsRef.current = editPlan?.insertions.length || 0;
+    } else if (state.value === 'complete' && onAnimationComplete) {
+      onAnimationComplete();
+    }
+  }, [state.value, onPhaseChange, editPlan, onAnimationComplete]);
+  
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const currentPhase = state.value as WordTransformPhase;
+      
+      // Space or Enter key to trigger buttons
+      if (e.key === ' ' || e.key === 'Enter') {
+        if (currentPhase === 'idle' && document.activeElement === startButtonRef.current) {
+          startAnimation();
+          e.preventDefault();
+        } else if (currentPhase === 'complete' && document.activeElement === restartButtonRef.current) {
+          restartAnimation();
+          e.preventDefault();
+        }
+      }
+      
+      // Shortcut keys when no other element has focus
+      if (document.activeElement === document.body) {
+        // 'r' key to restart when in complete phase
+        if (e.key === 'r' && currentPhase === 'complete') {
+          restartAnimation();
+          e.preventDefault();
+        }
+        
+        // 's' key to start when in idle phase
+        if (e.key === 's' && currentPhase === 'idle') {
+          startAnimation();
+          e.preventDefault();
+        }
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [state.value, startAnimation, restartAnimation]);
+
+  // Called when a letter animation completes
+  const handleLetterAnimationComplete = useCallback(() => {
+    animationCountRef.current += 1;
+    
+    // If all animations in the current phase are complete, move to the next phase
+    if (animationCountRef.current >= totalAnimationsRef.current) {
+      send({ type: 'DONE_PHASE' });
+    }
+  }, [send]);
+
+  // Determine the animation state for a letter based on the current phase and edit plan
+  const getLetterAnimationState = useCallback((
+    letterIndex: number,
+    phase: WordTransformPhase,
+    editPlan: EditPlan | null
   ): LetterAnimationState => {
-    // Default animation state is 'normal'
-    let animationState: LetterAnimationState = 'normal';
+    if (!editPlan) return 'normal';
+
+    // Check if this letter is being deleted
+    const isDeleted = editPlan.deletions.includes(letterIndex);
     
+    // Check if this letter is being moved
+    const moveInfo = editPlan.moves.find(move => move.fromIndex === letterIndex);
+    const isMoved = Boolean(moveInfo);
+    
+    // Check if this is a "true mover" (highlighted for special animation)
+    const isTrueMover = isMoved && editPlan.highlightIndices?.includes(letterIndex);
+
+    // Determine animation state based on the current phase
     switch (phase) {
-      case AnimationPhase.DELETING:
-        // Mark letters that will be deleted with 'deletion' state
-        if (editPlan.deletions.includes(letterIndex)) {
-          animationState = 'deletion';
-        }
-        break;
-        
-      case AnimationPhase.MOVING:
-        // Check if letter is moving at all
-        const isMoving = editPlan.moves.some(move => move.fromIndex === letterIndex);
-        
-        if (isMoving) {
-          // Check if letter is a true mover (special highlight)
-          if (editPlan.highlightIndices.includes(letterIndex)) {
-            // True movers get a special animation state for enhanced highlighting
-            animationState = 'true-mover';
-          } else {
-            // Regular moving letters
-            animationState = 'movement';
-          }
-        }
-        break;
-        
-      case AnimationPhase.INSERTING:
-        // No special state for existing letters during insertion phase
-        break;
-        
+      case 'deleting':
+        return isDeleted ? 'deletion' : 'normal';
+      case 'moving':
+        return isTrueMover ? 'true-mover' : (isMoved ? 'movement' : 'normal');
+      case 'inserting':
+        // For insertion phase, we show the final result
+        return 'normal';
+      case 'complete':
+        return 'normal';
       default:
-        // Keep default 'normal' state
-        break;
+        return 'normal';
     }
-    
-    return animationState;
-  };
+  }, []);
 
-  // Expose testing API via ref
-  useImperativeHandle(ref, (): WordTransformTestingAPI => ({
-    phase: state.phase,
-    editPlan: state.editPlan,
-    isAnimating: state.isAnimating,
-    sourceLetters: state.sourceLetters,
-    targetLetters: state.targetLetters,
+  // Expose internal state and methods for testing
+  useImperativeHandle(ref, () => ({
+    phase: state.value as WordTransformPhase,
+    editPlan,
+    isAnimating: state.value !== 'idle' && state.value !== 'complete',
+    sourceLetters: misspelling.split(''),
+    targetLetters: correct.split(''),
     startAnimation,
-    completedAnimations: state.completedAnimations,
-    totalAnimationsInPhase: state.totalAnimationsInPhase
-  }), [
-    state.phase, 
-    state.editPlan, 
-    state.isAnimating, 
-    state.sourceLetters, 
-    state.targetLetters,
-    state.completedAnimations,
-    state.totalAnimationsInPhase,
-    startAnimation
-  ]);
-
-  // Render letters based on current animation phase
-  const renderLetters = () => {
-    // Early return if no edit plan is available or inputs are empty
-    if (!state.editPlan || misspelling === '' || correct === '') return null;
-    
-    // Use a non-null assertion for clarity in this scope 
-    // We've already checked that state.editPlan is not null
-    const editPlan = state.editPlan;
-    
-    switch (state.phase) {
-      case AnimationPhase.IDLE:
-      case AnimationPhase.DELETING:
-        return (
-          <div className={styles.wordContainer}>
-            <AnimatePresence mode="sync">
-              {state.sourceLetters.map((letter, index) => {
-                // Determine if letter is being deleted in the DELETING phase
-                const isDeleted = state.phase === AnimationPhase.DELETING &&
-                  editPlan?.deletions.includes(index);
-                
-                // Set animation state based on phase and deletion status
-                const animationState: LetterAnimationState = isDeleted
-                  ? 'deletion'
-                  : 'normal';
-                
-                // Should only animate letters that are actually being deleted
-                const shouldAnimate = isDeleted && state.isAnimating;
-                
-                // Determine CSS classes - add special class for deleted letters
-                const cssClasses = [
-                  styles.letter,
-                  isDeleted ? styles.deleted : ''
-                ].filter(Boolean).join(' ');
-                
-                // Determine the detailed state for debugging and testing
-                const detailedState = isDeleted ? 'deleted' : 'stable';
-                
-                return (
-                  <Letter 
-                    key={`source-${index}`}
-                    character={letter}
-                    animationState={animationState}
-                    initialIndex={index}
-                    onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
-                    className={cssClasses}
-                    data-extended-state={detailedState}
-                    data-letter-index={index}
-                    data-is-deleted={isDeleted}
-                    data-animation-active={shouldAnimate}
-                    data-debug={debugMode}
-                  />
-                );
-              })}
-            </AnimatePresence>
-          </div>
-        );
-        
-      case AnimationPhase.MOVING:
-        return (
-          <div className={styles.wordContainer}>
-            <AnimatePresence mode="sync">
-              {state.sourceLetters.map((letter, index) => {
-                // Instead of skipping deleted letters in the moving phase,
-                // mark them as exiting for proper animations
-                
-                // Check if this letter was deleted in previous phase
-                const isDeletedLetter = editPlan?.deletions.includes(index);
-                
-                // If it's a deleted letter, mark as exiting
-                if (isDeletedLetter) {
-                  return (
-                    <Letter 
-                      key={`source-${index}`}
-                      character={letter}
-                      animationState="exiting"
-                      initialIndex={index}
-                      onAnimationComplete={state.isAnimating ? handleLetterAnimationComplete : undefined}
-                      className={styles.deleted}
-                      data-extended-state="exiting"
-                      data-letter-index={index}
-                      data-is-deleted={true}
-                      data-animation-active={state.isAnimating}
-                      data-debug={debugMode}
-                    />
-                  );
-                }
-                
-                // For non-deleted letters, check if they're moved
-                const moveInfo = editPlan?.moves.find(m => m.fromIndex === index);
-                
-                // Only animate letters that are actually moving
-                const shouldAnimate = !!moveInfo && state.isAnimating;
-                
-                // Determine CSS classes - add special class for true movers
-                // Check if this is a true mover using the original function
-                const extendedState = getLetterAnimationState(index, state.phase, editPlan);
-                const cssClasses = [
-                  styles.letter,
-                  extendedState === 'true-mover' ? styles.trueMover : ''
-                ].filter(Boolean).join(' ');
-                
-                return (
-                  <Letter 
-                    key={`source-${index}`}
-                    character={letter}
-                    animationState={extendedState}
-                    initialIndex={index}
-                    onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
-                    className={cssClasses}
-                    data-extended-state={extendedState}
-                    data-letter-index={index}
-                    data-is-moved={!!moveInfo}
-                    data-move-to-index={moveInfo?.toIndex}
-                    data-animation-active={shouldAnimate}
-                    data-debug={debugMode}
-                  />
-                );
-              })}
-            </AnimatePresence>
-          </div>
-        );
-        
-      case AnimationPhase.INSERTING:
-        return (
-          <div className={styles.wordContainer}>
-            <AnimatePresence mode="sync">
-              {state.targetLetters.map((letter, index) => {
-                // Check if this letter is being inserted in the current phase
-                const isInserted = state.phase === AnimationPhase.INSERTING &&
-                  editPlan?.insertions.find(ins => ins.position === index);
-                
-                // Set animation state based on insertion status
-                const animationState: LetterAnimationState = isInserted
-                  ? 'insertion'
-                  : 'normal';
-                
-                // Only animate letters that are actually being inserted
-                const shouldAnimate = isInserted && state.isAnimating;
-                
-                // Determine CSS classes - add special class for inserted letters
-                const cssClasses = [
-                  styles.letter,
-                  isInserted ? styles.inserted : ''
-                ].filter(Boolean).join(' ');
-                
-                // Determine the detailed state for debugging and testing
-                const detailedState = isInserted ? 'inserted' : 'stable';
-                
-                return (
-                  <Letter 
-                    key={`target-${index}`}
-                    character={letter}
-                    animationState={animationState}
-                    initialIndex={index}
-                    onAnimationComplete={shouldAnimate ? handleLetterAnimationComplete : undefined}
-                    className={cssClasses}
-                    data-extended-state={detailedState}
-                    data-letter-index={index}
-                    data-is-inserted={isInserted}
-                    data-animation-active={shouldAnimate}
-                    data-debug={debugMode}
-                  />
-                );
-              })}
-            </AnimatePresence>
-          </div>
-        );
-        
-      case AnimationPhase.COMPLETE:
-        return (
-          <div className={styles.wordContainer}>
-            <AnimatePresence mode="sync">
-              {state.targetLetters.map((letter, index) => (
-                <Letter 
-                  key={`target-${index}`}
-                  character={letter}
-                  animationState="normal"
-                  initialIndex={index}
-                  className={styles.letter}
-                  data-extended-state="complete"
-                  data-letter-index={index}
-                  data-animation-active={false}
-                  data-debug={debugMode}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-        );
-        
-      default:
-        return null;
-    }
-  };
+    restartAnimation,
+    completedAnimations: animationCountRef.current,
+    totalAnimationsInPhase: totalAnimationsRef.current
+  }), [state.value, editPlan, misspelling, correct, startAnimation, restartAnimation]);
   
-  // Main rendering logic with animation state machine
+  // Track the active letter arrays for the current phase
+  const sourceLetters = useMemo(() => misspelling.split(''), [misspelling]);
+  const targetLetters = useMemo(() => correct.split(''), [correct]);
+  
+  // Set CSS variables for animation timing based on speedMultiplier
+  const containerStyle = useMemo(() => {
+    return {
+      '--speed-multiplier': speedMultiplier,
+      '--remove-duration': `${300 / speedMultiplier}ms`,
+      '--add-duration': `${300 / speedMultiplier}ms`,
+      '--move-duration': `${500 / speedMultiplier}ms`,
+    } as React.CSSProperties;
+  }, [speedMultiplier]);
+
+  // Determine current phase for data attribute and CSS
+  const currentPhase = state.value as WordTransformPhase;
+  const isAnimating = currentPhase !== 'idle' && currentPhase !== 'complete';
+
   return (
     <div 
-      ref={containerRef}
       className={`${styles.wordTransform} ${className}`}
-      data-phase={state.phase}
+      style={containerStyle}
       data-testid="word-transform"
-      data-colors-enabled={colorsEnabled}
-      data-debug-mode={debugMode}
-      data-animation-active={state.isAnimating}
-      data-edit-plan-loaded={!!state.editPlan}
-      data-animations-progress={`${state.completedAnimations}/${state.totalAnimationsInPhase}`}
+      data-phase={currentPhase}
+      data-animating={isAnimating ? 'true' : 'false'}
+      data-debug-mode={debugMode ? 'true' : 'false'}
     >
-      <div 
-        className={styles.wordContainer} 
-        id="wordContainer"
-        data-testid="word-container"
-      >
-        {renderLetters()}
-        
-        {/* Debug information */}
-        <div 
-          className={styles.controlsContainer}
-          data-testid="controls-container"
-        >
-          {state.editPlan && !state.isAnimating && state.phase === AnimationPhase.IDLE && (
-            <button 
-              onClick={startAnimation}
-              className={styles.actionButton}
-              data-testid="start-animation-button"
-            >
-              Start Animation
-            </button>
-          )}
-          
-          {state.editPlan && (
-            <div 
-              className={styles.debugInfo}
-              data-testid="debug-info"
-            >
-              <div>Phase: {state.phase}</div>
-              <div>Animations: {state.completedAnimations} / {state.totalAnimationsInPhase}</div>
-              <div>Edit Plan: {state.editPlan.deletions.length} deletions, {state.editPlan.moves.length} moves, {state.editPlan.insertions.length} insertions</div>
-            </div>
-          )}
-        </div>
+      <div className={styles.lettersContainer}>
+        <SourceLetters
+          letters={sourceLetters}
+          phase={currentPhase}
+          editPlan={editPlan}
+          onLetterAnimationComplete={handleLetterAnimationComplete}
+          getLetterAnimationState={getLetterAnimationState}
+          colorsEnabled={colorsEnabled}
+        />
+        <TargetLetters
+          letters={targetLetters}
+          phase={currentPhase}
+          editPlan={editPlan}
+          onLetterAnimationComplete={handleLetterAnimationComplete}
+          colorsEnabled={colorsEnabled}
+        />
       </div>
+      
+      {currentPhase === 'idle' && (
+        <button 
+          className={styles.startButton}
+          onClick={startAnimation}
+          data-testid="start-animation-button"
+          ref={startButtonRef}
+          aria-label="Start animation"
+        >
+          Start Animation
+        </button>
+      )}
+      
+      {currentPhase === 'complete' && (
+        <button 
+          className={styles.restartButton}
+          onClick={restartAnimation}
+          data-testid="restart-animation-button"
+          ref={restartButtonRef}
+          aria-label="Restart animation"
+        >
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24" 
+            width="24" 
+            height="24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M3 2v6h6"></path>
+            <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
+          </svg>
+          Replay
+        </button>
+      )}
+      
+      {debugMode && (
+        <div className={styles.debugInfo}>
+          <div>Phase: {currentPhase}</div>
+          <div>Deletions: {editPlan?.deletions.length || 0}</div>
+          <div>Moves: {editPlan?.moves.length || 0}</div>
+          <div>Insertions: {editPlan?.insertions.length || 0}</div>
+          <div>Animations: {animationCountRef.current}/{totalAnimationsRef.current}</div>
+        </div>
+      )}
     </div>
   );
 });
 
-// Add displayName for better debugging in React DevTools
 WordTransform.displayName = 'WordTransform';
 
 export default WordTransform; 

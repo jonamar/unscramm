@@ -1065,7 +1065,61 @@
         16
       ],
       "priority": "high",
-      "subtasks": []
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Analyze and Compare Both WordTransform Implementations",
+          "description": "Conduct a thorough analysis of both WordTransform.tsx and WordTransformFSM.tsx implementations to determine which one should be kept.",
+          "dependencies": [],
+          "details": "1. Create a comparison document listing features of both implementations\n2. Evaluate each implementation based on performance metrics (render times, memory usage)\n3. Assess code maintainability and clarity by reviewing component structure\n4. Check compatibility with React 19 features and best practices\n5. Document any unique functionality in either implementation that must be preserved\n6. Make a clear recommendation on which implementation to keep with justification\n<info added on 2025-06-09T21:47:21.156Z>\nARCHITECTURAL ANALYSIS COMPLETE:\n\nWordTransformFSM (349 lines) is significantly better than WordTransform (738 lines).\n\nWordTransformFSM Advantages:\n- 53% smaller codebase\n- Cleaner separation of concerns with custom hooks-based state machine\n- Uses composition with SourceLetters/TargetLetters components vs monolithic approach\n- Already aligned with project goal of removing XState dependencies\n- More focused readable component logic\n- Better testing API\n- Enhanced keyboard navigation\n\nWordTransform Issues:\n- Complex useReducer with 738 lines of tightly coupled logic\n- Monolithic component doing too many things\n- More complex phase transition logic embedded in component\n- Harder to test due to size and complexity\n\nRecommendation: WordTransformFSM is architecturally superior for consolidation.\n</info added on 2025-06-09T21:47:21.156Z>",
+          "status": "done",
+          "testStrategy": "No direct testing needed for this analysis phase, but document any performance tests conducted during evaluation."
+        },
+        {
+          "id": 2,
+          "title": "Consolidate to Single Implementation with Full Feature Set",
+          "description": "Based on the analysis, enhance the selected implementation to incorporate any missing features from the other version.",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Create a new branch for the consolidation work\n2. Start with the superior implementation identified in subtask 1\n3. Incorporate any missing features or functionality from the other implementation\n4. Ensure the component maintains the same props interface for backward compatibility\n5. Rename the component to simply 'WordTransform' regardless of which base implementation was chosen\n6. Add comprehensive comments explaining the implementation decisions\n7. Update TypeScript types as needed\n<info added on 2025-06-09T21:51:02.242Z>\nCONSOLIDATION COMPLETE: Successfully replaced WordTransform.tsx (738 lines) with WordTransformFSM.tsx (349 lines) as the new WordTransform.tsx. \n\nKey changes:\n- Renamed original to WordTransform.legacy.tsx as backup\n- Copied WordTransformFSM to WordTransform.tsx\n- Updated API to match legacy version exactly including completedAnimations and totalAnimationsInPhase\n- Fixed component name and displayName\n- Maintained all props compatibility\n- Reduced codebase by approximately 389 lines\n- Application tested and loading correctly on localhost:6002\n\nThe FSM (Finite State Machine) implementation was chosen as the superior version due to its cleaner architecture and significantly reduced code size while maintaining full functionality.\n</info added on 2025-06-09T21:51:02.242Z>",
+          "status": "in-progress",
+          "testStrategy": "Write unit tests for any newly added functionality and ensure existing tests pass for the consolidated component."
+        },
+        {
+          "id": 3,
+          "title": "Update All Component References Throughout Codebase",
+          "description": "Identify and update all imports and references to either WordTransform implementation to use the new consolidated component.",
+          "dependencies": [
+            2
+          ],
+          "details": "1. Use IDE search tools to find all imports of both 'WordTransform' and 'WordTransformFSM'\n2. Update each import statement to reference the new consolidated component\n3. Pay special attention to the main application page from Task 7\n4. Check any custom hooks that might reference these components\n5. Verify that props passed to the component in each instance are compatible with the consolidated interface\n6. Run the TypeScript compiler to catch any type errors after updates",
+          "status": "pending",
+          "testStrategy": "After updates, run the full test suite to ensure no integration issues were introduced."
+        },
+        {
+          "id": 4,
+          "title": "Remove Deprecated Implementation and Associated Files",
+          "description": "Clean up the codebase by removing the unused implementation and all associated files.",
+          "dependencies": [
+            3
+          ],
+          "details": "1. Remove the unused implementation file (either WordTransform.tsx or WordTransformFSM.tsx)\n2. Remove associated test files for the deprecated implementation\n3. Remove or update Storybook stories specific to the deprecated implementation\n4. Update any documentation that references the removed component\n5. Check for any utility functions or hooks that were only used by the removed implementation and remove if no longer needed\n6. Ensure no dead code or imports remain",
+          "status": "pending",
+          "testStrategy": "Verify the application builds without errors and all tests pass after removal."
+        },
+        {
+          "id": 5,
+          "title": "Verify Full Functionality and Performance",
+          "description": "Conduct comprehensive testing to ensure the consolidated component maintains all required functionality and performs well.",
+          "dependencies": [
+            4
+          ],
+          "details": "1. Test all animation phases (deletions, movements, insertions) work correctly\n2. Verify that speed control functions properly at different settings\n3. Check that accessibility features are preserved\n4. Test edge cases like very long words or rapid consecutive transformations\n5. Measure performance metrics to ensure no regression compared to original implementations\n6. Verify the component works correctly in all contexts where it's used in the application\n7. Document any minor behavioral differences between the original and consolidated implementations",
+          "status": "pending",
+          "testStrategy": "1. Run automated tests covering all functionality\n2. Perform manual testing of animations and interactions\n3. Use React DevTools to verify render performance\n4. Test across different browsers to ensure consistent behavior"
+        }
+      ]
     },
     {
       "id": 19,
