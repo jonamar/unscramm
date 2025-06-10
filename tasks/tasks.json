@@ -1176,6 +1176,74 @@
       ],
       "priority": "medium",
       "subtasks": []
+    },
+    {
+      "id": 20,
+      "title": "Fix WordTransform Empty Phase Transition Issues",
+      "description": "Fix animation phase transition issues in the WordTransform component where animations get stuck when a phase has zero operations, by implementing automatic phase progression for empty phases.",
+      "details": "This task addresses a critical bug in the WordTransform animation system where the state machine gets stuck when transitioning through phases that have no operations to perform:\n\n1. **Problem Analysis**:\n   - The current implementation relies on `handleLetterAnimationComplete` callbacks to trigger phase transitions\n   - When a phase has zero operations (no deletions, moves, or insertions), these callbacks are never triggered\n   - This causes the animation to freeze as the state machine cannot progress to the next phase\n\n2. **Implementation Steps**:\n   - Modify the phase transition logic in the WordTransform component to detect empty phases\n   - Add a condition in the phase initialization code to check if the current phase has zero operations:\n   ```typescript\n   const startPhase = (phase: AnimationPhase) => {\n     // Get operations for the current phase\n     const operations = getOperationsForPhase(phase, editPlan);\n     \n     // If no operations for this phase, immediately progress to next phase\n     if (operations.length === 0) {\n       // Use setTimeout with 0ms to ensure this happens after the current render cycle\n       setTimeout(() => {\n         progressToNextPhase();\n       }, 0);\n       return;\n     }\n     \n     // Existing phase initialization code...\n   };\n   ```\n   \n   - Update the `progressToNextPhase` function to handle the case where multiple consecutive phases might be empty\n   - Ensure the rendering logic correctly handles empty phases without visual glitches\n   - Add appropriate logging to track phase transitions for debugging purposes\n\n3. **Edge Cases to Handle**:\n   - Multiple consecutive empty phases\n   - Empty phases at the beginning or end of the animation sequence\n   - Interaction with pause/resume functionality if implemented\n   - Potential race conditions during rapid phase transitions\n\n4. **Performance Considerations**:\n   - Use React's useRef to track animation state to prevent unnecessary re-renders\n   - Ensure setTimeout callbacks are properly cleaned up in useEffect cleanup functions",
+      "testStrategy": "1. **Unit Tests**:\n   - Create unit tests for the phase transition logic that verify empty phases are correctly detected\n   - Test the `startPhase` and `progressToNextPhase` functions with mock edit plans containing empty phases\n   - Verify that callbacks are properly cleaned up to prevent memory leaks\n\n2. **Integration Tests**:\n   - Create test cases with word pairs that trigger empty phases:\n     - Words where no deletions are needed (e.g., \"cat\" → \"cats\")\n     - Words where no movements are needed (e.g., \"abc\" → \"abd\")\n     - Words where no insertions are needed (e.g., \"apple\" → \"aple\")\n   - Test with extreme cases like identical words or completely different words\n\n3. **Manual Testing**:\n   - Create a test harness that allows stepping through animation phases manually\n   - Verify visually that transitions between phases are smooth even when phases are empty\n   - Test with various animation speeds to ensure timing issues don't occur\n   - Verify that the animation completes successfully for all test cases\n\n4. **Regression Testing**:\n   - Ensure existing animation functionality works correctly for normal cases\n   - Verify that the fix doesn't introduce performance regressions\n   - Test on different browsers and devices to ensure cross-platform compatibility",
+      "status": "pending",
+      "dependencies": [
+        5,
+        18
+      ],
+      "priority": "high",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Diagnose Phase Transition Logic Issues in WordTransform Component",
+          "description": "Analyze the current implementation of the WordTransform component to identify the exact points where the state machine fails to progress when encountering empty phases.",
+          "dependencies": [],
+          "details": "1. Add debug logging to track phase transitions and operation counts\n2. Identify the specific conditions that cause the animation to freeze\n3. Map out the current phase transition flow with a focus on the `handleLetterAnimationComplete` callback mechanism\n4. Document how the component currently determines when to move to the next phase\n5. Create a test case that reproduces the empty phase issue consistently\n<info added on 2025-06-10T19:17:59.177Z>\n## Root Cause Analysis\n\nThe animation freezes when a phase has zero operations because:\n1. When `totalAnimationsRef.current` is set to 0 for an empty phase\n2. The condition `animationCountRef.current >= totalAnimationsRef.current` is true (0 >= 0)\n3. But `handleLetterAnimationComplete` callback is never triggered since no letters have animations\n4. Therefore `send({ type: 'DONE_PHASE' })` is never called\n5. The animation remains stuck in the empty phase\n\n**Critical Code Location**: Lines ~108-118 in WordTransform.tsx where phase animation counts are set without checking for empty phases.\n\n**Reproduction Cases**:\n- \"cat\" → \"cats\" (no deletions, no moves)\n- \"abc\" → \"abd\" (no deletions, no moves)\n- \"hello\" → \"helo\" (no insertions, no moves)\n\n**Secondary Issues**:\n- Potential visual glitches in SourceLetters/TargetLetters during rapid transitions\n- Missing timeout cleanup for race conditions\n- State machine skips empty phases on START but not during DONE_PHASE transitions\n</info added on 2025-06-10T19:17:59.177Z>",
+          "status": "done",
+          "testStrategy": "Create a controlled test environment with predefined animation phases, including empty ones, to reliably reproduce the issue."
+        },
+        {
+          "id": 2,
+          "title": "Implement Empty Phase Detection and Auto-Progression",
+          "description": "Modify the phase transition logic to detect when a phase has zero operations and automatically progress to the next phase without waiting for animation callbacks.",
+          "dependencies": [
+            1
+          ],
+          "details": "1. Update the `startPhase` function to check for empty operation arrays\n2. Implement a mechanism to count expected operations for each phase\n3. Add a condition that triggers immediate progression when operation count is zero\n4. Use setTimeout with 0ms delay to ensure proper execution order\n5. Ensure the auto-progression mechanism works with the existing state management\n<info added on 2025-06-10T19:19:35.607Z>\n## IMPLEMENTATION COMPLETE - Empty Phase Auto-Progression Fix\n\n**CHANGES MADE**:\n\n1. **Fixed WordTransform.tsx phase transition logic** (lines ~108-125):\n   - Added automatic detection of empty phases (when `totalAnimationsRef.current === 0`)\n   - Implemented auto-progression using `setTimeout(() => send({ type: 'DONE_PHASE' }), 0)`\n   - Added proper cleanup to prevent memory leaks\n   - Excluded 'idle' and 'complete' phases from auto-progression\n\n2. **Added comprehensive test story** in Controls.stories.tsx:\n   - Created `EmptyPhaseTransitionTest` story with `EmptyPhaseTestControls` component\n   - Included 5 specific test cases covering different empty phase scenarios:\n     - \"cat\" → \"cats\" (no deletions, no moves)\n     - \"hello\" → \"helo\" (no insertions, no moves) \n     - \"abc\" → \"abd\" (no deletions, no moves)\n     - \"same\" → \"same\" (all phases empty)\n     - \"a\" → \"b\" (single letter replacement)\n   - Enabled debugMode to show phase transitions in real-time\n\n**KEY FIX LOGIC**:\n```typescript\n// Auto-progress through empty phases\nconst currentPhaseOperationCount = totalAnimationsRef.current;\nif (currentPhaseOperationCount === 0 && \n    state.value !== 'idle' && \n    state.value !== 'complete') {\n  const timeoutId = setTimeout(() => {\n    send({ type: 'DONE_PHASE' });\n  }, 0);\n  return () => clearTimeout(timeoutId);\n}\n```\n\n**TESTING**:\n- Navigate to Storybook → Components → Controls → EmptyPhaseTransitionTest\n- Try each test case and verify animations complete without freezing\n- Watch debug info to see smooth phase transitions\n- Ready for comprehensive testing in subtask 20.3\n</info added on 2025-06-10T19:19:35.607Z>",
+          "status": "done",
+          "testStrategy": "Test with animation sequences containing various patterns of empty phases (beginning, middle, end, consecutive) to verify auto-progression works in all scenarios."
+        },
+        {
+          "id": 3,
+          "title": "Handle Multiple Consecutive Empty Phases",
+          "description": "Enhance the phase progression logic to handle scenarios where multiple consecutive phases might be empty, ensuring the animation doesn't skip necessary rendering states.",
+          "dependencies": [
+            2
+          ],
+          "details": "1. Modify the `progressToNextPhase` function to handle consecutive empty phases\n2. Implement a recursive or iterative approach to check and progress through multiple empty phases\n3. Add safeguards against infinite loops (e.g., if all remaining phases are empty)\n4. Ensure each phase transition is properly registered in the component state\n5. Add appropriate delays between consecutive auto-progressions to maintain animation integrity",
+          "status": "pending",
+          "testStrategy": "Create test cases with various patterns of consecutive empty phases and verify that all phases are processed in the correct order with appropriate state updates."
+        },
+        {
+          "id": 4,
+          "title": "Fix Render Logic for Smooth Transitions",
+          "description": "Update the rendering logic to ensure smooth visual transitions between SourceLetters and TargetLetters components when progressing through empty phases.",
+          "dependencies": [
+            3
+          ],
+          "details": "1. Review the current rendering logic for SourceLetters and TargetLetters components\n2. Identify potential visual glitches during rapid phase transitions\n3. Implement render optimizations to prevent flickering or jarring transitions\n4. Use React's useRef to track animation state without triggering unnecessary re-renders\n5. Ensure cleanup functions properly handle any setTimeout or animation callbacks",
+          "status": "pending",
+          "testStrategy": "Perform visual testing with slow-motion recordings of transitions to identify any rendering artifacts, and verify smooth animations across different browsers."
+        },
+        {
+          "id": 5,
+          "title": "Implement Comprehensive Testing and Storybook Verification",
+          "description": "Create a comprehensive test suite and Storybook examples to verify the fixed animation system works correctly for all edge cases and animation sequences.",
+          "dependencies": [
+            4
+          ],
+          "details": "1. Create unit tests for the empty phase detection and auto-progression logic\n2. Implement integration tests for the complete animation flow\n3. Add specific test cases for edge scenarios (empty phases at start/end, all empty phases, etc.)\n4. Create Storybook examples demonstrating various animation sequences\n5. Add controls in Storybook to manipulate animation speed and pause/resume functionality",
+          "status": "pending",
+          "testStrategy": "Use Jest for unit testing the phase transition logic, and React Testing Library for component integration tests. Create Storybook stories with various animation configurations to visually verify correct behavior."
+        }
+      ]
     }
   ],
   "metadata": {

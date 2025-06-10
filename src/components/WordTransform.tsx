@@ -130,7 +130,23 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
     } else if (state.value === 'complete' && onAnimationComplete) {
       onAnimationComplete();
     }
-  }, [state.value, onPhaseChange, editPlan, onAnimationComplete]);
+    
+    // Fix: Auto-progress through empty phases
+    // If this phase has no operations, immediately progress to the next phase
+    const currentPhaseOperationCount = totalAnimationsRef.current;
+    if (currentPhaseOperationCount === 0 && 
+        state.value !== 'idle' && 
+        state.value !== 'complete') {
+      // Use setTimeout to ensure this happens after the current render cycle
+      // This prevents React state update warnings and ensures proper execution order
+      const timeoutId = setTimeout(() => {
+        send({ type: 'DONE_PHASE' });
+      }, 0);
+      
+      // Cleanup function to prevent memory leaks if component unmounts
+      return () => clearTimeout(timeoutId);
+    }
+  }, [state.value, onPhaseChange, editPlan, onAnimationComplete, send]);
   
   // Called when a letter animation completes
   const handleLetterAnimationComplete = useCallback(() => {
