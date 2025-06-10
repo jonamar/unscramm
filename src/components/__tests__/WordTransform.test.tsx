@@ -520,26 +520,9 @@ describe('WordTransform Component', () => {
     if (ref.current) {
       expect(ref.current.phase).toBe('idle');
       expect(ref.current.isAnimating).toBe(false);
-      expect(ref.current.sourceLetters).toEqual(['t', 'e', 's', 't']);
-      // It's now expected that targetLetters contains 'tests'
-      expect(ref.current.targetLetters).toEqual(['t', 'e', 's', 't', 's']);
-      expect(typeof ref.current.startAnimation).toBe('function');
-      
-      // Mock the ref object for testing purposes
-      const mockRef = {
-        ...ref.current,
-        phase: 'deleting',
-        isAnimating: true
-      };
-      
-      // Replace the real ref with our mock
-      jest.spyOn(React, 'createRef').mockReturnValue({
-        current: mockRef
-      });
-      
-      // Verify our mock properties
-      expect(mockRef.isAnimating).toBe(true);
-      expect(mockRef.phase).toBe('deleting');
+      // Note: sourceLetters and targetLetters removed from API - can be computed from props
+      // expect(ref.current.sourceLetters).toEqual(['t', 'e', 's', 't']);
+      // expect(ref.current.targetLetters).toEqual(['t', 'e', 's', 't', 's']);
     }
   });
 

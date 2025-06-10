@@ -18,7 +18,6 @@ const meta: Meta<typeof WordTransform> = {
     onAnimationStart: { action: 'animation started' },
     onAnimationComplete: { action: 'animation completed' },
     onPhaseChange: { action: 'phase changed' },
-    onRestart: { action: 'animation restarted' },
   },
 };
 

@@ -26,8 +26,6 @@ export interface WordTransformProps {
   onAnimationComplete?: () => void;
   /** Optional callback when animation phase changes */
   onPhaseChange?: (phase: WordTransformPhase) => void;
-  /** Optional callback when animation is restarted from complete state */
-  onRestart?: () => void;
   /** 
    * Flag to control behavior when props change during an animation:
    * - true (default): Cancel any in-flight animation and reset to IDLE state
@@ -53,14 +51,8 @@ export interface WordTransformTestingAPI {
   editPlan: EditPlan | null;
   /** Whether animation is currently running */
   isAnimating: boolean;
-  /** Current letters from source word in DOM */
-  sourceLetters: string[];
-  /** Current letters from target word in DOM */
-  targetLetters: string[];
   /** Start the animation sequence */
   startAnimation: () => void;
-  /** Restart the animation from the complete state */
-  restartAnimation: () => void;
   /** Number of completed animations in current phase */
   completedAnimations: number;
   /** Total number of animations expected in current phase */
@@ -80,7 +72,6 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
   onAnimationStart,
   onAnimationComplete,
   onPhaseChange,
-  onRestart,
   cancelOnPropsChange = true,
   debugMode = false
 }, ref) => {
@@ -103,10 +94,6 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
   const animationCountRef = useRef(0);
   const totalAnimationsRef = useRef(0);
   
-  // Refs for the buttons to handle keyboard focus
-  const startButtonRef = useRef<HTMLButtonElement>(null);
-  const restartButtonRef = useRef<HTMLButtonElement>(null);
-
   // Function to start the animation sequence
   const startAnimation = useCallback(() => {
     if (onAnimationStart) {
@@ -115,21 +102,6 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
     send({ type: 'START' });
   }, [send, onAnimationStart]);
   
-  // Function to restart the animation from the complete phase
-  const restartAnimation = useCallback(() => {
-    if (onRestart) {
-      onRestart();
-    }
-    send({ type: 'RESTART' });
-    // After restarting, immediately start the animation again
-    setTimeout(() => {
-      send({ type: 'START' });
-      if (onAnimationStart) {
-        onAnimationStart();
-      }
-    }, 0);
-  }, [send, onRestart, onAnimationStart]);
-
   // Reset the animation when words change (if cancelOnPropsChange is true)
   useEffect(() => {
     if (cancelOnPropsChange) {
@@ -160,44 +132,6 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
     }
   }, [state.value, onPhaseChange, editPlan, onAnimationComplete]);
   
-  // Handle keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const currentPhase = state.value as WordTransformPhase;
-      
-      // Space or Enter key to trigger buttons
-      if (e.key === ' ' || e.key === 'Enter') {
-        if (currentPhase === 'idle' && document.activeElement === startButtonRef.current) {
-          startAnimation();
-          e.preventDefault();
-        } else if (currentPhase === 'complete' && document.activeElement === restartButtonRef.current) {
-          restartAnimation();
-          e.preventDefault();
-        }
-      }
-      
-      // Shortcut keys when no other element has focus
-      if (document.activeElement === document.body) {
-        // 'r' key to restart when in complete phase
-        if (e.key === 'r' && currentPhase === 'complete') {
-          restartAnimation();
-          e.preventDefault();
-        }
-        
-        // 's' key to start when in idle phase
-        if (e.key === 's' && currentPhase === 'idle') {
-          startAnimation();
-          e.preventDefault();
-        }
-      }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [state.value, startAnimation, restartAnimation]);
-
   // Called when a letter animation completes
   const handleLetterAnimationComplete = useCallback(() => {
     animationCountRef.current += 1;
@@ -247,13 +181,10 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
     phase: state.value as WordTransformPhase,
     editPlan,
     isAnimating: state.value !== 'idle' && state.value !== 'complete',
-    sourceLetters: misspelling.split(''),
-    targetLetters: correct.split(''),
     startAnimation,
-    restartAnimation,
     completedAnimations: animationCountRef.current,
     totalAnimationsInPhase: totalAnimationsRef.current
-  }), [state.value, editPlan, misspelling, correct, startAnimation, restartAnimation]);
+  }), [state.value, editPlan, startAnimation]);
   
   // Track the active letter arrays for the current phase
   const sourceLetters = useMemo(() => misspelling.split(''), [misspelling]);
@@ -299,44 +230,6 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
           colorsEnabled={colorsEnabled}
         />
       </div>
-      
-      {currentPhase === 'idle' && (
-        <button 
-          className={styles.startButton}
-          onClick={startAnimation}
-          data-testid="start-animation-button"
-          ref={startButtonRef}
-          aria-label="Start animation"
-        >
-          Start Animation
-        </button>
-      )}
-      
-      {currentPhase === 'complete' && (
-        <button 
-          className={styles.restartButton}
-          onClick={restartAnimation}
-          data-testid="restart-animation-button"
-          ref={restartButtonRef}
-          aria-label="Restart animation"
-        >
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            viewBox="0 0 24 24" 
-            width="24" 
-            height="24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          >
-            <path d="M3 2v6h6"></path>
-            <path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path>
-          </svg>
-          Replay
-        </button>
-      )}
       
       {debugMode && (
         <div className={styles.debugInfo}>
