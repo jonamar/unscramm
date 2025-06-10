@@ -113,6 +113,18 @@ export const EmptyPhaseTransitionTest: Story = {
   render: () => <EmptyPhaseTestControls />,
 };
 
+// Comprehensive test for consecutive empty phases
+export const ConsecutiveEmptyPhasesTest: Story = {
+  render: () => {
+    const ConsecutiveEmptyPhasesTest = React.lazy(() => import('./ConsecutiveEmptyPhasesTest'));
+    return (
+      <React.Suspense fallback={<div style={{ color: '#fff', padding: '2rem' }}>Loading test suite...</div>}>
+        <ConsecutiveEmptyPhasesTest />
+      </React.Suspense>
+    );
+  },
+};
+
 // Interactive controls with stateful behavior
 const InteractiveControls = () => {
   const [speed, setSpeed] = useState(1);
@@ -357,6 +369,9 @@ const EmptyPhaseTestControls = () => {
     { misspelling: "abc", correct: "abd", description: "No deletions, no moves (only character changes)" },
     { misspelling: "same", correct: "same", description: "Identical words (all phases empty)" },
     { misspelling: "a", correct: "b", description: "Single letter replacement" },
+    { misspelling: "test", correct: "tests", description: "No deletions, no moves - consecutive empty phases" },
+    { misspelling: "word", correct: "wor", description: "No moves, no insertions - consecutive empty phases" },
+    { misspelling: "ab", correct: "cd", description: "Only character replacements - no moves or insertions" },
   ];
 
   const handlePlay = () => {
