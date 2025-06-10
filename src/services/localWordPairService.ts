@@ -290,32 +290,32 @@ export class LocalWordPairService implements WordPairService {
   }
 
   /**
-   * Returns a random word pair from the dictionary
-   * @returns Promise resolving to a random WordPair
-   * @throws {DictionaryError} If no word pairs are available
+   * Gets a random word pair from the dictionary
+   * Ensures the pair is not the same as the last returned pair
+   * @returns Promise<WordPair> A random word pair
+   * @throws {DictionaryError} If the dictionary fails to load
    */
   async getRandomPair(): Promise<WordPair> {
     try {
-      // Ensure dictionary is loaded
-      if (!this.isDictionaryLoaded) {
-        await this.loadDictionary();
-      }
-
-      // Select a random pair
-      const pair = this.selectRandomPair();
+      // Load dictionary if not already loaded
+      await this.loadDictionary();
       
-      // Store the pair as recently used
-      await this.storeRecentPair(pair);
-      this.lastPair = pair;
+      // Shuffle the dictionary array for better randomness
+      this.shuffleDictionary();
       
-      return pair;
+      // Select a random pair (avoiding immediate repeats)
+      const selectedPair = this.selectRandomPair();
+      
+      // Store the pair in recent history
+      await this.storeRecentPair(selectedPair);
+      
+      // Update last pair to avoid consecutive duplicates
+      this.lastPair = selectedPair;
+      
+      return selectedPair;
     } catch (error) {
-      // Rethrow if it's already one of our custom errors
-      if (error instanceof WordPairServiceError) {
-        throw error;
-      }
-      // Otherwise wrap it
-      throw new WordPairServiceError(`Error getting random pair: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Error in getRandomPair:', error);
+      throw error;
     }
   }
 

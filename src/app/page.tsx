@@ -54,7 +54,6 @@ export default function Home() {
         const randomPair = await wordPairService.getRandomPair();
         setCurrentWordPair(randomPair);
         setIsPlaying(false); // Reset playing state when new words are loaded
-        console.log('Shuffle successful:', randomPair);
       } catch (error) {
         console.error('Failed to load random word pair:', error);
         setShuffleError('Failed to load random word pair. Please try again.');
