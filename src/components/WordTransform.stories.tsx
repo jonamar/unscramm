@@ -31,7 +31,6 @@ export const Default: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: false,
-    cancelOnPropsChange: true,
   },
 };
 
@@ -42,7 +41,6 @@ export const WithDebugMode: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
 };
 
@@ -53,7 +51,6 @@ export const LongerWords: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: false,
-    cancelOnPropsChange: true,
   },
 };
 
@@ -64,7 +61,6 @@ export const FastAnimation: Story = {
     speedMultiplier: 3,
     colorsEnabled: true,
     debugMode: false,
-    cancelOnPropsChange: true,
   },
 };
 
@@ -75,7 +71,6 @@ export const SlowAnimation: Story = {
     speedMultiplier: 0.5,
     colorsEnabled: true,
     debugMode: false,
-    cancelOnPropsChange: true,
   },
 };
 
@@ -86,7 +81,6 @@ export const NoColors: Story = {
     speedMultiplier: 1,
     colorsEnabled: false,
     debugMode: false,
-    cancelOnPropsChange: true,
   },
 };
 
@@ -97,23 +91,21 @@ export const MoreComplexTransformation: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
 };
 
-export const WithRestartFunctionality: Story = {
+export const ComplexTransformation: Story = {
   args: {
     misspelling: 'cofee',
     correct: 'coffee',
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
   parameters: {
     docs: {
       description: {
-        story: 'This example demonstrates the restart functionality. After the animation completes, a "Replay" button appears that allows restarting the animation. You can also press the "r" key to restart when the animation is complete.',
+        story: 'This example demonstrates a complex transformation with multiple operations. The animation will automatically start when triggered by the external Controls component.',
       },
     },
   },
@@ -127,7 +119,6 @@ export const DeletionsOnly: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
   parameters: {
     docs: {
@@ -145,7 +136,6 @@ export const InsertionsOnly: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
   parameters: {
     docs: {
@@ -163,7 +153,6 @@ export const MovementsOnly: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
   parameters: {
     docs: {
@@ -181,7 +170,6 @@ export const AllOperationsCombined: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
   parameters: {
     docs: {
@@ -199,7 +187,6 @@ export const ZeroLengthPhases: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
   parameters: {
     docs: {
@@ -217,7 +204,6 @@ export const EdgeCaseEmptyToFull: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
   parameters: {
     docs: {
@@ -235,7 +221,6 @@ export const EdgeCaseFullToEmpty: Story = {
     speedMultiplier: 1,
     colorsEnabled: true,
     debugMode: true,
-    cancelOnPropsChange: true,
   },
   parameters: {
     docs: {

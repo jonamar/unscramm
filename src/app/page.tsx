@@ -117,7 +117,6 @@ export default function Home() {
               correct={currentWordPair.correct}
               speedMultiplier={speed}
               onAnimationComplete={handleAnimationComplete}
-              cancelOnPropsChange={true}
             />
           ) : (
             <p className="text-gray-400 text-center text-sm sm:text-base px-2">
