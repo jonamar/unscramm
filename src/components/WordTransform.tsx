@@ -138,15 +138,11 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
         state.value !== 'idle' && 
         state.value !== 'complete') {
       
-      if (debugMode) {
-        console.log(`[WordTransform] Auto-progressing empty phase: ${state.value} (0 operations)`);
-      }
-      
       // Use setTimeout to ensure this happens after the current render cycle
       // This prevents React state update warnings and ensures proper execution order
       const timeoutId = setTimeout(() => {
         if (debugMode) {
-          console.log(`[WordTransform] Sending DONE_PHASE from empty phase: ${state.value}`);
+          console.log(`[WordTransform] Auto-progressing empty phase: ${state.value} -> DONE_PHASE`);
         }
         send({ type: 'DONE_PHASE' });
       }, 0);
@@ -154,7 +150,7 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
       // Cleanup function to prevent memory leaks if component unmounts
       return () => clearTimeout(timeoutId);
     }
-  }, [state.value, onPhaseChange, editPlan, onAnimationComplete, send, debugMode]);
+  }, [state.value, onPhaseChange, editPlan, onAnimationComplete, send]);
   
   // Called when a letter animation completes
   const handleLetterAnimationComplete = useCallback(() => {
