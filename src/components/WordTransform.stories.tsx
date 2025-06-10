@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import WordTransformFSM from './WordTransformFSM';
+import WordTransform from './WordTransform';
 
-const meta: Meta<typeof WordTransformFSM> = {
-  title: 'Components/WordTransformFSM',
-  component: WordTransformFSM,
+const meta: Meta<typeof WordTransform> = {
+  title: 'Components/WordTransform',
+  component: WordTransform,
   parameters: {
     layout: 'centered',
   },
@@ -23,7 +23,7 @@ const meta: Meta<typeof WordTransformFSM> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof WordTransformFSM>;
+type Story = StoryObj<typeof WordTransform>;
 
 export const Default: Story = {
   args: {

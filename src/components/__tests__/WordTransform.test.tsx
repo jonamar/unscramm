@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import WordTransform, { AnimationPhase, WordTransformTestingAPI } from '../WordTransform';
+import WordTransform, { WordTransformTestingAPI } from '../WordTransform';
+import { WordTransformPhase } from '../wordTransform.machine';
 import '@testing-library/jest-dom';
 // computeEditPlan is imported for mocking but not directly used in tests
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -107,7 +108,7 @@ describe('WordTransform Component', () => {
     // Test component initial rendering
     const component = screen.getByTestId('word-transform');
     expect(component).toBeInTheDocument();
-    expect(component).toHaveAttribute('data-phase', AnimationPhase.IDLE);
+    expect(component).toHaveAttribute('data-phase', 'idle');
     
     // Verify the "Start Animation" button is present in initial state
     const startButton = screen.getByTestId('start-animation-button');
@@ -169,7 +170,7 @@ describe('WordTransform Component', () => {
     });
     
     // Check that we're back to IDLE state
-    expect(screen.getByTestId('word-transform')).toHaveAttribute('data-phase', AnimationPhase.IDLE);
+    expect(screen.getByTestId('word-transform')).toHaveAttribute('data-phase', 'idle');
   });
 
   it('continues animation when props change during animation with cancelOnPropsChange=false', () => {
@@ -208,7 +209,7 @@ describe('WordTransform Component', () => {
     );
     
     // No phase change to IDLE should happen
-    expect(onPhaseChangeMock).not.toHaveBeenCalledWith(AnimationPhase.IDLE);
+    expect(onPhaseChangeMock).not.toHaveBeenCalledWith('idle');
   });
 
   it('handles empty input transitions correctly', () => {
@@ -362,7 +363,7 @@ describe('WordTransform Component', () => {
       
       // Manually set the phase to MOVING for testing
       const component = screen.getByTestId('word-transform');
-      component.setAttribute('data-phase', AnimationPhase.MOVING);
+      component.setAttribute('data-phase', 'moving');
       
       // Manually add trueMover class to the first letter
       const letters = screen.getAllByTestId('letter');
@@ -405,12 +406,12 @@ describe('WordTransform Component', () => {
       jest.advanceTimersByTime(100);
       
       const component = screen.getByTestId('word-transform');
-      component.setAttribute('data-phase', AnimationPhase.COMPLETE);
+      component.setAttribute('data-phase', 'complete');
       component.setAttribute('data-animation-active', 'true');
     });
     
     // Check that we're in COMPLETE phase
-    expect(screen.getByTestId('word-transform')).toHaveAttribute('data-phase', AnimationPhase.COMPLETE);
+    expect(screen.getByTestId('word-transform')).toHaveAttribute('data-phase', 'complete');
     
     // Reset the mock to check if it's called after reaching COMPLETE phase
     onPhaseChangeMock.mockReset();
@@ -426,7 +427,7 @@ describe('WordTransform Component', () => {
     
     // Additional verification: check that state stays as COMPLETE
     const component = screen.getByTestId('word-transform');
-    expect(component).toHaveAttribute('data-phase', AnimationPhase.COMPLETE);
+    expect(component).toHaveAttribute('data-phase', 'complete');
   });
 
   // Test the data-phase attributes and testing hooks
@@ -440,7 +441,7 @@ describe('WordTransform Component', () => {
     
     // Check the main component has the correct data-phase attribute
     const component = screen.getByTestId('word-transform');
-    expect(component).toHaveAttribute('data-phase', AnimationPhase.IDLE);
+    expect(component).toHaveAttribute('data-phase', 'idle');
     
     // Start animation
     const startButton = screen.getByTestId('start-animation-button');
@@ -451,12 +452,12 @@ describe('WordTransform Component', () => {
       jest.advanceTimersByTime(100);
       
       const component = screen.getByTestId('word-transform');
-      component.setAttribute('data-phase', AnimationPhase.DELETING);
+      component.setAttribute('data-phase', 'deleting');
       component.setAttribute('data-animation-active', 'true');
     });
     
     // Verify data-phase updates as animation progresses
-    expect(screen.getByTestId('word-transform')).toHaveAttribute('data-phase', AnimationPhase.DELETING);
+    expect(screen.getByTestId('word-transform')).toHaveAttribute('data-phase', 'deleting');
     
     // Verify other data attributes
     expect(screen.getByTestId('word-transform')).toHaveAttribute('data-animation-active', 'true');
@@ -517,7 +518,7 @@ describe('WordTransform Component', () => {
     // Verify the ref contains the testing API properties
     expect(ref.current).not.toBeNull();
     if (ref.current) {
-      expect(ref.current.phase).toBe(AnimationPhase.IDLE);
+      expect(ref.current.phase).toBe('idle');
       expect(ref.current.isAnimating).toBe(false);
       expect(ref.current.sourceLetters).toEqual(['t', 'e', 's', 't']);
       // It's now expected that targetLetters contains 'tests'
@@ -527,7 +528,7 @@ describe('WordTransform Component', () => {
       // Mock the ref object for testing purposes
       const mockRef = {
         ...ref.current,
-        phase: AnimationPhase.DELETING,
+        phase: 'deleting',
         isAnimating: true
       };
       
@@ -538,13 +539,13 @@ describe('WordTransform Component', () => {
       
       // Verify our mock properties
       expect(mockRef.isAnimating).toBe(true);
-      expect(mockRef.phase).toBe(AnimationPhase.DELETING);
+      expect(mockRef.phase).toBe('deleting');
     }
   });
 
   // This helper is kept for future tests but not used currently
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const advanceToPhase = async (ref: React.RefObject<WordTransformTestingAPI>, targetPhaseParam: AnimationPhase) => {
+  const advanceToPhase = async (ref: React.RefObject<WordTransformTestingAPI>, targetPhaseParam: WordTransformPhase) => {
     // Prep reference to current phase for validation
     let currentPhase = ref.current?.phase;
     
@@ -554,7 +555,7 @@ describe('WordTransform Component', () => {
     }
     
     // Click the start button if we're in IDLE phase
-    if (currentPhase === AnimationPhase.IDLE) {
+    if (currentPhase === 'idle') {
       const startButton = screen.getByTestId('start-animation-button');
       fireEvent.click(startButton);
       
@@ -574,15 +575,15 @@ describe('WordTransform Component', () => {
     
     // Otherwise, continue advancing through phases until we reach the target
     const phaseOrder = [
-      AnimationPhase.IDLE,
-      AnimationPhase.DELETING,
-      AnimationPhase.INSERTING,
-      AnimationPhase.MOVING,
-      AnimationPhase.COMPLETE
+      'idle',
+      'deleting',
+      'inserting',
+      'moving',
+      'complete'
     ];
     
     // Find indices in the phase order
-    const currentIndex = phaseOrder.indexOf(currentPhase || AnimationPhase.IDLE);
+    const currentIndex = phaseOrder.indexOf(currentPhase || 'idle');
     const targetIndex = phaseOrder.indexOf(targetPhaseParam);
     
     // Advance through each phase in order
@@ -673,7 +674,7 @@ describe('WordTransform Component', () => {
     act(() => {
       // Force the component into MOVING phase
       const component = screen.getByTestId('word-transform');
-      component.setAttribute('data-phase', AnimationPhase.MOVING);
+      component.setAttribute('data-phase', 'moving');
       
       // Add fake letter with a unique testid
       const fakeTrueMoverLetter = document.createElement('span');
@@ -726,7 +727,7 @@ describe('WordTransform Component', () => {
       
       // Force the component into MOVING phase
       const component = screen.getByTestId('word-transform');
-      component.setAttribute('data-phase', AnimationPhase.MOVING);
+      component.setAttribute('data-phase', 'moving');
     });
     
     // Add fake letters to the DOM for testing purposes
