@@ -137,17 +137,16 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
       onAnimationComplete();
     }
     
-    // Fix: Auto-progress through empty phases, including consecutive empty phases
-    // If this phase has no operations, immediately progress to the next phase
-    // But don't auto-progress if we're in the middle of a reset operation
+    // TEMPORARILY DISABLED: Auto-progress through empty phases
+    // This is causing infinite loops - need to debug the root cause
+    // TODO: Re-enable after fixing the underlying issue
+    /*
     const currentPhaseOperationCount = totalAnimationsRef.current;
     if (currentPhaseOperationCount === 0 && 
         state.value !== 'idle' && 
         state.value !== 'complete' &&
         !isResettingRef.current) {
       
-      // Use setTimeout to ensure this happens after the current render cycle
-      // This prevents React state update warnings and ensures proper execution order
       const timeoutId = setTimeout(() => {
         if (debugMode) {
           console.log(`[WordTransform] Auto-progressing empty phase: ${state.value} -> DONE_PHASE`);
@@ -155,9 +154,9 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
         send({ type: 'DONE_PHASE' });
       }, 0);
       
-      // Cleanup function to prevent memory leaks if component unmounts
       return () => clearTimeout(timeoutId);
     }
+    */
   }, [state.value, onPhaseChange, editPlan, onAnimationComplete, send]);
   
   // Called when a letter animation completes
