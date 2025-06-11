@@ -93,6 +93,7 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
   // Track animation completed count for each phase
   const animationCountRef = useRef(0);
   const totalAnimationsRef = useRef(0);
+  const isResettingRef = useRef(false);
   
   // Function to start the animation sequence
   const startAnimation = useCallback(() => {
@@ -105,9 +106,14 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
   // Reset the animation when words change (if cancelOnPropsChange is true)
   useEffect(() => {
     if (cancelOnPropsChange) {
+      isResettingRef.current = true;
       send({ type: 'RESET' });
       animationCountRef.current = 0;
       totalAnimationsRef.current = 0;
+      // Clear the reset flag after a brief delay
+      setTimeout(() => {
+        isResettingRef.current = false;
+      }, 10);
     }
   }, [misspelling, correct, cancelOnPropsChange, send]);
 
@@ -133,10 +139,12 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
     
     // Fix: Auto-progress through empty phases, including consecutive empty phases
     // If this phase has no operations, immediately progress to the next phase
+    // But don't auto-progress if we're in the middle of a reset operation
     const currentPhaseOperationCount = totalAnimationsRef.current;
     if (currentPhaseOperationCount === 0 && 
         state.value !== 'idle' && 
-        state.value !== 'complete') {
+        state.value !== 'complete' &&
+        !isResettingRef.current) {
       
       // Use setTimeout to ensure this happens after the current render cycle
       // This prevents React state update warnings and ensures proper execution order
