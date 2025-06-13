@@ -227,6 +227,9 @@ const RealShuffleControls = () => {
 
   const handleReset = () => {
     setIsPlaying(false);
+    if (wordTransformRef.current) {
+      wordTransformRef.current.reset();
+    }
   };
 
   // REAL shuffle functionality using LocalWordPairService
@@ -383,6 +386,9 @@ const EmptyPhaseTestControls = () => {
 
   const handleReset = () => {
     setIsPlaying(false);
+    if (wordTransformRef.current) {
+      wordTransformRef.current.reset();
+    }
   };
 
   const handleSpeedChange = (newSpeed: number) => {

@@ -72,6 +72,11 @@ const ConsecutiveEmptyPhasesTest: React.FC = () => {
     setPhaseLog(['idle']);
     setIsRunning(true);
     
+    // Reset the WordTransform component when starting a new test
+    if (wordTransformRef.current) {
+      wordTransformRef.current.reset();
+    }
+    
     // Analyze the edit plan to understand what should happen
     const analysis = analyzeEditPlan(testCase.misspelling, testCase.correct);
     console.log(`Testing: "${testCase.misspelling}" → "${testCase.correct}"`, analysis);

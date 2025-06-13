@@ -53,6 +53,8 @@ export interface WordTransformTestingAPI {
   isAnimating: boolean;
   /** Start the animation sequence */
   startAnimation: () => void;
+  /** Reset the animation to idle state */
+  reset: () => void;
   /** Number of completed animations in current phase */
   completedAnimations: number;
   /** Total number of animations expected in current phase */
@@ -104,6 +106,18 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
     }
     send({ type: 'START' });
   }, [send, onAnimationStart]);
+  
+  // Function to reset the animation to idle state
+  const reset = useCallback(() => {
+    isResettingRef.current = true;
+    send({ type: 'RESET' });
+    animationCountRef.current = 0;
+    totalAnimationsRef.current = 0;
+    // Clear the reset flag after a brief delay
+    setTimeout(() => {
+      isResettingRef.current = false;
+    }, 10);
+  }, [send]);
   
   // Reset the animation when words change (if cancelOnPropsChange is true)
   useEffect(() => {
@@ -214,9 +228,10 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
     editPlan,
     isAnimating: state.value !== 'idle' && state.value !== 'complete',
     startAnimation,
+    reset,
     completedAnimations: animationCountRef.current,
     totalAnimationsInPhase: totalAnimationsRef.current
-  }), [state.value, editPlan, startAnimation]);
+  }), [state.value, editPlan, startAnimation, reset]);
   
   // Track the active letter arrays for the current phase
   const sourceLetters = useMemo(() => misspelling.split('').map((char, i) => ({ char, origIndex: i })), [misspelling]);
