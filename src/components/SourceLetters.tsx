@@ -6,8 +6,8 @@ import { WordTransformPhase } from './wordTransform.machine';
 import styles from './WordTransform.module.css';
 
 export interface SourceLettersProps {
-  /** Source letters from the misspelled word */
-  letters: string[];
+  /** Source letters from the misspelled word, with stable original indices */
+  letters: { char: string; origIndex: number }[];
   /** Current animation phase */
   phase: WordTransformPhase;
   /** Edit plan for the transformation */
@@ -39,7 +39,7 @@ const SourceLetters = memo<SourceLettersProps>(({
 
   return (
     <AnimatePresence mode="sync">
-      {letters.map((letter, index) => {
+      {letters.map(({ char, origIndex }, index) => {
         // Get the animation state for this letter
         const animationState = getLetterAnimationState(index, phase, editPlan);
         
@@ -53,11 +53,11 @@ const SourceLetters = memo<SourceLettersProps>(({
         
         return (
           <Letter
-            key={`source-${letter}-${index}`}
-            character={letter}
+            key={`source-${char}-${origIndex}`}
+            character={char}
             animationState={animationState}
             className={letterClass}
-            initialIndex={index}
+            initialIndex={origIndex}
             onAnimationComplete={needsCallback ? onLetterAnimationComplete : undefined}
           />
         );

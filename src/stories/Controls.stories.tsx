@@ -451,7 +451,27 @@ const EmptyPhaseTestControls = () => {
         )}
       </div>
       
-      {/* Test Cases */}
+      {/* Controls component container */}
+      <div style={{ 
+        padding: '1.5rem', 
+        borderRadius: '8px', 
+        border: '1px solid #374151', 
+        backgroundColor: '#111827',
+        marginBottom: '1.5rem'
+      }}>
+        <Controls
+          speed={speed}
+          isPlaying={isPlaying}
+          isShuffle={false}
+          currentWordPair={currentWordPair}
+          onPlay={handlePlay}
+          onReset={handleReset}
+          onSpeedChange={handleSpeedChange}
+          onWordPairSubmit={handleWordPairSubmit}
+        />
+      </div>
+      
+      {/* Test Cases - moved below UI */}
       <div style={{ 
         padding: '1.5rem', 
         borderRadius: '8px', 
@@ -482,27 +502,6 @@ const EmptyPhaseTestControls = () => {
             </button>
           ))}
         </div>
-      </div>
-      
-      {/* Controls component container */}
-      <div style={{ 
-        padding: '1.5rem', 
-        borderRadius: '8px', 
-        border: '1px solid #374151', 
-        backgroundColor: '#111827',
-        marginBottom: '1.5rem'
-      }}>
-        <Controls
-          speed={speed}
-          isPlaying={isPlaying}
-          isShuffle={false}
-          currentWordPair={currentWordPair}
-          onPlay={handlePlay}
-          onReset={handleReset}
-          onShuffle={() => {}} // No shuffle in this test
-          onSpeedChange={handleSpeedChange}
-          onWordPairSubmit={handleWordPairSubmit}
-        />
       </div>
       
       {testHistory.length > 0 && (

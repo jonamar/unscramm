@@ -75,10 +75,38 @@ export function computeEditPlan(sourceWord: string, targetWord: string): EditPla
   // Sort insertions ascending so we insert left→right
   insertions.sort((a, b) => a.position - b.position);
 
-  // 4. Moves = any matched pair where sourceIdx ≠ targetIdx
+  // 4. Moves = characters that actually change their relative order
+  // A character is only a move if it breaks the monotonic sequence of the LCS
   const moves: Move[] = [];
-  for (const [sIdx, tIdx] of matches.pairs) {
-    if (sIdx !== tIdx) {
+  for (let k = 0; k < matches.pairs.length; k++) {
+    const [sIdx, tIdx] = matches.pairs[k];
+    
+    // Check if this character breaks the monotonic order
+    let isOutOfOrder = false;
+    
+    // Check against previous pairs
+    for (let i = 0; i < k; i++) {
+      const [prevS, prevT] = matches.pairs[i];
+      if (sIdx > prevS && tIdx < prevT) {
+        // This character comes after prevS in source but before prevT in target
+        isOutOfOrder = true;
+        break;
+      }
+    }
+    
+    // Check against following pairs
+    if (!isOutOfOrder) {
+      for (let i = k + 1; i < matches.pairs.length; i++) {
+        const [nextS, nextT] = matches.pairs[i];
+        if (sIdx < nextS && tIdx > nextT) {
+          // This character comes before nextS in source but after nextT in target
+          isOutOfOrder = true;
+          break;
+        }
+      }
+    }
+    
+    if (isOutOfOrder) {
       moves.push({ fromIndex: sIdx, toIndex: tIdx });
     }
   }
@@ -135,4 +163,5 @@ export function identifyTrueMovers(pairs: Array<[number, number]>): number[] {
   }
 
   return highlightIndices;
-} 
+}
+

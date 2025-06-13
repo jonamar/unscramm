@@ -81,6 +81,8 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
     return computeEditPlan(misspelling, correct);
   }, [misspelling, correct]);
 
+
+
   // Use the new React hooks-based state machine
   const [state, send] = useWordTransformMachine(
     editPlan ? {
@@ -217,16 +219,16 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
   }), [state.value, editPlan, startAnimation]);
   
   // Track the active letter arrays for the current phase
-  const sourceLetters = useMemo(() => misspelling.split(''), [misspelling]);
+  const sourceLetters = useMemo(() => misspelling.split('').map((char, i) => ({ char, origIndex: i })), [misspelling]);
   const targetLetters = useMemo(() => correct.split(''), [correct]);
   
   // Set CSS variables for animation timing based on speedMultiplier
   const containerStyle = useMemo(() => {
     return {
       '--speed-multiplier': speedMultiplier,
-      '--remove-duration': `${300 / speedMultiplier}ms`,
-      '--add-duration': `${300 / speedMultiplier}ms`,
-      '--move-duration': `${500 / speedMultiplier}ms`,
+      '--remove-duration': `${1200 / speedMultiplier}ms`,
+      '--add-duration': `${1200 / speedMultiplier}ms`,
+      '--move-duration': `${2000 / speedMultiplier}ms`,
     } as React.CSSProperties;
   }, [speedMultiplier]);
 
