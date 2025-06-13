@@ -40,17 +40,18 @@ const SourceLetters = memo<SourceLettersProps>(({
   // Only render source letters in the appropriate phases
   if (phase !== 'idle' && phase !== 'deleting' && phase !== 'moving') return null;
 
+  // CRITICAL FIX: Filter out deleted letters during moving phase
+  // Deleted letters should not be rendered at all during moving phase
+  const filteredLetters = phase === 'moving' && editPlan 
+    ? letters.map((letter, index) => ({ ...letter, originalIndex: index }))
+             .filter(({ originalIndex }) => !editPlan.deletions.includes(originalIndex))
+    : letters.map((letter, index) => ({ ...letter, originalIndex: index }));
+
   return (
     <AnimatePresence mode="sync">
-      {letters.map(({ char, origIndex }, index) => {
-        // CRITICAL FIX: Filter out deleted letters during moving phase
-        // Deleted letters should not be rendered at all during moving phase
-        if (phase === 'moving' && editPlan && editPlan.deletions.includes(index)) {
-          return null;
-        }
-        
-        // Get the animation state for this letter
-        const animationState = getLetterAnimationState(index, phase, editPlan);
+      {filteredLetters.map(({ char, origIndex, originalIndex }) => {
+        // Get the animation state for this letter using the original index
+        const animationState = getLetterAnimationState(originalIndex, phase, editPlan);
         
         // Only set animation callbacks on letters that are actively animating
         const needsCallback = 
