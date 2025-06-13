@@ -31,30 +31,40 @@ export interface LetterProps {
   tabIndex?: number;
   /** Optional performance optimization flag */
   disableLayoutAnimation?: boolean;
+  /** Speed multiplier for animations (default: 1) - higher values make animations faster */
+  speedMultiplier?: number;
 }
 
 /**
  * Returns appropriate animation duration based on environment and motion preferences
  * 
- * @param baseValue - The default animation duration in seconds
+ * @param baseValue - The base animation duration in milliseconds
+ * @param speedMultiplier - Speed multiplier for animations
  * @param shouldReduceMotion - Whether animations should be reduced
- * @returns Adjusted animation duration
+ * @returns Adjusted animation duration in seconds
  */
-const getDuration = (baseValue: number, shouldReduceMotion: boolean): number => 
-  shouldReduceMotion || process.env.NODE_ENV === 'test' ? 0.001 : baseValue;
+const getDuration = (baseValue: number, speedMultiplier: number, shouldReduceMotion: boolean): number => {
+  if (shouldReduceMotion || process.env.NODE_ENV === 'test') {
+    return 0.001;
+  }
+  
+  // Apply speed multiplier and convert to seconds
+  return (baseValue / speedMultiplier) / 1000;
+};
 
 /**
  * Creates variant for the normal (default) letter state
  * 
  * @param shouldReduceMotion - Whether to reduce motion
+ * @param speedMultiplier - Speed multiplier for animations
  * @returns Animation variant for the normal state
  */
-const createNormalVariant = (shouldReduceMotion: boolean) => ({
+const createNormalVariant = (shouldReduceMotion: boolean, speedMultiplier: number) => ({
   opacity: 1,
   scale: 1,
   y: 0,
   transition: {
-    duration: getDuration(0.3, shouldReduceMotion),
+    duration: getDuration(300, speedMultiplier, shouldReduceMotion),
     ease: "easeInOut"
   }
 });
@@ -63,14 +73,15 @@ const createNormalVariant = (shouldReduceMotion: boolean) => ({
  * Creates variant for the deletion animation state
  * 
  * @param shouldReduceMotion - Whether to reduce motion
+ * @param speedMultiplier - Speed multiplier for animations
  * @returns Animation variant for the deletion state
  */
-const createDeletionVariant = (shouldReduceMotion: boolean) => ({
+const createDeletionVariant = (shouldReduceMotion: boolean, speedMultiplier: number) => ({
   opacity: 0,
   scale: shouldReduceMotion ? 1 : [1, 0.8],
   y: shouldReduceMotion ? 0 : [0, 10],
   transition: {
-    duration: getDuration(0.4, shouldReduceMotion),
+    duration: getDuration(1200, speedMultiplier, shouldReduceMotion),
     ease: "easeOut",
     times: shouldReduceMotion ? [0, 1] : [0, 1]
   }
@@ -80,14 +91,15 @@ const createDeletionVariant = (shouldReduceMotion: boolean) => ({
  * Creates variant for the insertion animation state
  * 
  * @param shouldReduceMotion - Whether to reduce motion
+ * @param speedMultiplier - Speed multiplier for animations
  * @returns Animation variant for the insertion state
  */
-const createInsertionVariant = (shouldReduceMotion: boolean) => ({
+const createInsertionVariant = (shouldReduceMotion: boolean, speedMultiplier: number) => ({
   opacity: shouldReduceMotion ? [0, 1] : [0, 1, 1],
   scale: shouldReduceMotion ? 1 : [1.3, 1.1, 1],
   y: shouldReduceMotion ? 0 : [0, -5, 0],
   transition: {
-    duration: getDuration(0.5, shouldReduceMotion),
+    duration: getDuration(1200, speedMultiplier, shouldReduceMotion),
     ease: "easeOut",
     times: shouldReduceMotion ? [0, 1] : [0, 0.6, 1],
     // Add a slight bounce for insertions
@@ -99,13 +111,14 @@ const createInsertionVariant = (shouldReduceMotion: boolean) => ({
  * Creates variant for the movement animation state
  * 
  * @param shouldReduceMotion - Whether to reduce motion
+ * @param speedMultiplier - Speed multiplier for animations
  * @returns Animation variant for the movement state
  */
-const createMovementVariant = (shouldReduceMotion: boolean) => ({
+const createMovementVariant = (shouldReduceMotion: boolean, speedMultiplier: number) => ({
   scale: shouldReduceMotion ? 1 : [1, 1.1, 1],
   // Enhanced animation for movement
   transition: {
-    duration: getDuration(0.8, shouldReduceMotion),
+    duration: getDuration(2000, speedMultiplier, shouldReduceMotion),
     // Use an exaggerated bounce effect
     ease: shouldReduceMotion ? "easeOut" : [0.1, 2.3, 0.36, 1.2], 
     times: shouldReduceMotion ? [0, 1] : [0, 0.4, 1],
@@ -121,16 +134,17 @@ const createMovementVariant = (shouldReduceMotion: boolean) => ({
  * Enhanced version of movement with more pronounced animations
  * 
  * @param shouldReduceMotion - Whether to reduce motion
+ * @param speedMultiplier - Speed multiplier for animations
  * @returns Animation variant for the true-mover state
  */
-const createTrueMoverVariant = (shouldReduceMotion: boolean) => ({
+const createTrueMoverVariant = (shouldReduceMotion: boolean, speedMultiplier: number) => ({
   // More pronounced scale effect for true movers
   scale: shouldReduceMotion ? 1 : [1, 1.25, 1],
   // Add subtle rotation for emphasis
   rotate: shouldReduceMotion ? 0 : [0, -5, 5, 0],
   // Enhanced animation for true movers
   transition: {
-    duration: getDuration(1.2, shouldReduceMotion), // Longer duration
+    duration: getDuration(2000, speedMultiplier, shouldReduceMotion), // Use same duration as movement
     // More pronounced bounce effect
     ease: shouldReduceMotion ? "easeOut" : [0.1, 2.5, 0.3, 1.3],
     times: shouldReduceMotion ? [0, 1] : [0, 0.3, 0.7, 1],
@@ -144,14 +158,15 @@ const createTrueMoverVariant = (shouldReduceMotion: boolean) => ({
  * Creates variant for the exiting animation state
  * 
  * @param shouldReduceMotion - Whether to reduce motion
+ * @param speedMultiplier - Speed multiplier for animations
  * @returns Animation variant for the exiting state
  */
-const createExitingVariant = (shouldReduceMotion: boolean) => ({
+const createExitingVariant = (shouldReduceMotion: boolean, speedMultiplier: number) => ({
   opacity: 0,
   scale: shouldReduceMotion ? 0.8 : [1, 0.8, 0.6],
   y: shouldReduceMotion ? 10 : [0, 10, 15],
   transition: {
-    duration: getDuration(0.5, shouldReduceMotion),
+    duration: getDuration(1200, speedMultiplier, shouldReduceMotion),
     ease: "easeOut",
     times: shouldReduceMotion ? [0, 1] : [0, 0.7, 1]
   }
@@ -162,16 +177,17 @@ const createExitingVariant = (shouldReduceMotion: boolean) => ({
  * and user's reduced motion preferences
  * 
  * @param shouldReduceMotion - Whether animations should be reduced/disabled
+ * @param speedMultiplier - Speed multiplier for animations
  * @returns Animation variants object for Framer Motion
  */
-const createLetterVariants = (shouldReduceMotion: boolean): Variants => {
+const createLetterVariants = (shouldReduceMotion: boolean, speedMultiplier: number): Variants => {
   return {
-    normal: createNormalVariant(shouldReduceMotion),
-    deletion: createDeletionVariant(shouldReduceMotion),
-    insertion: createInsertionVariant(shouldReduceMotion),
-    movement: createMovementVariant(shouldReduceMotion),
-    exiting: createExitingVariant(shouldReduceMotion),
-    'true-mover': createTrueMoverVariant(shouldReduceMotion)
+    normal: createNormalVariant(shouldReduceMotion, speedMultiplier),
+    deletion: createDeletionVariant(shouldReduceMotion, speedMultiplier),
+    insertion: createInsertionVariant(shouldReduceMotion, speedMultiplier),
+    movement: createMovementVariant(shouldReduceMotion, speedMultiplier),
+    exiting: createExitingVariant(shouldReduceMotion, speedMultiplier),
+    'true-mover': createTrueMoverVariant(shouldReduceMotion, speedMultiplier)
   };
 };
 
@@ -330,6 +346,7 @@ const Letter: React.FC<LetterProps> = memo(({
   className = '',
   tabIndex = 0,
   disableLayoutAnimation = false,
+  speedMultiplier = 1,
 }) => {
   // Track component mount/unmount status for cleanup
   const [isPresent, safeToRemove] = usePresence();
@@ -339,7 +356,7 @@ const Letter: React.FC<LetterProps> = memo(({
   const shouldReduceMotion = useReducedMotion() || process.env.NODE_ENV === 'test';
   
   // Create variants with motion preference applied
-  const letterVariants = createLetterVariants(!!shouldReduceMotion);
+  const letterVariants = createLetterVariants(!!shouldReduceMotion, speedMultiplier);
   
   // Get accessibility attributes based on current state
   const ariaLabel = getAriaLabel(character, animationState);

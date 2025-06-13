@@ -16,6 +16,8 @@ export interface TargetLettersProps {
   onLetterAnimationComplete?: () => void;
   /** Whether to enable color coding */
   colorsEnabled?: boolean;
+  /** Speed multiplier for animations (default: 1) - higher values make animations faster */
+  speedMultiplier?: number;
 }
 
 /**
@@ -28,6 +30,7 @@ const TargetLetters = memo<TargetLettersProps>(({
   editPlan,
   onLetterAnimationComplete,
   colorsEnabled = true,
+  speedMultiplier = 1,
 }) => {
   if (!editPlan || !letters.length) return null;
 
@@ -57,6 +60,7 @@ const TargetLetters = memo<TargetLettersProps>(({
             animationState={animationState}
             className={letterClass}
             initialIndex={index}
+            speedMultiplier={speedMultiplier}
             onAnimationComplete={needsCallback ? onLetterAnimationComplete : undefined}
           />
         );

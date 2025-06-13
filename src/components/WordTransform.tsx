@@ -243,7 +243,8 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
       '--speed-multiplier': speedMultiplier,
       '--remove-duration': `${1200 / speedMultiplier}ms`,
       '--add-duration': `${1200 / speedMultiplier}ms`,
-      '--move-duration': `${2000 / speedMultiplier}ms`,
+      '--reorder-duration': `${2000 / speedMultiplier}ms`,
+      '--exit-duration': `${1200 / speedMultiplier}ms`,
     } as React.CSSProperties;
   }, [speedMultiplier]);
 
@@ -268,6 +269,7 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
           onLetterAnimationComplete={handleLetterAnimationComplete}
           getLetterAnimationState={getLetterAnimationState}
           colorsEnabled={colorsEnabled}
+          speedMultiplier={speedMultiplier}
         />
         <TargetLetters
           letters={targetLetters}
@@ -275,6 +277,7 @@ const WordTransform = forwardRef<WordTransformTestingAPI, WordTransformProps>(({
           editPlan={editPlan}
           onLetterAnimationComplete={handleLetterAnimationComplete}
           colorsEnabled={colorsEnabled}
+          speedMultiplier={speedMultiplier}
         />
       </div>
       

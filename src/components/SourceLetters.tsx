@@ -18,6 +18,8 @@ export interface SourceLettersProps {
   getLetterAnimationState: (letterIndex: number, phase: WordTransformPhase, editPlan: EditPlan | null) => LetterAnimationState;
   /** Whether to enable color coding */
   colorsEnabled?: boolean;
+  /** Speed multiplier for animations (default: 1) - higher values make animations faster */
+  speedMultiplier?: number;
 }
 
 /**
@@ -31,6 +33,7 @@ const SourceLetters = memo<SourceLettersProps>(({
   onLetterAnimationComplete,
   getLetterAnimationState,
   colorsEnabled = true,
+  speedMultiplier = 1,
 }) => {
   if (!editPlan || !letters.length) return null;
 
@@ -58,6 +61,7 @@ const SourceLetters = memo<SourceLettersProps>(({
             animationState={animationState}
             className={letterClass}
             initialIndex={origIndex}
+            speedMultiplier={speedMultiplier}
             onAnimationComplete={needsCallback ? onLetterAnimationComplete : undefined}
           />
         );
