@@ -43,15 +43,14 @@ const SourceLetters = memo<SourceLettersProps>(({
   // CRITICAL FIX: Filter out deleted letters during moving phase
   // Deleted letters should not be rendered at all during moving phase
   const filteredLetters = phase === 'moving' && editPlan 
-    ? letters.map((letter, index) => ({ ...letter, originalIndex: index }))
-             .filter(({ originalIndex }) => !editPlan.deletions.includes(originalIndex))
-    : letters.map((letter, index) => ({ ...letter, originalIndex: index }));
+    ? letters.filter(({ origIndex }) => !editPlan.deletions.includes(origIndex))
+    : letters;
 
   return (
     <AnimatePresence mode="sync">
-      {filteredLetters.map(({ char, origIndex, originalIndex }) => {
+      {filteredLetters.map(({ char, origIndex }) => {
         // Get the animation state for this letter using the original index
-        const animationState = getLetterAnimationState(originalIndex, phase, editPlan);
+        const animationState = getLetterAnimationState(origIndex, phase, editPlan);
         
         // Only set animation callbacks on letters that are actively animating
         const needsCallback = 
