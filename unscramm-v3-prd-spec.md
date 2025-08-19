@@ -4,6 +4,8 @@
 **Status:** Proposed
 **Author:** Cascade
 
+**Note:** This document is the authoritative specification for the v3 rewrite. It supersedes all previous planning documents, including `spec.md` and `scripts/phase_1-prd.txt`.
+
 ---
 
 ## 1. Overview & Goal
@@ -56,6 +58,7 @@ We will keep the existing GitHub repo but perform a clean, isolated rewrite on a
 Do:
 - Keep only the minimal files needed for v3.
 - Port the working algorithm utilities (`editPlan.ts`, `lcs.ts`) with unchanged names/exports.
+- Preserve key repository files: `LICENSE`, `README.md`, `.github/`, `design_guidelines/`, and this document.
 
 Don’t:
 - Carry over unused configs, deep tooling, or state machines.
@@ -108,6 +111,7 @@ The repository will be wiped clean. The new structure will be minimal:
         3.  **`phase: 'moving'`**: Render the remaining letters (the LCS members), but now sorted into their final target positions. This triggers the FLIP animation for re-ordering.
         4.  **`phase: 'inserting'`**: Render the final target word letters. This introduces the new letters from `plan.insertions` at their final positions, triggering the enter animation.
         5.  **`phase: 'final'`**: The animation is complete. The list of letters is the final target word.
+    *   **Note on "Moves"**: The `moving` phase animates all remaining (LCS) letters settling into their final sorted positions. The `plan.moves` and `plan.highlightIndices` arrays are used to apply special styling (e.g., yellow color) to the "true movers"—those that change position relative to their peers—not to trigger the animation itself.
 *   **Animation Strategy:**
     *   Render letters as `<motion.span layout>` keyed by a stable identity.
     *   Wrap list in `<AnimatePresence>` for enter/exit.
@@ -116,14 +120,14 @@ The repository will be wiped clean. The new structure will be minimal:
 
 ### 5.4. Visual Design & Styling
 
-All styling will adhere to the project's visual guidelines. Use Tailwind utility classes for speed and consistency.
+All styling will adhere to the project's visual guidelines. Use Tailwind utility classes for speed and consistency. The `tailwind.config.js` file should be configured to use the semantic design tokens (colors, fonts, spacing) from the style guide.
 
 *   **Style Guide Location:** `design_guidelines/styleguide.md`
 *   **Color semantics:**
     *   Deletions = red (e.g., `text-red-500`)
     *   Insertions = green (e.g., `text-green-500`)
     *   Moves/true-movers = yellow (e.g., `text-yellow-500`)
-*   **Reduced motion:** Respect OS setting. Collapse durations and avoid large movements when `prefers-reduced-motion` is enabled.
+*   **Reduced motion:** Respect OS setting via the `prefers-reduced-motion` CSS media query. A UI toggle is not required for v3. Collapse durations and avoid large movements when enabled.
 
 ### 5.5. Core Algorithm Outline
 
