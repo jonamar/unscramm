@@ -13,6 +13,7 @@ export interface WordUnscramblerProps {
   source: string;
   target: string;
   animateSignal: number; // increment to re-run animation
+  resetSignal?: number; // increment to reset to initial state without animating
   onAnimationStart?: () => void;
   onAnimationComplete?: () => void;
 }
@@ -41,6 +42,7 @@ export default function WordUnscrambler({
   source,
   target,
   animateSignal,
+  resetSignal,
   onAnimationStart,
   onAnimationComplete,
 }: WordUnscramblerProps) {
@@ -129,6 +131,17 @@ export default function WordUnscrambler({
     return () => { runningRef.current = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [animateSignal]);
+
+  // Handle external reset without animating
+  useEffect(() => {
+    if (resetSignal === undefined) return;
+    // Bring the view back to the initial state instantly
+    runningRef.current = false;
+    setPhase('idle');
+    setLetters(sourceLetters);
+    // do not call onAnimationStart/Complete
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetSignal, sourceLetters]);
 
   // Styling variants
   const getLetterClass = (item: LetterItem): string => {

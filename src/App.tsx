@@ -6,6 +6,7 @@ function App() {
   const [source, setSource] = useState('tesd');
   const [target, setTarget] = useState('tads');
   const [animateSignal, setAnimateSignal] = useState(0);
+  const [resetSignal, setResetSignal] = useState(0);
   const [running, setRunning] = useState(false);
   const runTokenRef = useRef(0);
 
@@ -22,8 +23,8 @@ function App() {
 
   const onReset = () => {
     if (running) return;
-    setSource('');
-    setTarget('');
+    // Reset the view to the initial state without starting animation
+    setResetSignal((n) => n + 1);
   };
 
   return (
@@ -61,6 +62,7 @@ function App() {
           source={source}
           target={target}
           animateSignal={animateSignal}
+          resetSignal={resetSignal}
           onAnimationStart={() => {}}
           onAnimationComplete={onComplete}
         />
