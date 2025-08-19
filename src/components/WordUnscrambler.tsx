@@ -93,6 +93,7 @@ export default function WordUnscrambler({
 
   // Orchestrate phases when animateSignal changes
   useEffect(() => {
+    if (animateSignal <= 0) return; // only run when explicitly triggered via Play
     const run = async () => {
       if (runningRef.current) return; // prevent overlap
       runningRef.current = true;
