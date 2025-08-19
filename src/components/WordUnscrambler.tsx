@@ -53,6 +53,7 @@ export default function WordUnscrambler({
   const prefersReduced = usePrefersReducedMotion();
   const [phase, setPhase] = useState<Phase>('idle');
   const runningRef = useRef(false);
+  const deletingIdsRef = useRef<Set<string>>(new Set());
 
   const plan = useMemo(() => computeEditPlan(source, target), [source, target]);
 
@@ -104,7 +105,10 @@ export default function WordUnscrambler({
 
       // Phase: deleting
       setPhase('deleting');
-      // filter out deletions
+      // identify ids to delete and render one frame with red styling before removal
+      deletingIdsRef.current = new Set(plan.deletions.map((i) => `src-${i}`));
+      await new Promise(requestAnimationFrame);
+      // now remove the deletions to trigger exit animations with red class
       const afterDelete = sourceLetters.filter((_, i) => !plan.deletions.includes(i));
       setLetters(afterDelete);
       await delay(DURATIONS.deleting);
@@ -154,8 +158,14 @@ export default function WordUnscrambler({
 
   // Styling variants
   const getLetterClass = (item: LetterItem): string => {
-    if (phase === 'deleting') return 'text-deletion';
-    if (phase === 'inserting') return 'text-insertion';
+    if (phase === 'deleting') {
+      // only letters being removed should be red
+      return deletingIdsRef.current.has(item.id) ? 'text-deletion' : '';
+    }
+    if (phase === 'inserting') {
+      // only newly inserted letters should be green
+      return item.id.startsWith('ins-') ? 'text-insertion' : '';
+    }
     if (phase === 'moving') {
       // highlight true movers using plan.moves (fromIndex)
       const idx = parseInt(item.id.split('-')[1] || '-1', 10);
