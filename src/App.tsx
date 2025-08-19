@@ -52,7 +52,7 @@ function App() {
         <button className="btn neu" onClick={onAnimate} disabled={running || !source || !target} aria-label="Animate">
           ▶
         </button>
-        <button className="btn neu" onClick={onReset} disabled={running} aria-label="Reset">
+        <button className="btn neu" onClick={onReset} disabled={running} aria-label="Reset view">
           ↺
         </button>
       </div>
