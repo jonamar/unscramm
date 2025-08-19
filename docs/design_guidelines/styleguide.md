@@ -12,6 +12,8 @@
 - **Spellcheck**: `red` (border-bottom)
 - **Secondary Text**: `#777` (#advancedLink)
 
+Note: Prefer using the CSS variables defined in `src/index.css` under `@theme` instead of hard-coded hex values, e.g. `var(--color-bg)`, `var(--color-panel)`, `var(--color-button)`, `var(--color-text)`, `var(--color-text-secondary)`, `var(--color-deletion)`, `var(--color-insertion)`, `var(--color-move)`.
+
 _Refer to SVG icons in `design_guidelines/ui/`:_
 - `ui-colors.svg` for palette reference
 - `ui-play.svg`, `ui-reload.svg`, `ui-rand.svg` for controls
@@ -147,6 +149,103 @@ Use:
 .letter-shift    { transition: transform var(--letter-shift-duration) cubic-bezier(0.25,0.1,0.25,1); }
 ``` 
 **Tip**: Always set a starting state (transform+opacity) for entry animations.
+
+—
+
+## Design Tokens (Source of Truth)
+
+Tokens are named variables that store visual decisions (colors, typography, motion). They are defined in `src/index.css` under the `@theme` block and referenced via `var(--token-name)` or Tailwind arbitrary values.
+
+Core tokens:
+
+- Colors
+  - `--color-bg` (background)
+  - `--color-panel` (elevated surface)
+  - `--color-button`, `--color-button-hover`
+  - `--color-text`, `--color-text-secondary`
+  - Semantic: `--color-deletion` (red), `--color-move` (yellow), `--color-insertion` (green)
+- Typography
+  - `--font-sans`
+
+Usage examples:
+
+- Tailwind with variables: `bg-[--color-panel] text-[--color-text]`
+- Semantic utilities (defined in `src/index.css`): `.text-deletion`, `.text-move`, `.text-insertion`
+
+Benefits: consistency, easy theming (dark/light/high-contrast), maintainability, accessibility tuning in one place.
+
+## Semantic Color Utilities
+
+Defined in `src/index.css`:
+
+- `.text-deletion { color: var(--color-deletion); }`
+- `.text-move { color: var(--color-move); }`
+- `.text-insertion { color: var(--color-insertion); }`
+
+Guidelines:
+
+- Apply per-letter, not per-phase.
+- Deleting: only soon-to-be-removed letters red.
+- Moving: only letters that change position yellow.
+- Inserting: only newly inserted letters green.
+- Final: reset to neutral text color.
+
+## Motion system and Reduced Motion
+
+Durations (match component logic):
+
+- Delete phase: 400ms
+- Move phase: 1000ms
+- Insert phase: 300ms
+- Per-letter transition: 250ms
+
+Debug/inspection: a speed multiplier may slow all timings in development.
+
+Reduced motion policy:
+
+- If `(prefers-reduced-motion: reduce)`, cap waits to 50ms and per-letter transitions to 50ms.
+- Avoid large movements; prefer subtle opacity/scale changes.
+
+Recommended easing:
+
+- Reorder/movement: `cubic-bezier(0.1, 2, 0.3, 1)` or similarly gentle spring-like ease.
+- Add/Remove fades: standard ease-in-out.
+
+## Unscrambler Letter Behavior (Example: `tesd → tads`)
+
+- Initial: neutral.
+- Deleting: `e` is red for the full delete phase, then removed.
+- Moving: only movers are yellow (`d` and `s`); non-movers (`t`) remain neutral.
+- Inserting: `a` appears green; survivors stay neutral.
+- Final: all neutral.
+
+Preservation rule: survivors reuse their original identities (stable keys) to avoid re-creating letters during insert phase.
+
+## Buttons and Focus
+
+- Base size ~40px; consider 44px min tap target if space allows.
+- Focus-visible: show a ring for keyboard users (`.btn:focus-visible`).
+- Disabled: `opacity: 0.5` and non-interactive.
+- Toggle states (e.g., Play vs. Reset): keep `aria-label` specific and update on state change.
+
+## Accessibility
+
+- Keyboard order: inputs → Play → Reset; ensure visible focus.
+- Live announcements (optional): an `aria-live="polite"` region can announce phase changes (Deleting… Moving… Inserting… Completed.)
+- Color contrast: ensure text and colored states meet AA against the dark background. Prefer adjusting tokens if needed.
+
+## Layout with Tailwind mapping
+
+- Container: `w-full max-w-[600px] px-6`
+- Panels: `.panel` (predefined in `src/index.css`) for elevated surfaces.
+- Inputs: `.input` for consistent background, border, and focus styles.
+
+Provide both Tailwind examples and CSS snippets for contributors not using Tailwind utilities.
+
+## Iconography
+
+- Icons live in `docs/design_guidelines/ui/`.
+- Size to fit buttons; inherit current color when used inside buttons (use `fill="currentColor"`).
 
 ## Responsive Breakpoints
 ```css
