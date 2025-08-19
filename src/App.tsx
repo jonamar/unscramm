@@ -31,7 +31,7 @@ function App() {
     <main className="main w-full max-w-[600px] mx-auto px-6 box-border">
       <h1 className="heading">Unscramm v3</h1>
 
-      <section className="mt-6">
+      <section className="mt-6 flex justify-center">
         <WordUnscrambler
           source={source}
           target={target}
