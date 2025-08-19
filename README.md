@@ -16,6 +16,21 @@ See PRD: `docs/unscramm-v3-prd-spec.md` and style guide: `docs/design_guidelines
 - Build: `npm run build`
 - Test (CI): `npm test`
 
+## Design Tokens
+
+Source of truth: `src/index.css` under the `@theme` block. These CSS variables define colors, typography, and semantic states used across the app.
+
+- Colors: `--color-bg`, `--color-panel`, `--color-button`, `--color-button-hover`, `--color-text`, `--color-text-secondary`
+- Semantic colors: `--color-deletion` (red), `--color-move` (yellow), `--color-insertion` (green)
+- Typography: `--font-sans`
+
+Usage:
+
+- Tailwind with variables: `bg-[--color-panel] text-[--color-text]`
+- Utilities from `src/index.css`: `.text-deletion`, `.text-move`, `.text-insertion`
+
+Benefits: consistency, easy theming, maintainability, and accessible contrast tuning from a single place.
+
 ## Testing Stack
 
 - __Runner__: Vitest (v2)
