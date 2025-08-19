@@ -169,7 +169,7 @@ export default function WordUnscrambler({
     if (phase === 'moving') {
       // highlight true movers using plan.moves (fromIndex)
       const idx = parseInt(item.id.split('-')[1] || '-1', 10);
-      const isTrueMover = plan.moves.some(m => m.fromIndex === idx) && plan.highlightIndices.includes(idx);
+      const isTrueMover = plan.moves.some(m => m.fromIndex === idx) || plan.highlightIndices.includes(idx);
       return isTrueMover ? 'text-move' : '';
     }
     return '';
