@@ -31,7 +31,18 @@ function App() {
     <main className="main w-full max-w-[600px] mx-auto px-6 box-border">
       <h1 className="heading">Unscramm v3</h1>
 
-      <div className="panel input-panel flex items-center gap-2 w-full max-w-[600px] mt-4">
+      <section className="mt-6">
+        <WordUnscrambler
+          source={source}
+          target={target}
+          animateSignal={animateSignal}
+          resetSignal={resetSignal}
+          onAnimationStart={() => {}}
+          onAnimationComplete={onComplete}
+        />
+      </section>
+
+      <div className="panel input-panel flex items-center gap-2 w-full max-w-[600px] mt-6">
         <input
           type="text"
           className="input flex-1"
@@ -56,17 +67,6 @@ function App() {
           ↺
         </button>
       </div>
-
-      <section className="mt-8">
-        <WordUnscrambler
-          source={source}
-          target={target}
-          animateSignal={animateSignal}
-          resetSignal={resetSignal}
-          onAnimationStart={() => {}}
-          onAnimationComplete={onComplete}
-        />
-      </section>
     </main>
   );
 }
