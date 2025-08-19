@@ -26,6 +26,10 @@ const DURATIONS: Record<Phase, number> = {
   final: 0,
 };
 
+// Debug/inspection: slow down all timings (phase delays and per-letter transitions)
+// Set to 1 for normal speed, 5 for 5x slower, etc.
+const SPEED_MULTIPLIER = 5;
+
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
@@ -54,38 +58,31 @@ export default function WordUnscrambler({
 
   // Precompute helpers for rendering
   const sourceLetters = useMemo(() => source.split('').map((char, i) => ({ id: `src-${i}`, char })), [source]);
-  const targetLetters = useMemo(() => target.split('').map((char, j) => ({ id: `tgt-${j}`, char })), [target]);
-  const lcsMovingLetters = useMemo<LetterItem[]>(() => {
-    // LCS survivors ordered by final target indices triggers FLIP reordering
-    // Derive from plan.moves highlight + non-true movers by pairing LCS via deletions/insertions
-    // Simpler approach: take source letters not deleted, and map them to target order using LCS pairs
-    // Build survivors from matches via (all pairs are LCS)
-    // We don't have matches in plan; recompute via comparing deletions. Construct indices present after deletion
-    const survivors: { fromIndex: number }[] = [];
+  const { movingLetters, targetToSourceMap } = useMemo(() => {
+    // Build survivors (source indices not deleted)
+    const survivors: number[] = [];
     for (let i = 0; i < source.length; i++) {
-      if (!plan.deletions.includes(i)) survivors.push({ fromIndex: i });
+      if (!plan.deletions.includes(i)) survivors.push(i);
     }
-    // We need source->target index mapping for LCS members. Recompute by aligning characters greedily.
-    // Basic greedy match: walk target, match next same char from survivors left-to-right.
+    // Greedy map target positions to next unused survivor with same char
     const used = new Set<number>();
     const mapped: { fromIndex: number; toIndex: number; char: string }[] = [];
+    const t2s = new Map<number, number>(); // target index -> source index
     for (let t = 0; t < target.length; t++) {
       const c = target[t];
-      // find next survivor occurrence of c not already used
       let found = -1;
-      for (const s of survivors) {
-        if (!used.has(s.fromIndex) && source[s.fromIndex] === c) {
-          found = s.fromIndex; break;
-        }
+      for (const sIdx of survivors) {
+        if (!used.has(sIdx) && source[sIdx] === c) { found = sIdx; break; }
       }
       if (found >= 0) {
         used.add(found);
         mapped.push({ fromIndex: found, toIndex: t, char: c });
+        t2s.set(t, found);
       }
     }
-    // Now sort mapped by toIndex for target order
     mapped.sort((a, b) => a.toIndex - b.toIndex);
-    return mapped.map(m => ({ id: `src-${m.fromIndex}`, char: m.char }));
+    const movingLetters: LetterItem[] = mapped.map(m => ({ id: `src-${m.fromIndex}`, char: m.char }));
+    return { movingLetters, targetToSourceMap: t2s };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, target, plan.deletions.join(',')]);
 
@@ -103,7 +100,7 @@ export default function WordUnscrambler({
       setPhase('idle');
       setLetters(sourceLetters);
 
-      const delay = (ms: number) => new Promise((r) => setTimeout(r, prefersReduced ? Math.min(ms, 50) : ms));
+      const delay = (ms: number) => new Promise((r) => setTimeout(r, prefersReduced ? Math.min(ms, 50) : ms * SPEED_MULTIPLIER));
 
       // Phase: deleting
       setPhase('deleting');
@@ -114,12 +111,23 @@ export default function WordUnscrambler({
 
       // Phase: moving (reorder survivors into target order)
       setPhase('moving');
-      setLetters(lcsMovingLetters);
+      setLetters(movingLetters);
       await delay(DURATIONS.moving);
 
       // Phase: inserting (render final target, AnimatePresence will handle enters)
       setPhase('inserting');
-      setLetters(targetLetters);
+      // Preserve survivors by reusing their original ids; only create ids for new insertions
+      const finalLetters: LetterItem[] = [];
+      for (let j = 0; j < target.length; j++) {
+        const ch = target[j];
+        const srcIdx = targetToSourceMap.get(j);
+        if (srcIdx !== undefined) {
+          finalLetters.push({ id: `src-${srcIdx}`, char: ch });
+        } else {
+          finalLetters.push({ id: `ins-${j}`, char: ch });
+        }
+      }
+      setLetters(finalLetters);
       await delay(DURATIONS.inserting);
 
       // Phase: final
@@ -172,7 +180,7 @@ export default function WordUnscrambler({
               initial={{ opacity: phase === 'inserting' ? 0 : 1, y: phase === 'inserting' ? 10 : 0 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: phase === 'deleting' ? 0 : 1, scale: phase === 'deleting' ? 0.8 : 1 }}
-              transition={{ duration: prefersReduced ? 0.05 : 0.25 }}
+              transition={{ duration: (prefersReduced ? 0.05 : 0.25) * SPEED_MULTIPLIER }}
               className={getLetterClass(l)}
               data-testid="letter"
             >
