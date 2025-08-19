@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-
-# Run lint-staged to lint only changed files
-# This provides fast feedback without slowing down workflow
-npx lint-staged
