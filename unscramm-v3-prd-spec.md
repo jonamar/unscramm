@@ -102,6 +102,12 @@ The repository will be wiped clean. The new structure will be minimal:
     *   Orchestration: a single `async function runAnimation()` sequences phases via `await delay(DURATIONS[phase])`.
     *   Controls: disable the Animate button while running; prevent concurrent runs (e.g., with a ref boolean or run token).
     *   Rendering: render letters with `.map()` using a stable identity key (see Guardrails) and the current phase.
+    *   **State Derivation by Phase:** The component will use the `editPlan` to derive the list of letters to render at each step. This is the crucial link between the plan and the animation.
+        1.  **`phase: 'idle'`**: Render the initial source word letters.
+        2.  **`phase: 'deleting'`**: Filter the source word's letters, removing those whose indices are in `plan.deletions`.
+        3.  **`phase: 'moving'`**: Render the remaining letters (the LCS members), but now sorted into their final target positions. This triggers the FLIP animation for re-ordering.
+        4.  **`phase: 'inserting'`**: Render the final target word letters. This introduces the new letters from `plan.insertions` at their final positions, triggering the enter animation.
+        5.  **`phase: 'final'`**: The animation is complete. The list of letters is the final target word.
 *   **Animation Strategy:**
     *   Render letters as `<motion.span layout>` keyed by a stable identity.
     *   Wrap list in `<AnimatePresence>` for enter/exit.
@@ -123,6 +129,10 @@ All styling will adhere to the project's visual guidelines. Use Tailwind utility
 
 The transformation logic resides within `computeEditPlan`. This function takes a source and target string and returns a structured plan for the animation. The process is as follows:
 
+*   **Fast Paths:**
+    *   If `source === target`, no animation is needed (no-op).
+    *   If words are anagrams (same character counts), skip delete/insert phases and run only the move phase.
+
 1.  **Find Longest Common Subsequence (LCS):**
     *   First, identify the characters that are common to both the source and target strings and appear in the same order. This is the stable "backbone" of the transformation.
     *   The `findLCSPositions` utility will be used for this, returning the indices of the LCS characters in both the source and target strings.
@@ -138,7 +148,7 @@ The transformation logic resides within `computeEditPlan`. This function takes a
         export type EditPlan = {
           deletions: number[]; // indices in source to delete (sorted desc)
           insertions: { letter: string; position: number }[]; // sorted asc by position
-          moves: { fromIndex: number; toIndex: number }[]; // for LCS letters
+          moves: { fromIndex: number; toIndex: number }[]; // for LCS letters, sorted by toIndex
           highlightIndices: number[]; // original source indices that are true movers
         };
         ```
@@ -165,6 +175,7 @@ The following features are explicitly out of scope to ensure focus on the core p
 *   **Stable identity preserved:** letters that move are not remounted; the same identity ends in the new position.
 *   **Color semantics correct:** red for deletions, green for insertions, yellow for true movers.
 *   **Reduced motion respected** when enabled.
+*   **Character Scope:** Treat any character as an atomic symbol. v3 targets single-word, left-to-right inputs. Spaces and punctuation are allowed but not specially handled.
 
 ## 8. Guardrails (Agentic & Simplicity)
 
@@ -172,6 +183,7 @@ The following features are explicitly out of scope to ensure focus on the core p
 *   **Single sequencer:** `runAnimation()` is the only orchestrator; no nested orchestration.
 *   **Stable identity for letters:**
     *   Each letter instance gets a durable `id` derived from its original index and occurrence (e.g., `src-<index>-<occurrence>`).
+    *   When letters duplicate, pair LCS matches in left-to-right order (first occurrence to first match) to ensure stable, non-crossing mappings.
     *   Insertions get new ids; deletions remove by id; moves re-order by id.
     *   Keys for `<motion.span>` are these ids to enable FLIP and prevent remounts.
 *   **Single source of truth for timings:** central `DURATIONS` used by both `delay()` and motion `transition` props to avoid drift.
