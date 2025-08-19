@@ -105,13 +105,17 @@ export default function WordUnscrambler({
 
       // Phase: deleting
       setPhase('deleting');
-      // identify ids to delete and render one frame with red styling before removal
+      // mark to-be-deleted ids and keep them visible in red for the whole deletion duration
       deletingIdsRef.current = new Set(plan.deletions.map((i) => `src-${i}`));
+      // ensure frame renders with red before timing
       await new Promise(requestAnimationFrame);
-      // now remove the deletions to trigger exit animations with red class
+      // hold this state for the full deletion duration so red is noticeable
+      await delay(DURATIONS.deleting);
+      // now remove the deletions to trigger exit animations
       const afterDelete = sourceLetters.filter((_, i) => !plan.deletions.includes(i));
       setLetters(afterDelete);
-      await delay(DURATIONS.deleting);
+      // brief pause to allow exit animations to complete before moving phase
+      await delay(150);
 
       // Phase: moving (reorder survivors into target order)
       setPhase('moving');
