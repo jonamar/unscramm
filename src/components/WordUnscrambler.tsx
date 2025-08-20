@@ -16,6 +16,7 @@ export interface WordUnscramblerProps {
   resetSignal?: number; // increment to reset to initial state without animating
   onAnimationStart?: () => void;
   onAnimationComplete?: () => void;
+  onPhaseChange?: (phase: Phase) => void;
 }
 
 const DURATIONS: Record<Phase, number> = {
@@ -49,6 +50,7 @@ export default function WordUnscrambler({
   resetSignal,
   onAnimationStart,
   onAnimationComplete,
+  onPhaseChange,
 }: WordUnscramblerProps) {
   const prefersReduced = usePrefersReducedMotion();
   const [phase, setPhase] = useState<Phase>('idle');
@@ -160,6 +162,11 @@ export default function WordUnscrambler({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal, sourceLetters]);
 
+  // Notify parent when phase changes
+  useEffect(() => {
+    onPhaseChange?.(phase);
+  }, [phase, onPhaseChange]);
+
   // Styling variants
   const getLetterClass = (item: LetterItem): string => {
     if (phase === 'deleting') {
@@ -181,10 +188,6 @@ export default function WordUnscrambler({
 
   return (
     <div className="w-full max-w-[600px] px-6 box-border">
-      <div className="flex flex-wrap items-center gap-1 text-[--color-text-secondary] mb-3">
-        <span className="text-sm">Phase:</span>
-        <span className="text-sm font-mono">{phase}</span>
-      </div>
       <div className="flex w-full justify-center gap-[0.025em] text-white text-[2rem] select-none">
         <AnimatePresence initial={false}>
           {letters.map((l) => (

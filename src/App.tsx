@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import type { Phase } from './components/WordUnscrambler';
 import WordUnscrambler from './components/WordUnscrambler';
 import './App.css';
 
@@ -8,6 +9,7 @@ function App() {
   const [animateSignal, setAnimateSignal] = useState(0);
   const [resetSignal, setResetSignal] = useState(0);
   const [running, setRunning] = useState(false);
+  const [phase, setPhase] = useState<Phase>('idle');
   const runTokenRef = useRef(0);
 
   const onAnimate = () => {
@@ -30,17 +32,6 @@ function App() {
   return (
     <main className="main w-full max-w-[600px] mx-auto px-6 box-border">
       <h1 className="heading">Unscramm v3</h1>
-
-      <section className="mt-6 flex justify-center">
-        <WordUnscrambler
-          source={source}
-          target={target}
-          animateSignal={animateSignal}
-          resetSignal={resetSignal}
-          onAnimationStart={() => {}}
-          onAnimationComplete={onComplete}
-        />
-      </section>
 
       <div className="panel input-panel flex items-center gap-2 w-full max-w-[600px] mt-6">
         <input
@@ -67,6 +58,26 @@ function App() {
           ↺
         </button>
       </div>
+
+      {/* Centered, subdued phase indicator under the controls */}
+      <div className="w-full flex justify-center mt-2 text-[--color-text-secondary]">
+        <div className="flex items-center gap-1">
+          <span className="text-sm">Phase:</span>
+          <span className="text-sm font-mono">{phase}</span>
+        </div>
+      </div>
+
+      <section className="mt-4 flex justify-center">
+        <WordUnscrambler
+          source={source}
+          target={target}
+          animateSignal={animateSignal}
+          resetSignal={resetSignal}
+          onAnimationStart={() => {}}
+          onAnimationComplete={onComplete}
+          onPhaseChange={setPhase}
+        />
+      </section>
     </main>
   );
 }
