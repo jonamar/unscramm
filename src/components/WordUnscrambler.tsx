@@ -185,7 +185,7 @@ export default function WordUnscrambler({
         <span className="text-sm">Phase:</span>
         <span className="text-sm font-mono">{phase}</span>
       </div>
-      <div className="flex gap-[0.025em] text-white text-[2rem] select-none">
+      <div className="flex w-full justify-center gap-[0.025em] text-white text-[2rem] select-none">
         <AnimatePresence initial={false}>
           {letters.map((l) => (
             <motion.span
