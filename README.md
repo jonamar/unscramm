@@ -13,7 +13,7 @@ See PRD: `docs/unscramm-v3-prd-spec.md` and style guide: `docs/design_guidelines
 
 Unscramm is an interactive "animated spellcheck" that shows how a misspelled word transforms into the correct word via clear, accessible character transitions. It serves two goals:
 
-- Accessibility-focused visualization for dyslexic readers to see how letters change through deletion, movement, and insertion.
+- Accessibility-focused visualization for dyslexic readers, or anyone learning to read, to see how letters change through deletion, movement, and insertion.
 - A process experiment in rigorous, modular development where the majority of implementation is driven through AI-assisted workflows with clear specs and tests.
 
 ## Getting Started
