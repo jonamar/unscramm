@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { Phase } from './components/WordUnscrambler';
 import WordUnscrambler from './components/WordUnscrambler';
 import './App.css';
+import logoUrl from './assets/unscramm-logo.svg';
 
 function App() {
   const [source, setSource] = useState('tesd');
@@ -31,7 +32,9 @@ function App() {
 
   return (
     <main className="main w-full max-w-[600px] mx-auto px-6 box-border">
-      <h1 className="heading">Unscramm v3</h1>
+      <h1 className="heading flex justify-center">
+        <img src={logoUrl} alt="Unscramm" className="h-10" />
+      </h1>
 
       <section className="mt-6 flex justify-center">
         <WordUnscrambler
