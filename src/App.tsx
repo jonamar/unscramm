@@ -71,8 +71,8 @@ function App() {
         </button>
       </div>
 
-      {/* Centered, subdued phase indicator under the controls */}
-      <div className="w-full flex justify-center mt-2 text-[--color-text-secondary]">
+      {/* Centered, more subdued phase indicator under the controls */}
+      <div className="w-full flex justify-center mt-2 text-[--color-text-secondary] opacity-60">
         <div className="flex items-center gap-1">
           <span className="text-sm">Phase:</span>
           <span className="text-sm font-mono">{phase}</span>
