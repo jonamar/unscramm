@@ -25,8 +25,8 @@ function App() {
   };
 
   const onReset = () => {
-    if (running) return;
-    // Reset the view to the initial state without starting animation
+    // Reset the view to the initial state without starting animation (even if running)
+    setRunning(false); // unlock Play immediately in a single source of truth
     setResetSignal((n) => n + 1);
   };
 
@@ -69,7 +69,7 @@ function App() {
         <button className="btn neu" onClick={onAnimate} disabled={running || !source || !target} aria-label="Animate">
           ▶
         </button>
-        <button className="btn neu" onClick={onReset} disabled={running} aria-label="Reset view">
+        <button className="btn neu" onClick={onReset} aria-label="Reset view">
           ↺
         </button>
       </div>
