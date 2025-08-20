@@ -27,8 +27,8 @@ const DURATIONS: Record<Phase, number> = {
 };
 
 // Debug/inspection: slow down all timings (phase delays and per-letter transitions)
-// Set to 1 for normal speed, 5 for 5x slower, etc.
-const SPEED_MULTIPLIER = 5;
+// Set to 1 for normal speed. Current debugging value halved to 2.5 to run 2x faster than before.
+const SPEED_MULTIPLIER = 2.5;
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
