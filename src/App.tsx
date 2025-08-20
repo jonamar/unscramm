@@ -33,7 +33,7 @@ function App() {
   return (
     <main className="main w-full max-w-[600px] mx-auto px-6 box-border">
       <h1 className="heading flex justify-center">
-        <img src={logoUrl} alt="Unscramm" className="h-10" />
+        <img src={logoUrl} alt="Unscramm" className="h-20" />
       </h1>
 
       <section className="mt-6 flex justify-center">

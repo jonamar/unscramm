@@ -56,6 +56,7 @@ export default function WordUnscrambler({
   const [phase, setPhase] = useState<Phase>('idle');
   const runningRef = useRef(false);
   const deletingIdsRef = useRef<Set<string>>(new Set());
+  const tokenRef = useRef(0); // cancels in-flight runs when incremented
 
   const plan = useMemo(() => computeEditPlan(source, target), [source, target]);
 
@@ -97,6 +98,7 @@ export default function WordUnscrambler({
     const run = async () => {
       if (runningRef.current) return; // prevent overlap
       runningRef.current = true;
+      const myToken = ++tokenRef.current; // snapshot token for this run
       onAnimationStart?.();
 
       // Phase: idle (render initial)
@@ -106,6 +108,7 @@ export default function WordUnscrambler({
       const delay = (ms: number) => new Promise((r) => setTimeout(r, prefersReduced ? Math.min(ms, 50) : ms * SPEED_MULTIPLIER));
 
       // Phase: deleting
+      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
       setPhase('deleting');
       // mark to-be-deleted ids and keep them visible in red for the whole deletion duration
       deletingIdsRef.current = new Set(plan.deletions.map((i) => `src-${i}`));
@@ -113,16 +116,19 @@ export default function WordUnscrambler({
       await new Promise(requestAnimationFrame);
       // hold this state for the full deletion duration so red is noticeable
       await delay(DURATIONS.deleting);
+      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
       // now remove the deletions to trigger exit animations
       const afterDelete = sourceLetters.filter((_, i) => !plan.deletions.includes(i));
       setLetters(afterDelete);
       // brief pause to allow exit animations to complete before moving phase
       await delay(150);
+      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
 
       // Phase: moving (reorder survivors into target order)
       setPhase('moving');
       setLetters(movingLetters);
       await delay(DURATIONS.moving);
+      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
 
       // Phase: inserting (render final target, AnimatePresence will handle enters)
       setPhase('inserting');
@@ -139,6 +145,7 @@ export default function WordUnscrambler({
       }
       setLetters(finalLetters);
       await delay(DURATIONS.inserting);
+      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
 
       // Phase: final
       setPhase('final');
@@ -155,6 +162,7 @@ export default function WordUnscrambler({
   useEffect(() => {
     if (resetSignal === undefined) return;
     // Bring the view back to the initial state instantly
+    tokenRef.current += 1; // cancel any in-flight run
     runningRef.current = false;
     setPhase('idle');
     setLetters(sourceLetters);
