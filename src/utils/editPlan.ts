@@ -1,4 +1,4 @@
-import { findLCSPositions } from './lcs';
+// LCS utilities no longer directly imported here; survivor mapping is computed locally
 
 /**
  * Represents an insertion operation in the edit plan
@@ -52,67 +52,75 @@ export function computeEditPlan(sourceWord: string, targetWord: string): EditPla
   const source = sourceWord.split('');
   const target = targetWord.split('');
 
-  // 1. Find LCS matches to identify common characters
-  const matches = findLCSPositions(source, target);
+  // Multiset counts for target and source
+  const targetCounts: Record<string, number> = {};
+  for (const c of target) targetCounts[c] = (targetCounts[c] || 0) + 1;
+  const sourceCounts: Record<string, number> = {};
+  for (const c of source) sourceCounts[c] = (sourceCounts[c] || 0) + 1;
 
-  // 2. Deletions = any source index not in matches.sourceIndices
+  // Determine deletions by scanning source left→right, keep only as many as target requires
+  const remainingTargetNeed: Record<string, number> = { ...targetCounts };
   const deletions: number[] = [];
+  const keptSourceIndices: number[] = [];
   for (let i = 0; i < source.length; i++) {
-    if (!matches.sourceIndices.includes(i)) {
+    const ch = source[i];
+    if ((remainingTargetNeed[ch] || 0) > 0) {
+      remainingTargetNeed[ch]! -= 1;
+      keptSourceIndices.push(i);
+    } else {
       deletions.push(i);
     }
   }
-  // Sort deletions in descending order so removing right→left doesn't shift later indices
   deletions.sort((a, b) => b - a);
 
-  // 3. Insertions = any target index not in matches.targetIndices
+  // Determine insertions by scanning target left→right, insert where source lacks required count
+  const remainingSourceAvail: Record<string, number> = {};
+  for (const c of source) remainingSourceAvail[c] = (remainingSourceAvail[c] || 0) + 1;
   const insertions: Insertion[] = [];
   for (let j = 0; j < target.length; j++) {
-    if (!matches.targetIndices.includes(j)) {
-      insertions.push({ letter: target[j], position: j });
+    const ch = target[j];
+    if ((remainingSourceAvail[ch] || 0) > 0) {
+      remainingSourceAvail[ch]! -= 1;
+    } else {
+      insertions.push({ letter: ch, position: j });
     }
   }
-  // Sort insertions ascending so we insert left→right
-  insertions.sort((a, b) => a.position - b.position);
 
-  // 4. Moves = characters that actually change their relative order
-  // A character is only a move if it breaks the monotonic sequence of the LCS
+  // Build survivor mapping (pairs) by greedily matching target positions to the next unused kept source occurrence
+  const used = new Set<number>();
+  const pairs: Array<[number, number]> = [];
+  for (let tIdx = 0; tIdx < target.length; tIdx++) {
+    const ch = target[tIdx];
+    // find next kept source index with same char not used
+    let found = -1;
+    for (const sIdx of keptSourceIndices) {
+      if (!used.has(sIdx) && source[sIdx] === ch) { found = sIdx; break; }
+    }
+    if (found >= 0) {
+      used.add(found);
+      pairs.push([found, tIdx]);
+    }
+  }
+
+  // Moves are pairs that break monotonic order (same check as before but on survivor pairs)
   const moves: Move[] = [];
-  for (let k = 0; k < matches.pairs.length; k++) {
-    const [sIdx, tIdx] = matches.pairs[k];
-    
-    // Check if this character breaks the monotonic order
+  for (let k = 0; k < pairs.length; k++) {
+    const [sIdx, tIdx] = pairs[k];
     let isOutOfOrder = false;
-    
-    // Check against previous pairs
     for (let i = 0; i < k; i++) {
-      const [prevS, prevT] = matches.pairs[i];
-      if (sIdx > prevS && tIdx < prevT) {
-        // This character comes after prevS in source but before prevT in target
-        isOutOfOrder = true;
-        break;
-      }
+      const [prevS, prevT] = pairs[i];
+      if (sIdx > prevS && tIdx < prevT) { isOutOfOrder = true; break; }
     }
-    
-    // Check against following pairs
     if (!isOutOfOrder) {
-      for (let i = k + 1; i < matches.pairs.length; i++) {
-        const [nextS, nextT] = matches.pairs[i];
-        if (sIdx < nextS && tIdx > nextT) {
-          // This character comes before nextS in source but after nextT in target
-          isOutOfOrder = true;
-          break;
-        }
+      for (let i = k + 1; i < pairs.length; i++) {
+        const [nextS, nextT] = pairs[i];
+        if (sIdx < nextS && tIdx > nextT) { isOutOfOrder = true; break; }
       }
     }
-    
-    if (isOutOfOrder) {
-      moves.push({ fromIndex: sIdx, toIndex: tIdx });
-    }
+    if (isOutOfOrder) moves.push({ fromIndex: sIdx, toIndex: tIdx });
   }
 
-  // 5. Highlight = "true movers" = those matched letters whose shift deviates from bulk
-  const highlightIndices = identifyTrueMovers(matches.pairs);
+  const highlightIndices = identifyTrueMovers(pairs);
 
   return { deletions, insertions, moves, highlightIndices };
 }

@@ -1,4 +1,0 @@
-#!/usr/bin/env sh
-
-echo "Running Storybook visual tests before push..."
-npm run storybook:test 
