@@ -36,13 +36,30 @@ interface AnimationContext {
   wait: (ms: number) => Promise<void>;
 }
 
-export interface WordUnscramblerProps {
+/**
+ * Props for the DiffVisualizer component.
+ *
+ * This component visualizes the transformation between any two text strings
+ * by animating character deletions, movements, and insertions. Perfect for:
+ * - Spell-checking visualizations (e.g., "recieve" → "receive")
+ * - Text correction demonstrations
+ * - Educational tools showing text transformations
+ * - Browser extension content highlighting
+ */
+export interface DiffVisualizerProps {
+  /** The source text (e.g., misspelled word) */
   source: string;
+  /** The target text (e.g., correct spelling) */
   target: string;
-  animateSignal: number; // increment to re-run animation
-  resetSignal?: number; // increment to reset to initial state without animating
+  /** Increment this number to trigger a new animation */
+  animateSignal: number;
+  /** Optional: Increment to reset to initial state without animating */
+  resetSignal?: number;
+  /** Optional callback when animation starts */
   onAnimationStart?: () => void;
+  /** Optional callback when animation completes */
   onAnimationComplete?: () => void;
+  /** Optional callback for phase changes (useful for status indicators) */
   onPhaseChange?: (phase: Phase) => void;
 }
 
@@ -70,7 +87,7 @@ function checkAborted(signal: AbortSignal): void {
 
 /**
  * Phase: Idle
- * Renders the initial source word before animation begins.
+ * Renders the initial source text before animation begins.
  */
 async function performIdlePhase(ctx: AnimationContext): Promise<void> {
   ctx.setState({
@@ -82,7 +99,7 @@ async function performIdlePhase(ctx: AnimationContext): Promise<void> {
 
 /**
  * Phase: Deleting
- * Marks letters to be deleted in red, waits for visibility, then removes them.
+ * Marks characters to be deleted in red, waits for visibility, then removes them.
  */
 async function performDeletingPhase(
   ctx: AnimationContext,
@@ -116,7 +133,7 @@ async function performDeletingPhase(
 
 /**
  * Phase: Moving
- * Reorders surviving letters into their target positions (triggers FLIP animation).
+ * Reorders surviving characters into their target positions (triggers FLIP animation).
  */
 async function performMovingPhase(
   ctx: AnimationContext,
@@ -134,7 +151,7 @@ async function performMovingPhase(
 
 /**
  * Phase: Inserting
- * Adds new letters at their final positions (triggers enter animations).
+ * Adds new characters at their final positions (triggers enter animations).
  */
 async function performInsertingPhase(
   ctx: AnimationContext,
@@ -174,7 +191,36 @@ async function performFinalPhase(ctx: AnimationContext): Promise<void> {
   }));
 }
 
-export default function WordUnscrambler({
+/**
+ * DiffVisualizer - Generic text diff animation component
+ *
+ * Visualizes the transformation between any two text strings through
+ * a multi-phase animation showing deletions, movements, and insertions.
+ *
+ * Designed for:
+ * - Spell-checking visualizations
+ * - Text correction demos
+ * - Educational tools
+ * - Browser extensions (content script injection)
+ *
+ * Features:
+ * - Smooth FLIP animations for character movement
+ * - AbortController-based cancellation (matches browser APIs)
+ * - Respects prefers-reduced-motion
+ * - Atomic state updates
+ * - Phase-based callbacks
+ *
+ * @example
+ * ```tsx
+ * <DiffVisualizer
+ *   source="recieve"
+ *   target="receive"
+ *   animateSignal={animateCount}
+ *   onAnimationComplete={() => console.log('Done!')}
+ * />
+ * ```
+ */
+export default function DiffVisualizer({
   source,
   target,
   animateSignal,
@@ -182,7 +228,7 @@ export default function WordUnscrambler({
   onAnimationStart,
   onAnimationComplete,
   onPhaseChange,
-}: WordUnscramblerProps) {
+}: DiffVisualizerProps) {
   const prefersReduced = usePrefersReducedMotion();
   const plan = useMemo(() => computeEditPlan(source, target), [source, target]);
 
@@ -296,11 +342,11 @@ export default function WordUnscrambler({
     const { phase, deletingIds } = animationState;
 
     if (phase === 'deleting') {
-      // only letters being removed should be red
+      // only characters being removed should be red
       return deletingIds.has(item.id) ? 'text-deletion' : '';
     }
     if (phase === 'inserting') {
-      // only newly inserted letters should be green
+      // only newly inserted characters should be green
       return item.id.startsWith('ins-') ? 'text-insertion' : '';
     }
     if (phase === 'moving') {

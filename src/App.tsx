@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
-import type { Phase } from './components/WordUnscrambler';
-import WordUnscrambler from './components/WordUnscrambler';
+import type { Phase } from './components/DiffVisualizer';
+import DiffVisualizer from './components/DiffVisualizer';
 import logoUrl from './assets/unscramm-logo.svg';
 
 function App() {
@@ -36,7 +36,7 @@ function App() {
       </h1>
 
       <section className="mt-6 flex justify-center">
-        <WordUnscrambler
+        <DiffVisualizer
           source={source}
           target={target}
           animateSignal={animateSignal}
