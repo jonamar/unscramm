@@ -13,6 +13,16 @@ type LetterItem = {
 };
 
 /**
+ * Consolidated animation state.
+ * All visual state for the current animation phase.
+ */
+interface AnimationState {
+  phase: Phase;
+  letters: LetterItem[];
+  deletingIds: Set<string>;
+}
+
+/**
  * Context shared across all animation phases.
  * Contains the computed data and state setters needed to orchestrate the animation.
  */
@@ -22,9 +32,7 @@ interface AnimationContext {
   targetToSourceMap: Map<number, number>;
   plan: EditPlan;
   target: string;
-  setPhase: (phase: Phase) => void;
-  setLetters: (letters: LetterItem[]) => void;
-  deletingIdsRef: React.MutableRefObject<Set<string>>;
+  setState: (state: AnimationState | ((prev: AnimationState) => AnimationState)) => void;
   wait: (ms: number) => Promise<void>;
 }
 
@@ -65,8 +73,11 @@ function checkAborted(signal: AbortSignal): void {
  * Renders the initial source word before animation begins.
  */
 async function performIdlePhase(ctx: AnimationContext): Promise<void> {
-  ctx.setPhase('idle');
-  ctx.setLetters(ctx.sourceLetters);
+  ctx.setState({
+    phase: 'idle',
+    letters: ctx.sourceLetters,
+    deletingIds: new Set(),
+  });
 }
 
 /**
@@ -78,9 +89,13 @@ async function performDeletingPhase(
   signal: AbortSignal
 ): Promise<void> {
   checkAborted(signal);
-  ctx.setPhase('deleting');
   // mark to-be-deleted ids and keep them visible in red for the whole deletion duration
-  ctx.deletingIdsRef.current = new Set(ctx.plan.deletions.map((i) => `src-${i}`));
+  const deletingIds = new Set(ctx.plan.deletions.map((i) => `src-${i}`));
+  ctx.setState({
+    phase: 'deleting',
+    letters: ctx.sourceLetters,
+    deletingIds,
+  });
   // ensure frame renders with red before timing
   await new Promise(requestAnimationFrame);
   checkAborted(signal);
@@ -89,7 +104,11 @@ async function performDeletingPhase(
   checkAborted(signal);
   // now remove the deletions to trigger exit animations
   const afterDelete = ctx.sourceLetters.filter((_, i) => !ctx.plan.deletions.includes(i));
-  ctx.setLetters(afterDelete);
+  ctx.setState({
+    phase: 'deleting',
+    letters: afterDelete,
+    deletingIds,
+  });
   // brief pause to allow exit animations to complete before moving phase
   await ctx.wait(150);
   checkAborted(signal);
@@ -104,8 +123,11 @@ async function performMovingPhase(
   signal: AbortSignal
 ): Promise<void> {
   checkAborted(signal);
-  ctx.setPhase('moving');
-  ctx.setLetters(ctx.movingLetters);
+  ctx.setState({
+    phase: 'moving',
+    letters: ctx.movingLetters,
+    deletingIds: new Set(),
+  });
   await ctx.wait(DURATIONS.moving);
   checkAborted(signal);
 }
@@ -119,7 +141,6 @@ async function performInsertingPhase(
   signal: AbortSignal
 ): Promise<void> {
   checkAborted(signal);
-  ctx.setPhase('inserting');
   // Preserve survivors by reusing their original ids; only create ids for new insertions
   const finalLetters: LetterItem[] = [];
   for (let j = 0; j < ctx.target.length; j++) {
@@ -131,7 +152,11 @@ async function performInsertingPhase(
       finalLetters.push({ id: `ins-${j}`, char: ch });
     }
   }
-  ctx.setLetters(finalLetters);
+  ctx.setState({
+    phase: 'inserting',
+    letters: finalLetters,
+    deletingIds: new Set(),
+  });
   await ctx.wait(DURATIONS.inserting);
   checkAborted(signal);
 }
@@ -141,7 +166,12 @@ async function performInsertingPhase(
  * Animation complete, returns control to the component.
  */
 async function performFinalPhase(ctx: AnimationContext): Promise<void> {
-  ctx.setPhase('final');
+  // Phase transitions to 'final' while keeping current letters
+  // We use a functional update to preserve the current letters from inserting phase
+  ctx.setState((prev) => ({
+    ...prev,
+    phase: 'final',
+  }));
 }
 
 export default function WordUnscrambler({
@@ -154,10 +184,6 @@ export default function WordUnscrambler({
   onPhaseChange,
 }: WordUnscramblerProps) {
   const prefersReduced = usePrefersReducedMotion();
-  const [phase, setPhase] = useState<Phase>('idle');
-  const runningRef = useRef(false);
-  const deletingIdsRef = useRef<Set<string>>(new Set());
-
   const plan = useMemo(() => computeEditPlan(source, target), [source, target]);
 
   // Precompute helpers for rendering
@@ -172,7 +198,14 @@ export default function WordUnscrambler({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, target, plan.deletions.join(',')]);
 
-  const [letters, setLetters] = useState<LetterItem[]>(sourceLetters);
+  // Consolidated animation state
+  const [animationState, setAnimationState] = useState<AnimationState>({
+    phase: 'idle',
+    letters: sourceLetters,
+    deletingIds: new Set(),
+  });
+
+  const runningRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Orchestrate phases when animateSignal changes
@@ -203,9 +236,7 @@ export default function WordUnscrambler({
         targetToSourceMap,
         plan,
         target,
-        setPhase,
-        setLetters,
-        deletingIdsRef,
+        setState: setAnimationState,
         wait,
       };
 
@@ -246,22 +277,27 @@ export default function WordUnscrambler({
     // Bring the view back to the initial state instantly
     abortControllerRef.current?.abort(); // cancel any in-flight animation
     runningRef.current = false;
-    setPhase('idle');
-    setLetters(sourceLetters);
+    setAnimationState({
+      phase: 'idle',
+      letters: sourceLetters,
+      deletingIds: new Set(),
+    });
     // do not call onAnimationStart/Complete
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal, sourceLetters]);
 
   // Notify parent when phase changes
   useEffect(() => {
-    onPhaseChange?.(phase);
-  }, [phase, onPhaseChange]);
+    onPhaseChange?.(animationState.phase);
+  }, [animationState.phase, onPhaseChange]);
 
   // Styling variants
   const getLetterClass = (item: LetterItem): string => {
+    const { phase, deletingIds } = animationState;
+
     if (phase === 'deleting') {
       // only letters being removed should be red
-      return deletingIdsRef.current.has(item.id) ? 'text-deletion' : '';
+      return deletingIds.has(item.id) ? 'text-deletion' : '';
     }
     if (phase === 'inserting') {
       // only newly inserted letters should be green
@@ -270,11 +306,13 @@ export default function WordUnscrambler({
     if (phase === 'moving') {
       // highlight true movers using plan.moves (fromIndex)
       const idx = parseInt(item.id.split('-')[1] || '-1', 10);
-      const isTrueMover = plan.moves.some(m => m.fromIndex === idx) || plan.highlightIndices.includes(idx);
+      const isTrueMover = plan.moves.some((m) => m.fromIndex === idx) || plan.highlightIndices.includes(idx);
       return isTrueMover ? 'text-move' : '';
     }
     return '';
   };
+
+  const { phase, letters } = animationState;
 
   return (
     <div className="w-full max-w-[600px] px-6 box-border">
