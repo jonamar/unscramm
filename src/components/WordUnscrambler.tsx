@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { computeEditPlan } from '../utils/editPlan';
+import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
+import { computeSurvivorMapping } from '../utils/survivorMapping';
+import { delay } from '../utils/delay';
 
 export type Phase = 'idle' | 'deleting' | 'moving' | 'inserting' | 'final';
 
@@ -31,18 +34,6 @@ const DURATIONS: Record<Phase, number> = {
 // Set to 1 for normal speed. Current debugging value halved to 2.5 to run 2x faster than before.
 const SPEED_MULTIPLIER = 2.5;
 
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => setReduced(mq.matches);
-    update();
-    mq.addEventListener?.('change', update);
-    return () => mq.removeEventListener?.('change', update);
-  }, []);
-  return reduced;
-}
-
 export default function WordUnscrambler({
   source,
   target,
@@ -63,31 +54,13 @@ export default function WordUnscrambler({
   // Precompute helpers for rendering
   const sourceLetters = useMemo(() => source.split('').map((char, i) => ({ id: `src-${i}`, char })), [source]);
   const { movingLetters, targetToSourceMap } = useMemo(() => {
-    // Build survivors (source indices not deleted)
-    const survivors: number[] = [];
-    for (let i = 0; i < source.length; i++) {
-      if (!plan.deletions.includes(i)) survivors.push(i);
-    }
-    // Greedy map target positions to next unused survivor with same char
-    const used = new Set<number>();
-    const mapped: { fromIndex: number; toIndex: number; char: string }[] = [];
-    const t2s = new Map<number, number>(); // target index -> source index
-    for (let t = 0; t < target.length; t++) {
-      const c = target[t];
-      let found = -1;
-      for (const sIdx of survivors) {
-        if (!used.has(sIdx) && source[sIdx] === c) { found = sIdx; break; }
-      }
-      if (found >= 0) {
-        used.add(found);
-        mapped.push({ fromIndex: found, toIndex: t, char: c });
-        t2s.set(t, found);
-      }
-    }
-    mapped.sort((a, b) => a.toIndex - b.toIndex);
-    const movingLetters: LetterItem[] = mapped.map(m => ({ id: `src-${m.fromIndex}`, char: m.char }));
-    return { movingLetters, targetToSourceMap: t2s };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const mapping = computeSurvivorMapping(source, target, plan.deletions);
+    const movingLetters: LetterItem[] = mapping.mappedLetters.map((m) => ({
+      id: `src-${m.fromIndex}`,
+      char: m.char,
+    }));
+    return { movingLetters, targetToSourceMap: mapping.targetToSourceMap };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, target, plan.deletions.join(',')]);
 
   const [letters, setLetters] = useState<LetterItem[]>(sourceLetters);
@@ -105,7 +78,12 @@ export default function WordUnscrambler({
       setPhase('idle');
       setLetters(sourceLetters);
 
-      const delay = (ms: number) => new Promise((r) => setTimeout(r, prefersReduced ? Math.min(ms, 50) : ms * SPEED_MULTIPLIER));
+      // Helper to delay with speed multiplier and reduced motion support
+      const wait = (ms: number) =>
+        delay(ms, {
+          speedMultiplier: SPEED_MULTIPLIER,
+          maxDuration: prefersReduced ? 50 : undefined,
+        });
 
       // Phase: deleting
       if (myToken !== tokenRef.current) { runningRef.current = false; return; }
@@ -115,19 +93,19 @@ export default function WordUnscrambler({
       // ensure frame renders with red before timing
       await new Promise(requestAnimationFrame);
       // hold this state for the full deletion duration so red is noticeable
-      await delay(DURATIONS.deleting);
+      await wait(DURATIONS.deleting);
       if (myToken !== tokenRef.current) { runningRef.current = false; return; }
       // now remove the deletions to trigger exit animations
       const afterDelete = sourceLetters.filter((_, i) => !plan.deletions.includes(i));
       setLetters(afterDelete);
       // brief pause to allow exit animations to complete before moving phase
-      await delay(150);
+      await wait(150);
       if (myToken !== tokenRef.current) { runningRef.current = false; return; }
 
       // Phase: moving (reorder survivors into target order)
       setPhase('moving');
       setLetters(movingLetters);
-      await delay(DURATIONS.moving);
+      await wait(DURATIONS.moving);
       if (myToken !== tokenRef.current) { runningRef.current = false; return; }
 
       // Phase: inserting (render final target, AnimatePresence will handle enters)
@@ -144,7 +122,7 @@ export default function WordUnscrambler({
         }
       }
       setLetters(finalLetters);
-      await delay(DURATIONS.inserting);
+      await wait(DURATIONS.inserting);
       if (myToken !== tokenRef.current) { runningRef.current = false; return; }
 
       // Phase: final

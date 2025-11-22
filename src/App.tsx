@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import type { Phase } from './components/WordUnscrambler';
 import WordUnscrambler from './components/WordUnscrambler';
-import './App.css';
 import logoUrl from './assets/unscramm-logo.svg';
 
 function App() {
