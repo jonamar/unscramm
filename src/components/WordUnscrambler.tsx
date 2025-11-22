@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { computeEditPlan } from '../utils/editPlan';
+import { computeEditPlan, type EditPlan } from '../utils/editPlan';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { computeSurvivorMapping } from '../utils/survivorMapping';
 import { delay } from '../utils/delay';
@@ -11,6 +11,22 @@ type LetterItem = {
   id: string;    // stable identity key
   char: string;
 };
+
+/**
+ * Context shared across all animation phases.
+ * Contains the computed data and state setters needed to orchestrate the animation.
+ */
+interface AnimationContext {
+  sourceLetters: LetterItem[];
+  movingLetters: LetterItem[];
+  targetToSourceMap: Map<number, number>;
+  plan: EditPlan;
+  target: string;
+  setPhase: (phase: Phase) => void;
+  setLetters: (letters: LetterItem[]) => void;
+  deletingIdsRef: React.MutableRefObject<Set<string>>;
+  wait: (ms: number) => Promise<void>;
+}
 
 export interface WordUnscramblerProps {
   source: string;
@@ -34,6 +50,100 @@ const DURATIONS: Record<Phase, number> = {
 // Set to 1 for normal speed. Current debugging value halved to 2.5 to run 2x faster than before.
 const SPEED_MULTIPLIER = 2.5;
 
+/**
+ * Checks if the animation has been aborted.
+ * Throws an error if aborted, allowing early exit from async phase functions.
+ */
+function checkAborted(signal: AbortSignal): void {
+  if (signal.aborted) {
+    throw new DOMException('Animation aborted', 'AbortError');
+  }
+}
+
+/**
+ * Phase: Idle
+ * Renders the initial source word before animation begins.
+ */
+async function performIdlePhase(ctx: AnimationContext): Promise<void> {
+  ctx.setPhase('idle');
+  ctx.setLetters(ctx.sourceLetters);
+}
+
+/**
+ * Phase: Deleting
+ * Marks letters to be deleted in red, waits for visibility, then removes them.
+ */
+async function performDeletingPhase(
+  ctx: AnimationContext,
+  signal: AbortSignal
+): Promise<void> {
+  checkAborted(signal);
+  ctx.setPhase('deleting');
+  // mark to-be-deleted ids and keep them visible in red for the whole deletion duration
+  ctx.deletingIdsRef.current = new Set(ctx.plan.deletions.map((i) => `src-${i}`));
+  // ensure frame renders with red before timing
+  await new Promise(requestAnimationFrame);
+  checkAborted(signal);
+  // hold this state for the full deletion duration so red is noticeable
+  await ctx.wait(DURATIONS.deleting);
+  checkAborted(signal);
+  // now remove the deletions to trigger exit animations
+  const afterDelete = ctx.sourceLetters.filter((_, i) => !ctx.plan.deletions.includes(i));
+  ctx.setLetters(afterDelete);
+  // brief pause to allow exit animations to complete before moving phase
+  await ctx.wait(150);
+  checkAborted(signal);
+}
+
+/**
+ * Phase: Moving
+ * Reorders surviving letters into their target positions (triggers FLIP animation).
+ */
+async function performMovingPhase(
+  ctx: AnimationContext,
+  signal: AbortSignal
+): Promise<void> {
+  checkAborted(signal);
+  ctx.setPhase('moving');
+  ctx.setLetters(ctx.movingLetters);
+  await ctx.wait(DURATIONS.moving);
+  checkAborted(signal);
+}
+
+/**
+ * Phase: Inserting
+ * Adds new letters at their final positions (triggers enter animations).
+ */
+async function performInsertingPhase(
+  ctx: AnimationContext,
+  signal: AbortSignal
+): Promise<void> {
+  checkAborted(signal);
+  ctx.setPhase('inserting');
+  // Preserve survivors by reusing their original ids; only create ids for new insertions
+  const finalLetters: LetterItem[] = [];
+  for (let j = 0; j < ctx.target.length; j++) {
+    const ch = ctx.target[j];
+    const srcIdx = ctx.targetToSourceMap.get(j);
+    if (srcIdx !== undefined) {
+      finalLetters.push({ id: `src-${srcIdx}`, char: ch });
+    } else {
+      finalLetters.push({ id: `ins-${j}`, char: ch });
+    }
+  }
+  ctx.setLetters(finalLetters);
+  await ctx.wait(DURATIONS.inserting);
+  checkAborted(signal);
+}
+
+/**
+ * Phase: Final
+ * Animation complete, returns control to the component.
+ */
+async function performFinalPhase(ctx: AnimationContext): Promise<void> {
+  ctx.setPhase('final');
+}
+
 export default function WordUnscrambler({
   source,
   target,
@@ -47,7 +157,6 @@ export default function WordUnscrambler({
   const [phase, setPhase] = useState<Phase>('idle');
   const runningRef = useRef(false);
   const deletingIdsRef = useRef<Set<string>>(new Set());
-  const tokenRef = useRef(0); // cancels in-flight runs when incremented
 
   const plan = useMemo(() => computeEditPlan(source, target), [source, target]);
 
@@ -64,19 +173,21 @@ export default function WordUnscrambler({
   }, [source, target, plan.deletions.join(',')]);
 
   const [letters, setLetters] = useState<LetterItem[]>(sourceLetters);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Orchestrate phases when animateSignal changes
   useEffect(() => {
     if (animateSignal <= 0) return; // only run when explicitly triggered via Play
-    const run = async () => {
+
+    const runAnimation = async () => {
       if (runningRef.current) return; // prevent overlap
       runningRef.current = true;
-      const myToken = ++tokenRef.current; // snapshot token for this run
-      onAnimationStart?.();
 
-      // Phase: idle (render initial)
-      setPhase('idle');
-      setLetters(sourceLetters);
+      // Create new AbortController for this animation run
+      abortControllerRef.current = new AbortController();
+      const signal = abortControllerRef.current.signal;
+
+      onAnimationStart?.();
 
       // Helper to delay with speed multiplier and reduced motion support
       const wait = (ms: number) =>
@@ -85,54 +196,47 @@ export default function WordUnscrambler({
           maxDuration: prefersReduced ? 50 : undefined,
         });
 
-      // Phase: deleting
-      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
-      setPhase('deleting');
-      // mark to-be-deleted ids and keep them visible in red for the whole deletion duration
-      deletingIdsRef.current = new Set(plan.deletions.map((i) => `src-${i}`));
-      // ensure frame renders with red before timing
-      await new Promise(requestAnimationFrame);
-      // hold this state for the full deletion duration so red is noticeable
-      await wait(DURATIONS.deleting);
-      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
-      // now remove the deletions to trigger exit animations
-      const afterDelete = sourceLetters.filter((_, i) => !plan.deletions.includes(i));
-      setLetters(afterDelete);
-      // brief pause to allow exit animations to complete before moving phase
-      await wait(150);
-      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
+      // Build animation context
+      const ctx: AnimationContext = {
+        sourceLetters,
+        movingLetters,
+        targetToSourceMap,
+        plan,
+        target,
+        setPhase,
+        setLetters,
+        deletingIdsRef,
+        wait,
+      };
 
-      // Phase: moving (reorder survivors into target order)
-      setPhase('moving');
-      setLetters(movingLetters);
-      await wait(DURATIONS.moving);
-      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
+      try {
+        // Execute animation phases in sequence
+        await performIdlePhase(ctx);
+        await performDeletingPhase(ctx, signal);
+        await performMovingPhase(ctx, signal);
+        await performInsertingPhase(ctx, signal);
+        await performFinalPhase(ctx);
 
-      // Phase: inserting (render final target, AnimatePresence will handle enters)
-      setPhase('inserting');
-      // Preserve survivors by reusing their original ids; only create ids for new insertions
-      const finalLetters: LetterItem[] = [];
-      for (let j = 0; j < target.length; j++) {
-        const ch = target[j];
-        const srcIdx = targetToSourceMap.get(j);
-        if (srcIdx !== undefined) {
-          finalLetters.push({ id: `src-${srcIdx}`, char: ch });
-        } else {
-          finalLetters.push({ id: `ins-${j}`, char: ch });
+        onAnimationComplete?.();
+      } catch (error) {
+        // If aborted, silently exit without calling onAnimationComplete
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
         }
+        // Re-throw unexpected errors
+        throw error;
+      } finally {
+        runningRef.current = false;
       }
-      setLetters(finalLetters);
-      await wait(DURATIONS.inserting);
-      if (myToken !== tokenRef.current) { runningRef.current = false; return; }
-
-      // Phase: final
-      setPhase('final');
-      runningRef.current = false;
-      onAnimationComplete?.();
     };
 
-    run();
-    return () => { runningRef.current = false; };
+    runAnimation();
+
+    return () => {
+      // Abort animation on cleanup
+      abortControllerRef.current?.abort();
+      runningRef.current = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [animateSignal]);
 
@@ -140,7 +244,7 @@ export default function WordUnscrambler({
   useEffect(() => {
     if (resetSignal === undefined) return;
     // Bring the view back to the initial state instantly
-    tokenRef.current += 1; // cancel any in-flight run
+    abortControllerRef.current?.abort(); // cancel any in-flight animation
     runningRef.current = false;
     setPhase('idle');
     setLetters(sourceLetters);
