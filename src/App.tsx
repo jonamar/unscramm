@@ -1,21 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Phase } from './components/DiffVisualizer';
+import { ClipboardPaste, SendHorizontal, Play, RotateCcw } from 'lucide-react';
 import DiffVisualizer from './components/DiffVisualizer';
 import logoUrl from './assets/unscramm-logo.svg';
 import { spellService, type Suggestion } from './services/spell-suggestions';
+import { CircleButton, InputField, RectButton } from './components/DesignSystem';
+
+type Stage = 'intro' | 'suggestions' | 'animation';
 
 function App() {
+  const [stage, setStage] = useState<Stage>('intro');
   const [source, setSource] = useState('');
   const [target, setTarget] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [animateSignal, setAnimateSignal] = useState(0);
   const [resetSignal, setResetSignal] = useState(0);
   const [running, setRunning] = useState(false);
-  const [phase, setPhase] = useState<Phase>('idle');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [serviceLoading, setServiceLoading] = useState(true);
   const [serviceError, setServiceError] = useState<string | null>(null);
   const [clipboardError, setClipboardError] = useState<string | null>(null);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [underlineActive, setUnderlineActive] = useState(false);
   const runTokenRef = useRef(0);
 
   // Initialize spell service on mount
@@ -32,15 +37,22 @@ function App() {
     init();
   }, []);
 
-  const onAnimate = () => {
-    if (running) return;
+  const triggerAnimation = () => {
     setRunning(true);
     runTokenRef.current += 1;
     setAnimateSignal((n) => n + 1);
+    setUnderlineActive(true);
+    setStage('animation');
+  };
+
+  const onAnimate = () => {
+    if (running || !target) return;
+    triggerAnimation();
   };
 
   const onComplete = () => {
     setRunning(false);
+    setUnderlineActive(false);
   };
 
   const onReset = () => {
@@ -49,77 +61,120 @@ function App() {
     setResetSignal((n) => n + 1);
   };
 
+  const extractWord = (text: string) => text.trim().split(/\s+/)[0] ?? '';
+
+  const fetchSuggestions = async (word: string) => {
+    if (!spellService.isReady()) {
+      setServiceLoading(true);
+      try {
+        await spellService.initialize();
+        setServiceLoading(false);
+      } catch (error) {
+        setServiceError('Failed to load dictionary');
+        setServiceLoading(false);
+        return;
+      }
+    }
+
+    setSuggestionsLoading(true);
+    const results = await spellService.getSuggestions(word);
+    setSuggestions(results);
+    setSuggestionsLoading(false);
+  };
+
+  const goToSuggestions = async (wordInput: string) => {
+    setClipboardError(null);
+    const firstWord = extractWord(wordInput);
+    if (!firstWord) {
+      setClipboardError('Enter a word to begin');
+      return;
+    }
+    setSource(firstWord);
+    setTarget('');
+    setSuggestions([]);
+    setStage('suggestions');
+    setUnderlineActive(true);
+    await fetchSuggestions(firstWord);
+  };
+
   const onPasteFromClipboard = async () => {
     setClipboardError(null);
     try {
       const text = await navigator.clipboard.readText();
-      const firstWord = text.trim().split(/\s+/)[0];
-
-      if (!firstWord) {
-        setClipboardError('Paste a word to begin');
+      if (!text) {
+        setClipboardError('Clipboard empty or inaccessible');
         return;
       }
-
-      setSource(firstWord);
-      setTarget('');
-      setSuggestions([]);
-
-      // Get suggestions
-      if (spellService.isReady()) {
-        setSuggestionsLoading(true);
-        const results = await spellService.getSuggestions(firstWord);
-        setSuggestions(results);
-        setSuggestionsLoading(false);
-      }
+      await goToSuggestions(text);
     } catch (error) {
       setClipboardError('Clipboard empty or inaccessible');
     }
   };
 
-  const onCopyToClipboard = async () => {
-    if (!target) return;
-    try {
-      await navigator.clipboard.writeText(target);
-    } catch (error) {
-      console.error('Failed to copy to clipboard', error);
-    }
-  };
-
   const onSelectSuggestion = (suggestion: Suggestion) => {
     setTarget(suggestion.word);
-    // Auto-play animation
-    if (!running) {
-      setRunning(true);
-      runTokenRef.current += 1;
-      setAnimateSignal((n) => n + 1);
-    }
+    setTimeout(() => {
+      triggerAnimation();
+    }, 0);
   };
 
-  // Get suggestions when source changes manually
-  useEffect(() => {
-    if (!source || !spellService.isReady()) {
-      setSuggestions([]);
-      return;
-    }
+  const onSubmitInput = async () => {
+    if (!inputValue) return;
+    await goToSuggestions(inputValue);
+    setInputValue('');
+  };
 
-    const getSuggestions = async () => {
-      setSuggestionsLoading(true);
-      const results = await spellService.getSuggestions(source);
-      setSuggestions(results);
-      setSuggestionsLoading(false);
-    };
+  const renderIntroStage = () => (
+    <>
+      <img src={logoUrl} alt="Unscramm" className="intro-logo" />
+      <div className="heading-large">Give me a word to unscramble</div>
+      <RectButton onClick={onPasteFromClipboard} disabled={serviceLoading}>
+        <ClipboardPaste size={14} strokeWidth={1.5} />
+        Paste from Clipboard
+      </RectButton>
+      <InputField
+        placeholder="or type here"
+        value={inputValue}
+        onChange={setInputValue}
+        onAction={onSubmitInput}
+        actionIcon={<SendHorizontal size={14} strokeWidth={1.5} />}
+        disabled={serviceLoading}
+      />
+    </>
+  );
 
-    const timeoutId = setTimeout(getSuggestions, 300);
-    return () => clearTimeout(timeoutId);
-  }, [source]);
+  const renderSuggestionsStage = () => (
+    <>
+      <img src={logoUrl} alt="Unscramm" className="logo-top-right" />
+      <div className="spell-underline heading-large" style={{ textAlign: 'left' }}>
+        {source}
+      </div>
+      <div className="text-light">Suggestions:</div>
+      {suggestionsLoading ? (
+        <div className="text-light">Loading suggestions...</div>
+      ) : suggestions.length > 0 ? (
+        <div className="suggestion-group">
+          {suggestions.map((suggestion) => (
+            <RectButton
+              key={suggestion.word}
+              className="w-full justify-center"
+              onClick={() => onSelectSuggestion(suggestion)}
+              disabled={running}
+            >
+              {suggestion.word}
+            </RectButton>
+          ))}
+        </div>
+      ) : (
+        <div className="text-light">No suggestions found</div>
+      )}
+    </>
+  );
 
-  return (
-    <main className="main w-full max-w-[360px] mx-auto px-4 box-border pb-6">
-      <h1 className="heading flex justify-center">
-        <img src={logoUrl} alt="Unscramm" className="h-20" />
-      </h1>
-
-      <section className="mt-6 flex justify-center">
+  const renderAnimationStage = () => (
+    <>
+      <img src={logoUrl} alt="Unscramm" className="logo-top-right" />
+      <div className={underlineActive ? 'spell-underline' : ''}>
         <DiffVisualizer
           source={source}
           target={target}
@@ -127,124 +182,42 @@ function App() {
           resetSignal={resetSignal}
           onAnimationStart={() => {}}
           onAnimationComplete={onComplete}
-          onPhaseChange={setPhase}
         />
-      </section>
-
-      {/* Input controls */}
-      <div className="w-full max-w-[360px] mt-6 space-y-3">
-        {/* Source field with paste button */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            className="input flex-1"
-            placeholder="Enter misspelling"
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-            disabled={running || serviceLoading}
-          />
-          <button
-            className="btn neu text-sm px-3"
-            onClick={onPasteFromClipboard}
-            disabled={running || serviceLoading}
-            aria-label="Paste from clipboard"
-            title="Paste from clipboard"
-          >
-            📋
-          </button>
-        </div>
-
-        {/* Target field with copy button */}
-        <div className="flex items-center gap-2">
-          <input
-            type="text"
-            className="input flex-1"
-            placeholder="Select suggestion or enter word"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-            disabled={running}
-          />
-          <button
-            className="btn neu text-sm px-3"
-            onClick={onCopyToClipboard}
-            disabled={!target}
-            aria-label="Copy to clipboard"
-            title="Copy corrected spelling"
-          >
-            📄
-          </button>
-        </div>
-
-        {/* Play and reset buttons */}
-        <div className="flex items-center gap-2 justify-end">
-          <button className="btn neu" onClick={onAnimate} disabled={running || !source || !target} aria-label="Animate">
-            ▶
-          </button>
-          <button className="btn neu" onClick={onReset} aria-label="Reset view">
-            ↺
-          </button>
-        </div>
       </div>
+      <div className="text-light text-center">
+        {source} → {target}
+      </div>
+      <div className="flex items-center justify-center gap-4">
+        <CircleButton onClick={onAnimate} disabled={running}>
+          <Play size={14} strokeWidth={1.5} />
+        </CircleButton>
+        <CircleButton onClick={onReset}>
+          <RotateCcw size={14} strokeWidth={1.5} />
+        </CircleButton>
+      </div>
+      <div className="footer-bar">
+        <RectButton onClick={onPasteFromClipboard}>
+          <ClipboardPaste size={14} strokeWidth={1.5} />
+        </RectButton>
+        <InputField
+          value={inputValue}
+          onChange={setInputValue}
+          onAction={onSubmitInput}
+          actionIcon={<SendHorizontal size={14} strokeWidth={1.5} />}
+          actionDisabled={serviceLoading}
+        />
+      </div>
+    </>
+  );
 
-      {/* Status messages */}
-      {serviceLoading && (
-        <div className="w-full flex justify-center mt-4 text-[--color-text-secondary] text-sm">
-          Loading suggestions...
-        </div>
-      )}
-
-      {serviceError && (
-        <div className="w-full flex justify-center mt-4 text-[--color-deletion] text-sm">
-          {serviceError}
-        </div>
-      )}
-
-      {clipboardError && (
-        <div className="w-full flex justify-center mt-4 text-[--color-deletion] text-sm">
-          {clipboardError}
-        </div>
-      )}
-
-      {/* Suggestions list */}
-      {source && !serviceLoading && !serviceError && (
-        <div className="w-full max-w-[360px] mt-4">
-          {suggestionsLoading ? (
-            <div className="text-[--color-text-secondary] text-sm text-center">
-              Loading suggestions...
-            </div>
-          ) : suggestions.length > 0 ? (
-            <div className="space-y-2">
-              <div className="text-[--color-text-secondary] text-sm">
-                Suggestions for '{source}':
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {suggestions.map((suggestion, idx) => (
-                  <button
-                    key={suggestion.word}
-                    className={`btn neu w-auto h-auto text-sm px-3 py-2 ${idx === 0 ? 'bg-[--color-button-hover]' : ''}`}
-                    onClick={() => onSelectSuggestion(suggestion)}
-                    disabled={running}
-                    aria-label={`Select suggestion: ${suggestion.word}`}
-                  >
-                    {suggestion.word}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="text-[--color-text-secondary] text-sm text-center">
-              No suggestions found
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Phase indicator */}
-      <div className="w-full flex justify-center mt-4 text-[--color-text-secondary] opacity-60">
-        <div className="flex items-center gap-1">
-          <span className="text-sm">Phase:</span>
-          <span className="text-sm font-mono">{phase}</span>
-        </div>
+  return (
+    <main className="app-shell">
+      <div className="stage-panel">
+        {stage === 'intro' && renderIntroStage()}
+        {stage === 'suggestions' && renderSuggestionsStage()}
+        {stage === 'animation' && renderAnimationStage()}
+        {serviceError && <div className="error-text">{serviceError}</div>}
+        {clipboardError && <div className="error-text">{clipboardError}</div>}
       </div>
     </main>
   );
