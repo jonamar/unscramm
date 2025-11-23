@@ -27,6 +27,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+html,
+body {
+  width: 360px;
+  min-height: 560px;
+}
+
 body {
   @apply min-h-screen m-0 flex flex-col items-center bg-[--color-bg] text-[--color-text];
 }
@@ -37,7 +43,7 @@ body {
 .text-move { color: var(--color-move); }
 
 /* Buttons styled per styleguide */
-.btn { @apply w-10 h-10 rounded-full bg-[--color-button] text-white text-[1.2rem] flex items-center justify-center transition outline-none; }
+.btn { @apply rounded-full bg-[--color-button] text-white text-[1.2rem] flex items-center justify-center transition outline-none; }
 .btn:hover { background: var(--color-button-hover); }
 .btn:disabled { opacity: 0.5; }
 .btn:focus-visible { @apply ring-2 ring-white/30; }

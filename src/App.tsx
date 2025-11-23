@@ -221,7 +221,7 @@ function App() {
                 {suggestions.map((suggestion, idx) => (
                   <button
                     key={suggestion.word}
-                    className={`btn neu text-sm px-3 py-2 ${idx === 0 ? 'bg-[--color-button-hover]' : ''}`}
+                    className={`btn neu w-auto h-auto text-sm px-3 py-2 ${idx === 0 ? 'bg-[--color-button-hover]' : ''}`}
                     onClick={() => onSelectSuggestion(suggestion)}
                     disabled={running}
                     aria-label={`Select suggestion: ${suggestion.word}`}
