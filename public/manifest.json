@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Unscramm",
+  "version": "0.0.1",
+  "description": "Visualize text transformations and spelling corrections",
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Unscramm"
+  },
+  "icons": {
+    "16": "icon16.svg",
+    "48": "icon48.svg",
+    "128": "icon128.svg"
+  },
+  "permissions": []
+}

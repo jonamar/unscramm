@@ -30,7 +30,7 @@ function App() {
   };
 
   return (
-    <main className="main w-full max-w-[600px] mx-auto px-6 box-border">
+    <main className="main w-full max-w-[360px] mx-auto px-4 box-border">
       <h1 className="heading flex justify-center">
         <img src={logoUrl} alt="Unscramm" className="h-20" />
       </h1>
@@ -47,7 +47,7 @@ function App() {
         />
       </section>
 
-      <div className="panel input-panel flex items-center gap-2 w-full max-w-[600px] mt-6">
+      <div className="panel input-panel flex items-center gap-2 w-full max-w-[360px] mt-6">
         <input
           type="text"
           className="input flex-1"
