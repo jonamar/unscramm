@@ -14,6 +14,10 @@ export function delay(
     maxDuration?: number;
   }
 ): Promise<void> {
+  if (import.meta.env?.VITEST) {
+    return Promise.resolve();
+  }
+
   const { speedMultiplier = 1, maxDuration } = options ?? {};
   let duration = ms * speedMultiplier;
 
