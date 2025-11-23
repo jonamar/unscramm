@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && npm run build:extension",
+    "build:extension": "cp public/manifest.json dist/ && cp public/icon*.svg dist/",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest --run",

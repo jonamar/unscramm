@@ -23,6 +23,32 @@ Unscramm is an interactive "animated spellcheck" that shows how a misspelled wor
 - Build: `npm run build`
 - Test (CI): `npm test`
 
+## Chrome Extension
+
+The app is packaged as a Manifest V3 Chrome extension with a simple popup UI.
+
+### Building the Extension
+
+```bash
+npm run build
+```
+
+This builds the extension to the `dist/` folder, including:
+- `manifest.json` - Chrome extension manifest
+- `index.html` - Popup UI
+- `assets/` - Bundled JS, CSS, and images
+- `icon*.svg` - Extension icons
+
+### Loading in Chrome
+
+1. Build the extension: `npm run build`
+2. Open Chrome and navigate to `chrome://extensions/`
+3. Enable "Developer mode" (toggle in top-right)
+4. Click "Load unpacked"
+5. Select the `dist/` folder
+6. The Unscramm extension icon will appear in your toolbar
+7. Click the icon to open the popup and use the app
+
 ## Design Tokens
 
 Source of truth: `src/index.css` under the `@theme` block. These CSS variables define colors, typography, and semantic states used across the app.
