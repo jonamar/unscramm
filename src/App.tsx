@@ -1,18 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { ClipboardPaste, CornerDownLeft, Play, RotateCcw, Check, ChevronDown, Rabbit, Turtle, Snail } from 'lucide-react';
-import DiffVisualizer from './components/DiffVisualizer';
-import logoUrl from './assets/unscramm-icon.png';
+import { ClipboardPaste, CornerDownLeft } from 'lucide-react';
 import { spellService, type Suggestion } from './services/spell-suggestions';
-import { CircleButton, InputField, RectButton } from './components/DesignSystem';
+import { InputField, RectButton } from './components/DesignSystem';
+import { IntroStage } from './components/IntroStage';
+import { SuggestionsStage } from './components/SuggestionsStage';
+import { AnimationStage } from './components/AnimationStage';
+import { useAnimationSpeed } from './hooks/useAnimationSpeed';
 
 type Stage = 'intro' | 'suggestions' | 'animation';
-type AnimationSpeed = 'snail' | 'turtle' | 'rabbit';
-
-const SPEED_CONFIG = {
-  snail: { multiplier: 4, icon: Snail, label: 'Snail' },      // 4x slower (0.25x speed)
-  turtle: { multiplier: 2, icon: Turtle, label: 'Turtle' },   // 2x slower (0.5x speed)
-  rabbit: { multiplier: 1, icon: Rabbit, label: 'Rabbit' },   // 1x normal speed
-};
 
 function App() {
   const [stage, setStage] = useState<Stage>('intro');
@@ -31,9 +26,7 @@ function App() {
   const [underlineActive, setUnderlineActive] = useState(false);
   const [copiedWord, setCopiedWord] = useState<string | null>(null);
   const [copyDots, setCopyDots] = useState(0);
-  const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>('turtle');
-  const [speedLoaded, setSpeedLoaded] = useState(false);
-  const [speedDropdownOpen, setSpeedDropdownOpen] = useState(false);
+  const [animationSpeed, setAnimationSpeed] = useAnimationSpeed();
   const copyTimeoutRef = useRef<number | null>(null);
   const transitionTimeoutRef = useRef<number | null>(null);
   const dotIntervalRef = useRef<number | null>(null);
@@ -52,35 +45,6 @@ function App() {
     };
     init();
   }, []);
-
-  // Load animation speed preference from storage
-  useEffect(() => {
-    const loadSpeed = async () => {
-      try {
-        const result = await chrome.storage.local.get({ animationSpeed: 'turtle' });
-        setAnimationSpeed(result.animationSpeed as AnimationSpeed);
-        setSpeedLoaded(true);
-      } catch (error) {
-        console.error('Failed to load speed preference:', error);
-        setSpeedLoaded(true);
-      }
-    };
-    loadSpeed();
-  }, []);
-
-  // Save animation speed preference to storage whenever it changes
-  useEffect(() => {
-    if (!speedLoaded) return; // Don't save until we've loaded the initial value
-    
-    const saveSpeed = async () => {
-      try {
-        await chrome.storage.local.set({ animationSpeed });
-      } catch (error) {
-        console.error('Failed to save speed preference:', error);
-      }
-    };
-    saveSpeed();
-  }, [animationSpeed, speedLoaded]);
 
   const triggerAnimation = () => {
     setRunning(true);
@@ -248,17 +212,8 @@ function App() {
     };
   }, []);
 
-  // Close speed dropdown when clicking outside
-  useEffect(() => {
-    if (!speedDropdownOpen) return;
-    
-    const handleClickOutside = () => setSpeedDropdownOpen(false);
-    document.addEventListener('click', handleClickOutside);
-    
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [speedDropdownOpen]);
 
-  const renderFooterBar = () => (
+  const footerBar = (
     <>
       <div className="footer-bar">
         <RectButton onClick={onPasteFromClipboard}>
@@ -281,152 +236,47 @@ function App() {
     </>
   );
 
-  const renderIntroStage = () => (
-    <div className="stage-intro">
-      <img src={logoUrl} alt="Unscramm" className="intro-logo" />
-      <div className="heading-large">Give me a word to unscramble</div>
-      <RectButton className="intro-button" onClick={onPasteFromClipboard} disabled={serviceLoading}>
-        <ClipboardPaste size={14} strokeWidth={1.5} />
-        Paste from Clipboard
-      </RectButton>
-      <InputField
-        className="intro-input"
-        placeholder="or type here"
-        value={inputValue}
-        onChange={setInputValue}
-        onAction={onSubmitInput}
-        actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
-        disabled={serviceLoading}
-      />
-      <div className="footer-credit absolute-bottom">
-        Made with care by{' '}
-        <a href="https://scrappykin.com" target="_blank" rel="noopener noreferrer">
-          Scrappy Kin
-        </a>
-      </div>
-    </div>
-  );
-
-  const renderSuggestionsStage = () => (
-    <div className="stage-suggestions">
-      <img 
-        src={logoUrl} 
-        alt="Unscramm" 
-        className="logo-top-right" 
-        onClick={() => setStage('intro')}
-      />
-      <div className="spell-underline heading-large">{source}</div>
-      <div className="text-light">Suggestions:</div>
-      {suggestionsLoading ? (
-        <div className="text-light">Loading suggestions...</div>
-      ) : suggestions.length > 0 ? (
-        <div className="suggestion-group">
-          {suggestions.map((suggestion) => (
-            <div className="suggestion-row" key={suggestion.word}>
-              <RectButton
-                className="justify-start"
-                onClick={() => onSuggestionClick(suggestion.word)}
-                disabled={running}
-              >
-                {suggestion.word}
-              </RectButton>
-              {copiedWord === suggestion.word && (
-                <span className="copy-hint-success">
-                  <Check size={12} strokeWidth={2} /> Copied{'.'.repeat(copyDots)}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-light">Already spelled correctly</div>
-      )}
-      {renderFooterBar()}
-    </div>
-  );
-
-  const renderAnimationStage = () => (
-    <div className="stage-animation">
-      <img 
-        src={logoUrl} 
-        alt="Unscramm" 
-        className="logo-top-right" 
-        onClick={() => setStage('intro')}
-      />
-      <div className="transformation-summary text-light">
-        {source} → {target}
-      </div>
-      <div className="animation-display">
-        <div className={underlineActive ? 'spell-underline' : undefined}>
-          <DiffVisualizer
-            source={source}
-            target={target}
-            animateSignal={animateSignal}
-            resetSignal={resetSignal}
-            onAnimationStart={() => {}}
-            onAnimationComplete={onComplete}
-            speedMultiplier={2.5 * SPEED_CONFIG[animationSpeed].multiplier}
-          />
-        </div>
-      </div>
-      <div className="flex items-center justify-center gap-4">
-        <CircleButton onClick={onPrimaryAction} disabled={running || !target}>
-          {hasCompletedRun && !running ? (
-            <RotateCcw size={14} strokeWidth={1.5} />
-          ) : (
-            <Play
-              size={14}
-              strokeWidth={1.5}
-              className={running || !target ? 'text-gray-500' : undefined}
-            />
-          )}
-        </CircleButton>
-        <div className="speed-selector">
-          <button
-            className="ds-rect-button speed-button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSpeedDropdownOpen(!speedDropdownOpen);
-            }}
-            disabled={running}
-          >
-            {(() => {
-              const SpeedIcon = SPEED_CONFIG[animationSpeed].icon;
-              return <SpeedIcon size={14} strokeWidth={1.5} />;
-            })()}
-            <ChevronDown size={14} strokeWidth={1.5} />
-          </button>
-          {speedDropdownOpen && (
-            <div className="speed-dropdown">
-              {(Object.keys(SPEED_CONFIG) as AnimationSpeed[]).map((speed) => {
-                const config = SPEED_CONFIG[speed];
-                const SpeedIcon = config.icon;
-                return (
-                  <button
-                    key={speed}
-                    className="speed-option"
-                    onClick={() => {
-                      setAnimationSpeed(speed);
-                      setSpeedDropdownOpen(false);
-                    }}
-                  >
-                    <SpeedIcon size={14} strokeWidth={1.5} />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-      {renderFooterBar()}
-    </div>
-  );
-
   return (
     <main className="app-shell">
-      {stage === 'intro' && renderIntroStage()}
-      {stage === 'suggestions' && renderSuggestionsStage()}
-      {stage === 'animation' && renderAnimationStage()}
+      {stage === 'intro' && (
+        <IntroStage
+          inputValue={inputValue}
+          onInputChange={setInputValue}
+          onSubmit={onSubmitInput}
+          onPasteFromClipboard={onPasteFromClipboard}
+          disabled={serviceLoading}
+        />
+      )}
+      {stage === 'suggestions' && (
+        <SuggestionsStage
+          source={source}
+          suggestions={suggestions}
+          suggestionsLoading={suggestionsLoading}
+          copiedWord={copiedWord}
+          copyDots={copyDots}
+          running={running}
+          onLogoClick={() => setStage('intro')}
+          onSuggestionClick={onSuggestionClick}
+          footerBar={footerBar}
+        />
+      )}
+      {stage === 'animation' && (
+        <AnimationStage
+          source={source}
+          target={target}
+          animateSignal={animateSignal}
+          resetSignal={resetSignal}
+          running={running}
+          hasCompletedRun={hasCompletedRun}
+          underlineActive={underlineActive}
+          animationSpeed={animationSpeed}
+          onLogoClick={() => setStage('intro')}
+          onPrimaryAction={onPrimaryAction}
+          onAnimationComplete={onComplete}
+          onSpeedChange={setAnimationSpeed}
+          footerBar={footerBar}
+        />
+      )}
       {serviceError && <div className="error-text">{serviceError}</div>}
       {clipboardError && <div className="error-text">{clipboardError}</div>}
     </main>

@@ -1,0 +1,71 @@
+/* Layout - App shell, stages, footer bar */
+
+#root {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  flex: 1;
+}
+
+/* Single container with explicit 20px padding on all sides */
+.app-shell {
+  width: 100%;
+  min-height: 100%;
+  padding: 100px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+}
+
+/* Stage-specific alignment only - no padding */
+.stage-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+  align-items: center;
+  text-align: center;
+}
+
+.stage-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+  align-items: flex-start;
+  width: 100%;
+  flex: 1;
+  text-align: left;
+}
+
+.stage-animation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  width: 100%;
+}
+
+/* Logo positioned relative to .app-shell with 20px padding */
+.logo-top-right {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  height: 32px;
+  cursor: pointer;
+}
+
+.footer-bar {
+  margin-top: auto;
+  border-top: 1px solid var(--color-dark-gray);
+  padding-top: var(--space-small);
+  display: flex;
+  gap: var(--space-small);
+  align-items: center;
+  width: 100%;
+}
+
+.footer-bar .ds-input {
+  flex: 1;
+}

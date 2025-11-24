@@ -1,0 +1,71 @@
+/* Design System Components - All .ds-* button/input styles */
+
+.ds-rect-button {
+  border: 1.5px solid var(--color-dark-gray);
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: var(--font-medium);
+  background: transparent;
+  color: var(--color-white);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.ds-rect-button:disabled,
+.ds-circle-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ds-circle-button {
+  width: 31px;
+  height: 31px;
+  border: 1.5px solid var(--color-dark-gray);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--color-white);
+  cursor: pointer;
+}
+
+.ds-input {
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  background: #3e3d45;
+  padding: 0 0 0 10px;
+}
+
+.ds-input input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-white);
+  font-size: var(--font-medium);
+  padding: 6px 0;
+  height: 100%;
+}
+
+.ds-input input:focus {
+  outline: none;
+}
+
+.ds-input button {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-white);
+  cursor: pointer;
+}
+
+.ds-input button:disabled {
+  cursor: not-allowed;
+}
