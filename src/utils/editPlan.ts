@@ -1,5 +1,3 @@
-// LCS utilities no longer directly imported here; survivor mapping is computed locally
-
 /**
  * Represents an insertion operation in the edit plan
  */
@@ -21,6 +19,27 @@ export interface Move {
 }
 
 /**
+ * Letter snapshot used by the renderer for each animation phase.
+ */
+export interface PlanLetter {
+  id: string;
+  char: string;
+}
+
+interface SurvivorPair {
+  sourceIndex: number;
+  targetIndex: number;
+  char: string;
+}
+
+interface PlanLetters {
+  idle: PlanLetter[];
+  afterDelete: PlanLetter[];
+  moving: PlanLetter[];
+  final: PlanLetter[];
+}
+
+/**
  * The complete edit plan between two words
  */
 export interface EditPlan {
@@ -32,6 +51,16 @@ export interface EditPlan {
   moves: Move[];
   /** Source indices of characters that are "true movers" that should be highlighted */
   highlightIndices: number[];
+  /** Survivor mapping pairs to drive moving + insertion phases */
+  survivorPairs: SurvivorPair[];
+  /** Mapping of target index -> source index for surviving letters */
+  targetToSourceMap: Record<number, number>;
+  /** Precomputed letter snapshots per phase */
+  letters: PlanLetters;
+  /** Whether each animation phase should execute */
+  shouldDelete: boolean;
+  shouldMove: boolean;
+  shouldInsert: boolean;
 }
 
 /**
@@ -55,8 +84,6 @@ export function computeEditPlan(sourceWord: string, targetWord: string): EditPla
   // Multiset counts for target and source
   const targetCounts: Record<string, number> = {};
   for (const c of target) targetCounts[c] = (targetCounts[c] || 0) + 1;
-  const sourceCounts: Record<string, number> = {};
-  for (const c of source) sourceCounts[c] = (sourceCounts[c] || 0) + 1;
 
   // Determine deletions by scanning source left→right, keep only as many as target requires
   const remainingTargetNeed: Record<string, number> = { ...targetCounts };
@@ -122,7 +149,55 @@ export function computeEditPlan(sourceWord: string, targetWord: string): EditPla
 
   const highlightIndices = identifyTrueMovers(pairs);
 
-  return { deletions, insertions, moves, highlightIndices };
+  const survivorPairs: SurvivorPair[] = [];
+  const targetToSourceMap: Record<number, number> = {};
+  for (const [sIdx, tIdx] of pairs) {
+    survivorPairs.push({
+      sourceIndex: sIdx,
+      targetIndex: tIdx,
+      char: target[tIdx],
+    });
+    targetToSourceMap[tIdx] = sIdx;
+  }
+
+  const idleLetters: PlanLetter[] = source.map((char, i) => ({ id: `src-${i}`, char }));
+  const deletionSet = new Set(deletions);
+  const afterDelete: PlanLetter[] = idleLetters.filter((_, idx) => !deletionSet.has(idx));
+  const movingLetters: PlanLetter[] = survivorPairs
+    .slice()
+    .sort((a, b) => a.targetIndex - b.targetIndex)
+    .map(({ sourceIndex, char }) => ({ id: `src-${sourceIndex}`, char }));
+  const finalLetters: PlanLetter[] = target.map((char, idx) => {
+    const sourceIndex = targetToSourceMap[idx];
+    if (sourceIndex !== undefined) {
+      return { id: `src-${sourceIndex}`, char };
+    }
+    return { id: `ins-${idx}`, char };
+  });
+
+  const letters: PlanLetters = {
+    idle: idleLetters,
+    afterDelete,
+    moving: movingLetters,
+    final: finalLetters,
+  };
+
+  const shouldDelete = deletions.length > 0;
+  const shouldInsert = insertions.length > 0;
+  const shouldMove = survivorPairs.length > 0 && sourceWord !== targetWord;
+
+  return {
+    deletions,
+    insertions,
+    moves,
+    highlightIndices,
+    survivorPairs,
+    targetToSourceMap,
+    letters,
+    shouldDelete,
+    shouldMove,
+    shouldInsert,
+  };
 }
 
 /**

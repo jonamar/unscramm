@@ -1,16 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { computeEditPlan, type EditPlan } from '../utils/editPlan';
+import { computeEditPlan, type EditPlan, type PlanLetter } from '../utils/editPlan';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
-import { computeSurvivorMapping } from '../utils/survivorMapping';
 import { delay } from '../utils/delay';
 
 export type Phase = 'idle' | 'deleting' | 'moving' | 'inserting' | 'final';
 
-type LetterItem = {
-  id: string;    // stable identity key
-  char: string;
-};
+type LetterItem = PlanLetter;
 
 /**
  * Consolidated animation state.
@@ -27,14 +23,15 @@ interface AnimationState {
  * Contains the computed data and state setters needed to orchestrate the animation.
  */
 interface AnimationContext {
-  source: string;
-  sourceLetters: LetterItem[];
-  movingLetters: LetterItem[];
-  targetToSourceMap: Map<number, number>;
   plan: EditPlan;
-  target: string;
   setState: (state: AnimationState | ((prev: AnimationState) => AnimationState)) => void;
   wait: (ms: number) => Promise<void>;
+}
+
+interface PhaseDefinition {
+  name: Phase;
+  shouldRun: (plan: EditPlan) => boolean;
+  run: (ctx: AnimationContext, signal: AbortSignal) => Promise<void>;
 }
 
 /**
@@ -89,11 +86,13 @@ function checkAborted(signal: AbortSignal): void {
 /**
  * Phase: Idle
  * Renders the initial source text before animation begins.
+ *
+ * Requires: plan.letters.idle to contain the source characters with stable ids.
  */
 async function performIdlePhase(ctx: AnimationContext): Promise<void> {
   ctx.setState({
     phase: 'idle',
-    letters: ctx.sourceLetters,
+    letters: ctx.plan.letters.idle,
     deletingIds: new Set(),
   });
 }
@@ -101,6 +100,8 @@ async function performIdlePhase(ctx: AnimationContext): Promise<void> {
 /**
  * Phase: Deleting
  * Marks characters to be deleted in red, waits for visibility, then removes them.
+ *
+ * Requires: plan.deletions + plan.letters.idle (pre-delete) and plan.letters.afterDelete (post-delete) snapshots.
  */
 async function performDeletingPhase(
   ctx: AnimationContext,
@@ -111,7 +112,7 @@ async function performDeletingPhase(
   const deletingIds = new Set(ctx.plan.deletions.map((i) => `src-${i}`));
   ctx.setState({
     phase: 'deleting',
-    letters: ctx.sourceLetters,
+    letters: ctx.plan.letters.idle,
     deletingIds,
   });
   // ensure frame renders with red before timing
@@ -121,10 +122,9 @@ async function performDeletingPhase(
   await ctx.wait(DURATIONS.deleting);
   checkAborted(signal);
   // now remove the deletions to trigger exit animations
-  const afterDelete = ctx.sourceLetters.filter((_, i) => !ctx.plan.deletions.includes(i));
   ctx.setState({
     phase: 'deleting',
-    letters: afterDelete,
+    letters: ctx.plan.letters.afterDelete,
     deletingIds,
   });
   // brief pause to allow exit animations to complete before moving phase
@@ -135,6 +135,8 @@ async function performDeletingPhase(
 /**
  * Phase: Moving
  * Reorders surviving characters into their target positions (triggers FLIP animation).
+ *
+ * Requires: plan.letters.moving sorted by target positions of survivor pairs.
  */
 async function performMovingPhase(
   ctx: AnimationContext,
@@ -143,7 +145,7 @@ async function performMovingPhase(
   checkAborted(signal);
   ctx.setState({
     phase: 'moving',
-    letters: ctx.movingLetters,
+    letters: ctx.plan.letters.moving,
     deletingIds: new Set(),
   });
   await ctx.wait(DURATIONS.moving);
@@ -153,26 +155,17 @@ async function performMovingPhase(
 /**
  * Phase: Inserting
  * Adds new characters at their final positions (triggers enter animations).
+ *
+ * Requires: plan.letters.final (target order with survivor ids + insertion ids).
  */
 async function performInsertingPhase(
   ctx: AnimationContext,
   signal: AbortSignal
 ): Promise<void> {
   checkAborted(signal);
-  // Preserve survivors by reusing their original ids; only create ids for new insertions
-  const finalLetters: LetterItem[] = [];
-  for (let j = 0; j < ctx.target.length; j++) {
-    const ch = ctx.target[j];
-    const srcIdx = ctx.targetToSourceMap.get(j);
-    if (srcIdx !== undefined) {
-      finalLetters.push({ id: `src-${srcIdx}`, char: ch });
-    } else {
-      finalLetters.push({ id: `ins-${j}`, char: ch });
-    }
-  }
   ctx.setState({
     phase: 'inserting',
-    letters: finalLetters,
+    letters: ctx.plan.letters.final,
     deletingIds: new Set(),
   });
   await ctx.wait(DURATIONS.inserting);
@@ -191,6 +184,34 @@ async function performFinalPhase(ctx: AnimationContext): Promise<void> {
     phase: 'final',
   }));
 }
+
+const PHASES: PhaseDefinition[] = [
+  {
+    name: 'idle',
+    shouldRun: () => true,
+    run: (ctx) => performIdlePhase(ctx),
+  },
+  {
+    name: 'deleting',
+    shouldRun: (plan) => plan.shouldDelete,
+    run: performDeletingPhase,
+  },
+  {
+    name: 'moving',
+    shouldRun: (plan) => plan.shouldMove,
+    run: performMovingPhase,
+  },
+  {
+    name: 'inserting',
+    shouldRun: (plan) => plan.shouldInsert,
+    run: performInsertingPhase,
+  },
+  {
+    name: 'final',
+    shouldRun: () => true,
+    run: (ctx) => performFinalPhase(ctx),
+  },
+];
 
 /**
  * DiffVisualizer - Generic text diff animation component
@@ -232,23 +253,27 @@ export default function DiffVisualizer({
 }: DiffVisualizerProps) {
   const prefersReduced = usePrefersReducedMotion();
   const plan = useMemo(() => computeEditPlan(source, target), [source, target]);
+  const clampDuration = useMemo(
+    () => (ms: number) => (prefersReduced ? Math.min(ms, 50) : ms),
+    [prefersReduced]
+  );
+  const baseMotionDurationMs = 250;
+  const motionTransitionSeconds = useMemo(
+    () => (clampDuration(baseMotionDurationMs) / 1000) * SPEED_MULTIPLIER,
+    [clampDuration]
+  );
 
-  // Precompute helpers for rendering
-  const sourceLetters = useMemo(() => source.split('').map((char, i) => ({ id: `src-${i}`, char })), [source]);
-  const { movingLetters, targetToSourceMap } = useMemo(() => {
-    const mapping = computeSurvivorMapping(source, target, plan.deletions);
-    const movingLetters: LetterItem[] = mapping.mappedLetters.map((m) => ({
-      id: `src-${m.fromIndex}`,
-      char: m.char,
-    }));
-    return { movingLetters, targetToSourceMap: mapping.targetToSourceMap };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, target, plan.deletions.join(',')]);
+  const moverIds = useMemo(() => {
+    const ids = new Set<string>();
+    plan.moves.forEach((m) => ids.add(`src-${m.fromIndex}`));
+    plan.highlightIndices.forEach((idx) => ids.add(`src-${idx}`));
+    return ids;
+  }, [plan]);
 
   // Consolidated animation state
   const [animationState, setAnimationState] = useState<AnimationState>({
     phase: 'idle',
-    letters: sourceLetters,
+    letters: plan.letters.idle,
     deletingIds: new Set(),
   });
 
@@ -259,10 +284,10 @@ export default function DiffVisualizer({
   useEffect(() => {
     setAnimationState({
       phase: 'idle',
-      letters: sourceLetters,
+      letters: plan.letters.idle,
       deletingIds: new Set(),
     });
-  }, [source, target, sourceLetters]);
+  }, [plan]);
 
   // Orchestrate phases when animateSignal changes
   useEffect(() => {
@@ -282,42 +307,22 @@ export default function DiffVisualizer({
       const wait = (ms: number) =>
         delay(ms, {
           speedMultiplier: SPEED_MULTIPLIER,
-          maxDuration: prefersReduced ? 50 : undefined,
+          maxDuration: clampDuration(ms),
         });
 
       // Build animation context
       const ctx: AnimationContext = {
-        source,
-        sourceLetters,
-        movingLetters,
-        targetToSourceMap,
         plan,
-        target,
         setState: setAnimationState,
         wait,
       };
 
       try {
-        // Execute animation phases in sequence, skipping empty phases
-        await performIdlePhase(ctx);
-        
-        // Only run deleting phase if there are deletions
-        if (ctx.plan.deletions.length > 0) {
-          await performDeletingPhase(ctx, signal);
+        // Execute animation phases in sequence based on declarative config
+        for (const phase of PHASES) {
+          if (!phase.shouldRun(ctx.plan)) continue;
+          await phase.run(ctx, signal);
         }
-        
-        // Run moving phase if letters need to reorder (survivors exist and source != target)
-        // This handles both explicit moves and anagram cases
-        if (ctx.movingLetters.length > 0 && ctx.source !== ctx.target) {
-          await performMovingPhase(ctx, signal);
-        }
-        
-        // Only run inserting phase if there are insertions
-        if (ctx.plan.insertions.length > 0) {
-          await performInsertingPhase(ctx, signal);
-        }
-        
-        await performFinalPhase(ctx);
 
         onAnimationComplete?.();
       } catch (error) {
@@ -350,12 +355,12 @@ export default function DiffVisualizer({
     runningRef.current = false;
     setAnimationState({
       phase: 'idle',
-      letters: sourceLetters,
+      letters: plan.letters.idle,
       deletingIds: new Set(),
     });
     // do not call onAnimationStart/Complete
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetSignal, sourceLetters]);
+  }, [resetSignal, plan]);
 
   // Notify parent when phase changes
   useEffect(() => {
@@ -376,9 +381,7 @@ export default function DiffVisualizer({
     }
     if (phase === 'moving') {
       // highlight true movers using plan.moves (fromIndex)
-      const idx = parseInt(item.id.split('-')[1] || '-1', 10);
-      const isTrueMover = plan.moves.some((m) => m.fromIndex === idx) || plan.highlightIndices.includes(idx);
-      return isTrueMover ? 'text-move' : '';
+      return moverIds.has(item.id) ? 'text-move' : '';
     }
     return '';
   };
@@ -396,7 +399,7 @@ export default function DiffVisualizer({
               initial={{ opacity: phase === 'inserting' ? 0 : 1, y: phase === 'inserting' ? 10 : 0 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: phase === 'deleting' ? 0 : 1, scale: phase === 'deleting' ? 0.8 : 1 }}
-              transition={{ duration: (prefersReduced ? 0.05 : 0.25) * SPEED_MULTIPLIER }}
+              transition={{ duration: motionTransitionSeconds }}
               className={getLetterClass(l)}
               data-testid="letter"
             >
