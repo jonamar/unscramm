@@ -274,7 +274,7 @@ export default function DiffVisualizer({
   const { phase, letters } = animationState;
 
   return (
-    <div className="w-full max-w-[360px] px-4 box-border">
+    <div className="w-full max-w-[360px] box-border">
       <div className="flex w-full justify-center gap-[0.025em] text-white text-[1.5rem] select-none">
         <AnimatePresence initial={false}>
           {letters.map((l) => (

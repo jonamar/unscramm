@@ -249,18 +249,20 @@ function App() {
         className="logo-top-right" 
         onClick={() => setStage('intro')}
       />
-      <div className={underlineActive ? 'spell-underline' : ''}>
-        <DiffVisualizer
-          source={source}
-          target={target}
-          animateSignal={animateSignal}
-          resetSignal={resetSignal}
-          onAnimationStart={() => {}}
-          onAnimationComplete={onComplete}
-        />
-      </div>
-      <div className="text-light text-center">
+      <div className="transformation-summary text-light">
         {source} → {target}
+      </div>
+      <div className="animation-display">
+        <div className={underlineActive ? 'spell-underline' : undefined}>
+          <DiffVisualizer
+            source={source}
+            target={target}
+            animateSignal={animateSignal}
+            resetSignal={resetSignal}
+            onAnimationStart={() => {}}
+            onAnimationComplete={onComplete}
+          />
+        </div>
       </div>
       <div className="flex items-center justify-center gap-4">
         <CircleButton onClick={onPrimaryAction} disabled={running || !target}>

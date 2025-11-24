@@ -48,13 +48,14 @@ body {
   min-height: 100%;
   display: flex;
   justify-content: center;
+  flex: 1;
 }
 
 /* Single container with explicit 20px padding on all sides */
 .app-shell {
   width: 100%;
   min-height: 100%;
-  padding: 20px;
+  padding: 100px 20px 20px;
   display: flex;
   flex-direction: column;
   gap: var(--space-medium);
@@ -86,6 +87,7 @@ body {
   align-items: center;
   text-align: center;
   flex: 1;
+  width: 100%;
 }
 
 /* Logo positioned relative to .app-shell with 20px padding */
@@ -221,6 +223,16 @@ body {
   gap: 4px;
   margin-left: 12px;
   white-space: nowrap;
+}
+
+.stage-animation .transformation-summary {
+  font-size: var(--font-medium);
+}
+
+.animation-display {
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .footer-bar {
