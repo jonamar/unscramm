@@ -32,6 +32,7 @@ function App() {
   const [copiedWord, setCopiedWord] = useState<string | null>(null);
   const [copyDots, setCopyDots] = useState(0);
   const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>('turtle');
+  const [speedLoaded, setSpeedLoaded] = useState(false);
   const [speedDropdownOpen, setSpeedDropdownOpen] = useState(false);
   const copyTimeoutRef = useRef<number | null>(null);
   const transitionTimeoutRef = useRef<number | null>(null);
@@ -51,6 +52,35 @@ function App() {
     };
     init();
   }, []);
+
+  // Load animation speed preference from storage
+  useEffect(() => {
+    const loadSpeed = async () => {
+      try {
+        const result = await chrome.storage.local.get({ animationSpeed: 'turtle' });
+        setAnimationSpeed(result.animationSpeed as AnimationSpeed);
+        setSpeedLoaded(true);
+      } catch (error) {
+        console.error('Failed to load speed preference:', error);
+        setSpeedLoaded(true);
+      }
+    };
+    loadSpeed();
+  }, []);
+
+  // Save animation speed preference to storage whenever it changes
+  useEffect(() => {
+    if (!speedLoaded) return; // Don't save until we've loaded the initial value
+    
+    const saveSpeed = async () => {
+      try {
+        await chrome.storage.local.set({ animationSpeed });
+      } catch (error) {
+        console.error('Failed to save speed preference:', error);
+      }
+    };
+    saveSpeed();
+  }, [animationSpeed, speedLoaded]);
 
   const triggerAnimation = () => {
     setRunning(true);
