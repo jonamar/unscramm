@@ -23,7 +23,6 @@ function App() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [underlineActive, setUnderlineActive] = useState(false);
   const [copiedWord, setCopiedWord] = useState<string | null>(null);
-  const [realWordMessage, setRealWordMessage] = useState<string | null>(null);
   const copyTimeoutRef = useRef<number | null>(null);
   const transitionTimeoutRef = useRef<number | null>(null);
   const runTokenRef = useRef(0);
@@ -96,7 +95,6 @@ function App() {
 
   const goToSuggestions = async (wordInput: string) => {
     setClipboardError(null);
-    setRealWordMessage(null);
     const firstWord = extractWord(wordInput);
     if (!firstWord) {
       setClipboardError('Enter a word to begin');
@@ -118,7 +116,6 @@ function App() {
 
   const onPasteFromClipboard = async () => {
     setClipboardError(null);
-    setRealWordMessage(null);
     try {
       const text = await navigator.clipboard.readText();
       if (!text) {
@@ -152,17 +149,6 @@ function App() {
     }
   };
 
-  const handleRealWord = () => {
-    clearCopyIndicator();
-    clearTransitionTimer();
-    setRealWordMessage("That's a real word, please give me a misspelled one.");
-    setStage('intro');
-    setTarget('');
-    setSuggestions([]);
-    setRunning(false);
-    setHasCompletedRun(false);
-    setUnderlineActive(false);
-  };
 
   const scheduleAnimationTransition = (word: string) => {
     clearTransitionTimer();
@@ -180,10 +166,6 @@ function App() {
     if (running) return;
     setClipboardError(null);
     const normalizedWord = word.toLowerCase();
-    if (normalizedWord === source) {
-      handleRealWord();
-      return;
-    }
     try {
       await navigator.clipboard.writeText(normalizedWord);
       setCopiedWord(normalizedWord);
@@ -221,7 +203,6 @@ function App() {
         actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
         disabled={serviceLoading}
       />
-      {realWordMessage && <div className="info-text">{realWordMessage}</div>}
     </div>
   );
 
@@ -257,8 +238,20 @@ function App() {
           ))}
         </div>
       ) : (
-        <div className="text-light">No suggestions found</div>
+        <div className="text-light">Already spelled correctly</div>
       )}
+      <div className="footer-bar">
+        <RectButton onClick={onPasteFromClipboard}>
+          <ClipboardPaste size={14} strokeWidth={1.5} />
+        </RectButton>
+        <InputField
+          value={inputValue}
+          onChange={setInputValue}
+          onAction={onSubmitInput}
+          actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
+          actionDisabled={serviceLoading}
+        />
+      </div>
     </div>
   );
 

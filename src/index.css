@@ -154,7 +154,7 @@ body {
 }
 
 .ds-input {
-  border-radius: 8px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   background: #3e3d45;

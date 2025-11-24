@@ -128,7 +128,6 @@ class SpellSuggestionService {
   }
 
   private calculateSuggestions(word: string): Suggestion[] {
-    const exactFreq = this.frequencyMap.get(word);
     const candidates = this.getCandidateEntries(word.length);
 
     const scored = candidates
@@ -148,11 +147,8 @@ class SpellSuggestionService {
       frequency: item.entry.frequency,
     }));
 
-    if (exactFreq && !top.some((s) => s.word === word)) {
-      top.unshift({ word, frequency: exactFreq });
-    }
-
-    return top.slice(0, 4);
+    // Filter out the exact input word to avoid suggesting it back to the user
+    return top.filter((suggestion) => suggestion.word !== word).slice(0, 4);
   }
 
   private damerauLevenshtein(a: string, b: string): number {
