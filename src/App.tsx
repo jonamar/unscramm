@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { ClipboardPaste, SendHorizontal, Play, RotateCcw } from 'lucide-react';
+import { ClipboardPaste, CornerDownLeft, Play, RotateCcw } from 'lucide-react';
 import DiffVisualizer from './components/DiffVisualizer';
-import logoUrl from './assets/unscramm-logo.svg';
+import logoUrl from './assets/unscramm-icon.png';
 import { spellService, type Suggestion } from './services/spell-suggestions';
 import { CircleButton, InputField, RectButton } from './components/DesignSystem';
 
@@ -92,6 +92,7 @@ function App() {
     setSource(firstWord);
     setTarget('');
     setSuggestions([]);
+    setRunning(false);
     setStage('suggestions');
     setUnderlineActive(true);
     await fetchSuggestions(firstWord);
@@ -125,30 +126,34 @@ function App() {
   };
 
   const renderIntroStage = () => (
-    <>
+    <div className="stage-intro">
       <img src={logoUrl} alt="Unscramm" className="intro-logo" />
       <div className="heading-large">Give me a word to unscramble</div>
-      <RectButton onClick={onPasteFromClipboard} disabled={serviceLoading}>
+      <RectButton className="intro-button" onClick={onPasteFromClipboard} disabled={serviceLoading}>
         <ClipboardPaste size={14} strokeWidth={1.5} />
         Paste from Clipboard
       </RectButton>
       <InputField
+        className="intro-input"
         placeholder="or type here"
         value={inputValue}
         onChange={setInputValue}
         onAction={onSubmitInput}
-        actionIcon={<SendHorizontal size={14} strokeWidth={1.5} />}
+        actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
         disabled={serviceLoading}
       />
-    </>
+    </div>
   );
 
   const renderSuggestionsStage = () => (
-    <>
-      <img src={logoUrl} alt="Unscramm" className="logo-top-right" />
-      <div className="spell-underline heading-large" style={{ textAlign: 'left' }}>
-        {source}
-      </div>
+    <div className="stage-suggestions">
+      <img 
+        src={logoUrl} 
+        alt="Unscramm" 
+        className="logo-top-right" 
+        onClick={() => setStage('intro')}
+      />
+      <div className="spell-underline heading-large">{source}</div>
       <div className="text-light">Suggestions:</div>
       {suggestionsLoading ? (
         <div className="text-light">Loading suggestions...</div>
@@ -168,12 +173,17 @@ function App() {
       ) : (
         <div className="text-light">No suggestions found</div>
       )}
-    </>
+    </div>
   );
 
   const renderAnimationStage = () => (
-    <>
-      <img src={logoUrl} alt="Unscramm" className="logo-top-right" />
+    <div className="stage-animation">
+      <img 
+        src={logoUrl} 
+        alt="Unscramm" 
+        className="logo-top-right" 
+        onClick={() => setStage('intro')}
+      />
       <div className={underlineActive ? 'spell-underline' : ''}>
         <DiffVisualizer
           source={source}
@@ -203,22 +213,20 @@ function App() {
           value={inputValue}
           onChange={setInputValue}
           onAction={onSubmitInput}
-          actionIcon={<SendHorizontal size={14} strokeWidth={1.5} />}
+          actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
           actionDisabled={serviceLoading}
         />
       </div>
-    </>
+    </div>
   );
 
   return (
     <main className="app-shell">
-      <div className="stage-panel">
-        {stage === 'intro' && renderIntroStage()}
-        {stage === 'suggestions' && renderSuggestionsStage()}
-        {stage === 'animation' && renderAnimationStage()}
-        {serviceError && <div className="error-text">{serviceError}</div>}
-        {clipboardError && <div className="error-text">{clipboardError}</div>}
-      </div>
+      {stage === 'intro' && renderIntroStage()}
+      {stage === 'suggestions' && renderSuggestionsStage()}
+      {stage === 'animation' && renderAnimationStage()}
+      {serviceError && <div className="error-text">{serviceError}</div>}
+      {clipboardError && <div className="error-text">{clipboardError}</div>}
     </main>
   );
 }

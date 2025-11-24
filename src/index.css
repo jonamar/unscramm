@@ -40,34 +40,52 @@ body {
   @apply min-h-screen m-0 flex flex-col items-center;
   background: var(--color-bg);
   color: var(--color-white);
+  position: relative;
 }
 
+/* Single container with explicit 20px padding on all sides */
 .app-shell {
   width: 100%;
   min-height: 100%;
-  padding: var(--space-medium);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.stage-panel {
-  width: 100%;
-  border: 1px solid var(--color-dark-gray);
-  border-radius: 12px;
-  padding: var(--space-large) var(--space-medium);
-  background: var(--color-panel);
-  position: relative;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: var(--space-medium);
 }
 
+/* Stage-specific alignment only - no padding */
+.stage-intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+  align-items: center;
+  text-align: center;
+}
+
+.stage-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+  align-items: flex-start;
+  text-align: left;
+}
+
+.stage-animation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+/* Logo positioned relative to .app-shell with 20px padding */
 .logo-top-right {
   position: absolute;
-  top: var(--space-small);
-  right: var(--space-small);
+  top: 20px;
+  right: 20px;
   height: 32px;
+  cursor: pointer;
 }
 
 .intro-logo {
@@ -87,14 +105,15 @@ body {
 }
 
 .spell-underline {
+  display: inline-block;
   border-bottom: 1px dotted var(--color-red);
   padding-bottom: 2px;
 }
 
 .ds-rect-button {
   border: 1.5px solid var(--color-dark-gray);
-  border-radius: 2px;
-  padding: 10px 14px;
+  border-radius: 4px;
+  padding: 6px 10px;
   font-size: var(--font-medium);
   background: transparent;
   color: var(--color-white);
@@ -124,11 +143,11 @@ body {
 }
 
 .ds-input {
-  border: 1.5px solid var(--color-dark-gray);
-  border-radius: 2px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  background: transparent;
+  background: #3e3d45;
+  padding: 0 10px;
 }
 
 .ds-input input {
@@ -137,7 +156,8 @@ body {
   border: none;
   color: var(--color-white);
   font-size: var(--font-medium);
-  padding: 10px;
+  padding: 6px 0;
+  height: 100%;
 }
 
 .ds-input input:focus {
@@ -145,10 +165,10 @@ body {
 }
 
 .ds-input button {
-  border-left: 1.5px solid var(--color-dark-gray);
   background: transparent;
-  width: 40px;
-  height: 100%;
+  border: none;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -162,7 +182,7 @@ body {
 }
 
 .footer-bar {
-  margin-top: var(--space-medium);
+  margin-top: auto;
   border-top: 1px solid var(--color-dark-gray);
   padding-top: var(--space-small);
   display: flex;
@@ -174,10 +194,13 @@ body {
   flex: 1;
 }
 
-.stage-flow {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-medium);
+.intro-button {
+  align-self: center;
+}
+
+.intro-input {
+  width: 240px;
+  align-self: center;
 }
 
 .error-text {
