@@ -59,13 +59,17 @@ export function AnimationStage({
           />
         </div>
       </div>
-      <div className="flex items-center justify-center gap-4">
-        <CircleButton onClick={onPrimaryAction} disabled={running || !target}>
+      <div className="animation-controls">
+        <CircleButton 
+          className="play-button-large"
+          onClick={onPrimaryAction} 
+          disabled={running || !target}
+        >
           {hasCompletedRun && !running ? (
-            <RotateCcw size={14} strokeWidth={1.5} />
+            <RotateCcw size={28} strokeWidth={1.5} className="icon-reset" />
           ) : (
             <Play
-              size={14}
+              size={28}
               strokeWidth={1.5}
               className={running || !target ? 'text-gray-500' : undefined}
             />
