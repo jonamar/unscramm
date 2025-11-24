@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { computeEditPlan, type EditPlan, type PlanLetter } from '../utils/editPlan';
+import { computeEditPlan, type PlanLetter } from '../utils/editPlan';
+import { buildAnimationScript, type AnimationFrame } from '../utils/animationScript';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { delay } from '../utils/delay';
-
-export type Phase = 'idle' | 'deleting' | 'moving' | 'inserting' | 'final';
+import type { Phase, PhaseDurations } from '../types/animation';
 
 type LetterItem = PlanLetter;
 
@@ -16,22 +16,6 @@ interface AnimationState {
   phase: Phase;
   letters: LetterItem[];
   deletingIds: Set<string>;
-}
-
-/**
- * Context shared across all animation phases.
- * Contains the computed data and state setters needed to orchestrate the animation.
- */
-interface AnimationContext {
-  plan: EditPlan;
-  setState: (state: AnimationState | ((prev: AnimationState) => AnimationState)) => void;
-  wait: (ms: number) => Promise<void>;
-}
-
-interface PhaseDefinition {
-  name: Phase;
-  shouldRun: (plan: EditPlan) => boolean;
-  run: (ctx: AnimationContext, signal: AbortSignal) => Promise<void>;
 }
 
 /**
@@ -61,13 +45,15 @@ export interface DiffVisualizerProps {
   onPhaseChange?: (phase: Phase) => void;
 }
 
-const DURATIONS: Record<Phase, number> = {
+const DURATIONS: PhaseDurations = {
   idle: 0,
   deleting: 400,
   moving: 1000,
   inserting: 300,
   final: 0,
 };
+
+const DELETION_EXIT_DELAY = 150;
 
 // Debug/inspection: slow down all timings (phase delays and per-letter transitions)
 // Set to 1 for normal speed. Current debugging value halved to 2.5 to run 2x faster than before.
@@ -83,135 +69,25 @@ function checkAborted(signal: AbortSignal): void {
   }
 }
 
-/**
- * Phase: Idle
- * Renders the initial source text before animation begins.
- *
- * Requires: plan.letters.idle to contain the source characters with stable ids.
- */
-async function performIdlePhase(ctx: AnimationContext): Promise<void> {
-  ctx.setState({
-    phase: 'idle',
-    letters: ctx.plan.letters.idle,
-    deletingIds: new Set(),
-  });
-}
-
-/**
- * Phase: Deleting
- * Marks characters to be deleted in red, waits for visibility, then removes them.
- *
- * Requires: plan.deletions + plan.letters.idle (pre-delete) and plan.letters.afterDelete (post-delete) snapshots.
- */
-async function performDeletingPhase(
-  ctx: AnimationContext,
+async function playAnimationScript(
+  frames: AnimationFrame[],
+  setState: (state: AnimationState | ((prev: AnimationState) => AnimationState)) => void,
+  wait: (ms: number) => Promise<void>,
   signal: AbortSignal
 ): Promise<void> {
-  checkAborted(signal);
-  // mark to-be-deleted ids and keep them visible in red for the whole deletion duration
-  const deletingIds = new Set(ctx.plan.deletions.map((i) => `src-${i}`));
-  ctx.setState({
-    phase: 'deleting',
-    letters: ctx.plan.letters.idle,
-    deletingIds,
-  });
-  // ensure frame renders with red before timing
-  await new Promise(requestAnimationFrame);
-  checkAborted(signal);
-  // hold this state for the full deletion duration so red is noticeable
-  await ctx.wait(DURATIONS.deleting);
-  checkAborted(signal);
-  // now remove the deletions to trigger exit animations
-  ctx.setState({
-    phase: 'deleting',
-    letters: ctx.plan.letters.afterDelete,
-    deletingIds,
-  });
-  // brief pause to allow exit animations to complete before moving phase
-  await ctx.wait(150);
-  checkAborted(signal);
+  for (const frame of frames) {
+    checkAborted(signal);
+    setState({
+      phase: frame.phase,
+      letters: frame.letters,
+      deletingIds: new Set(frame.deletingIds),
+    });
+    // ensure DOM paints before waiting for duration
+    await new Promise(requestAnimationFrame);
+    checkAborted(signal);
+    await wait(frame.duration);
+  }
 }
-
-/**
- * Phase: Moving
- * Reorders surviving characters into their target positions (triggers FLIP animation).
- *
- * Requires: plan.letters.moving sorted by target positions of survivor pairs.
- */
-async function performMovingPhase(
-  ctx: AnimationContext,
-  signal: AbortSignal
-): Promise<void> {
-  checkAborted(signal);
-  ctx.setState({
-    phase: 'moving',
-    letters: ctx.plan.letters.moving,
-    deletingIds: new Set(),
-  });
-  await ctx.wait(DURATIONS.moving);
-  checkAborted(signal);
-}
-
-/**
- * Phase: Inserting
- * Adds new characters at their final positions (triggers enter animations).
- *
- * Requires: plan.letters.final (target order with survivor ids + insertion ids).
- */
-async function performInsertingPhase(
-  ctx: AnimationContext,
-  signal: AbortSignal
-): Promise<void> {
-  checkAborted(signal);
-  ctx.setState({
-    phase: 'inserting',
-    letters: ctx.plan.letters.final,
-    deletingIds: new Set(),
-  });
-  await ctx.wait(DURATIONS.inserting);
-  checkAborted(signal);
-}
-
-/**
- * Phase: Final
- * Animation complete, returns control to the component.
- */
-async function performFinalPhase(ctx: AnimationContext): Promise<void> {
-  // Phase transitions to 'final' while keeping current letters
-  // We use a functional update to preserve the current letters from inserting phase
-  ctx.setState((prev) => ({
-    ...prev,
-    phase: 'final',
-  }));
-}
-
-const PHASES: PhaseDefinition[] = [
-  {
-    name: 'idle',
-    shouldRun: () => true,
-    run: (ctx) => performIdlePhase(ctx),
-  },
-  {
-    name: 'deleting',
-    shouldRun: (plan) => plan.shouldDelete,
-    run: performDeletingPhase,
-  },
-  {
-    name: 'moving',
-    shouldRun: (plan) => plan.shouldMove,
-    run: performMovingPhase,
-  },
-  {
-    name: 'inserting',
-    shouldRun: (plan) => plan.shouldInsert,
-    run: performInsertingPhase,
-  },
-  {
-    name: 'final',
-    shouldRun: () => true,
-    run: (ctx) => performFinalPhase(ctx),
-  },
-];
 
 /**
  * DiffVisualizer - Generic text diff animation component
@@ -263,6 +139,20 @@ export default function DiffVisualizer({
     [clampDuration]
   );
 
+  const animationFrames = useMemo(() => {
+    const clampedDurations: PhaseDurations = {
+      idle: clampDuration(DURATIONS.idle),
+      deleting: clampDuration(DURATIONS.deleting),
+      moving: clampDuration(DURATIONS.moving),
+      inserting: clampDuration(DURATIONS.inserting),
+      final: clampDuration(DURATIONS.final),
+    };
+    return buildAnimationScript(plan, {
+      durations: clampedDurations,
+      deletionHoldMs: clampDuration(DELETION_EXIT_DELAY),
+    });
+  }, [plan, clampDuration]);
+
   const moverIds = useMemo(() => {
     const ids = new Set<string>();
     plan.moves.forEach((m) => ids.add(`src-${m.fromIndex}`));
@@ -271,10 +161,13 @@ export default function DiffVisualizer({
   }, [plan]);
 
   // Consolidated animation state
-  const [animationState, setAnimationState] = useState<AnimationState>({
-    phase: 'idle',
-    letters: plan.letters.idle,
-    deletingIds: new Set(),
+  const [animationState, setAnimationState] = useState<AnimationState>(() => {
+    const firstFrame = animationFrames[0];
+    return {
+      phase: firstFrame?.phase ?? 'idle',
+      letters: firstFrame?.letters ?? plan.letters.idle,
+      deletingIds: new Set(firstFrame?.deletingIds ?? []),
+    };
   });
 
   const runningRef = useRef(false);
@@ -282,12 +175,13 @@ export default function DiffVisualizer({
 
   // Reset animation state when source or target changes
   useEffect(() => {
+    const firstFrame = animationFrames[0];
     setAnimationState({
-      phase: 'idle',
-      letters: plan.letters.idle,
-      deletingIds: new Set(),
+      phase: firstFrame?.phase ?? 'idle',
+      letters: firstFrame?.letters ?? plan.letters.idle,
+      deletingIds: new Set(firstFrame?.deletingIds ?? []),
     });
-  }, [plan]);
+  }, [plan, animationFrames]);
 
   // Orchestrate phases when animateSignal changes
   useEffect(() => {
@@ -310,19 +204,9 @@ export default function DiffVisualizer({
           maxDuration: clampDuration(ms),
         });
 
-      // Build animation context
-      const ctx: AnimationContext = {
-        plan,
-        setState: setAnimationState,
-        wait,
-      };
-
       try {
-        // Execute animation phases in sequence based on declarative config
-        for (const phase of PHASES) {
-          if (!phase.shouldRun(ctx.plan)) continue;
-          await phase.run(ctx, signal);
-        }
+        // Execute animation frames produced by the animation script
+        await playAnimationScript(animationFrames, setAnimationState, wait, signal);
 
         onAnimationComplete?.();
       } catch (error) {
@@ -345,7 +229,7 @@ export default function DiffVisualizer({
       runningRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [animateSignal]);
+  }, [animateSignal, animationFrames, clampDuration]);
 
   // Handle external reset without animating
   useEffect(() => {
@@ -353,14 +237,15 @@ export default function DiffVisualizer({
     // Bring the view back to the initial state instantly
     abortControllerRef.current?.abort(); // cancel any in-flight animation
     runningRef.current = false;
+    const firstFrame = animationFrames[0];
     setAnimationState({
-      phase: 'idle',
-      letters: plan.letters.idle,
-      deletingIds: new Set(),
+      phase: firstFrame?.phase ?? 'idle',
+      letters: firstFrame?.letters ?? plan.letters.idle,
+      deletingIds: new Set(firstFrame?.deletingIds ?? []),
     });
     // do not call onAnimationStart/Complete
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetSignal, plan]);
+  }, [resetSignal, plan, animationFrames]);
 
   // Notify parent when phase changes
   useEffect(() => {
