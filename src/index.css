@@ -262,6 +262,12 @@ body {
   font-size: var(--font-medium);
 }
 
+.info-text {
+  color: var(--color-light-gray);
+  font-size: var(--font-medium);
+  text-align: center;
+}
+
 /* Animation color semantics */
 .text-deletion {
   color: #ef4444; /* red-500 */

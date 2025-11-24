@@ -23,6 +23,7 @@ function App() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [underlineActive, setUnderlineActive] = useState(false);
   const [copiedWord, setCopiedWord] = useState<string | null>(null);
+  const [realWordMessage, setRealWordMessage] = useState<string | null>(null);
   const copyTimeoutRef = useRef<number | null>(null);
   const transitionTimeoutRef = useRef<number | null>(null);
   const runTokenRef = useRef(0);
@@ -72,7 +73,7 @@ function App() {
     triggerAnimation();
   };
 
-  const extractWord = (text: string) => text.trim().split(/\s+/)[0] ?? '';
+  const extractWord = (text: string) => text.trim().split(/\s+/)[0]?.toLowerCase() ?? '';
 
   const fetchSuggestions = async (word: string) => {
     if (!spellService.isReady()) {
@@ -95,12 +96,13 @@ function App() {
 
   const goToSuggestions = async (wordInput: string) => {
     setClipboardError(null);
+    setRealWordMessage(null);
     const firstWord = extractWord(wordInput);
     if (!firstWord) {
       setClipboardError('Enter a word to begin');
       return;
     }
-    setSource(firstWord);
+    setSource(firstWord.toLowerCase());
     setTarget('');
     setSuggestions([]);
     setRunning(false);
@@ -116,6 +118,7 @@ function App() {
 
   const onPasteFromClipboard = async () => {
     setClipboardError(null);
+    setRealWordMessage(null);
     try {
       const text = await navigator.clipboard.readText();
       if (!text) {
@@ -149,6 +152,18 @@ function App() {
     }
   };
 
+  const handleRealWord = () => {
+    clearCopyIndicator();
+    clearTransitionTimer();
+    setRealWordMessage("That's a real word, please give me a misspelled one.");
+    setStage('intro');
+    setTarget('');
+    setSuggestions([]);
+    setRunning(false);
+    setHasCompletedRun(false);
+    setUnderlineActive(false);
+  };
+
   const scheduleAnimationTransition = (word: string) => {
     clearTransitionTimer();
     transitionTimeoutRef.current = window.setTimeout(() => {
@@ -164,14 +179,19 @@ function App() {
   const onSuggestionClick = async (word: string) => {
     if (running) return;
     setClipboardError(null);
+    const normalizedWord = word.toLowerCase();
+    if (normalizedWord === source) {
+      handleRealWord();
+      return;
+    }
     try {
-      await navigator.clipboard.writeText(word);
-      setCopiedWord(word);
+      await navigator.clipboard.writeText(normalizedWord);
+      setCopiedWord(normalizedWord);
       if (copyTimeoutRef.current) {
         window.clearTimeout(copyTimeoutRef.current);
       }
       copyTimeoutRef.current = window.setTimeout(() => setCopiedWord(null), 2000);
-      scheduleAnimationTransition(word);
+      scheduleAnimationTransition(normalizedWord);
     } catch (error) {
       setClipboardError('Unable to copy to clipboard');
     }
@@ -201,6 +221,7 @@ function App() {
         actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
         disabled={serviceLoading}
       />
+      {realWordMessage && <div className="info-text">{realWordMessage}</div>}
     </div>
   );
 
