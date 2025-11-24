@@ -27,6 +27,7 @@ interface AnimationState {
  * Contains the computed data and state setters needed to orchestrate the animation.
  */
 interface AnimationContext {
+  source: string;
   sourceLetters: LetterItem[];
   movingLetters: LetterItem[];
   targetToSourceMap: Map<number, number>;
@@ -254,6 +255,15 @@ export default function DiffVisualizer({
   const runningRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Reset animation state when source or target changes
+  useEffect(() => {
+    setAnimationState({
+      phase: 'idle',
+      letters: sourceLetters,
+      deletingIds: new Set(),
+    });
+  }, [source, target, sourceLetters]);
+
   // Orchestrate phases when animateSignal changes
   useEffect(() => {
     if (animateSignal <= 0) return; // only run when explicitly triggered via Play
@@ -277,6 +287,7 @@ export default function DiffVisualizer({
 
       // Build animation context
       const ctx: AnimationContext = {
+        source,
         sourceLetters,
         movingLetters,
         targetToSourceMap,
@@ -287,11 +298,25 @@ export default function DiffVisualizer({
       };
 
       try {
-        // Execute animation phases in sequence
+        // Execute animation phases in sequence, skipping empty phases
         await performIdlePhase(ctx);
-        await performDeletingPhase(ctx, signal);
-        await performMovingPhase(ctx, signal);
-        await performInsertingPhase(ctx, signal);
+        
+        // Only run deleting phase if there are deletions
+        if (ctx.plan.deletions.length > 0) {
+          await performDeletingPhase(ctx, signal);
+        }
+        
+        // Run moving phase if letters need to reorder (survivors exist and source != target)
+        // This handles both explicit moves and anagram cases
+        if (ctx.movingLetters.length > 0 && ctx.source !== ctx.target) {
+          await performMovingPhase(ctx, signal);
+        }
+        
+        // Only run inserting phase if there are insertions
+        if (ctx.plan.insertions.length > 0) {
+          await performInsertingPhase(ctx, signal);
+        }
+        
         await performFinalPhase(ctx);
 
         onAnimationComplete?.();

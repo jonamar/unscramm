@@ -25,7 +25,17 @@ Unscramm is an interactive "animated spellcheck" that shows how a misspelled wor
 
 ## Chrome Extension
 
-The app is packaged as a Manifest V3 Chrome extension with a simple popup UI.
+The app is packaged as a Manifest V3 Chrome extension with a popup UI and built-in spell-checking capabilities.
+
+### Features
+
+- **Built-in Dictionary**: Includes a frequency-based English dictionary (~370k words) for offline spell suggestions
+- **Smart Suggestions**: Uses Damerau-Levenshtein distance to find the best corrections for misspelled words
+- **Three-Stage Flow**:
+  1. **Input**: Paste from clipboard or type a word
+  2. **Suggestions**: View ranked spelling suggestions
+  3. **Animation**: Watch the transformation from misspelled to correct word
+- **Animated Visualization**: Color-coded character transitions (red=deletions, green=insertions, yellow=moves)
 
 ### Building the Extension
 
@@ -38,6 +48,7 @@ This builds the extension to the `dist/` folder, including:
 - `index.html` - Popup UI
 - `assets/` - Bundled JS, CSS, and images
 - `icon*.svg` - Extension icons
+- `frequency-dictionary.txt` - Built-in word frequency dictionary
 
 ### Loading in Chrome
 

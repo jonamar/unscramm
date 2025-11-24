@@ -207,3 +207,16 @@ body {
   color: var(--color-red);
   font-size: var(--font-medium);
 }
+
+/* Animation color semantics */
+.text-deletion {
+  color: #ef4444; /* red-500 */
+}
+
+.text-insertion {
+  color: #22c55e; /* green-500 */
+}
+
+.text-move {
+  color: #eab308; /* yellow-500 */
+}

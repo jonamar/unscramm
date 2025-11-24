@@ -21,4 +21,13 @@ describe('computeEditPlan', () => {
     const hasAAt1 = plan.insertions.some((ins) => ins.letter === 'a' && ins.position === 1);
     expect(hasAAt1).toBe(true);
   });
+
+  it('recieve → receive (anagram): no deletions or insertions', () => {
+    const plan = computeEditPlan('recieve', 'receive');
+    // Anagrams should have no deletions or insertions, just reordering
+    expect(plan.deletions).toEqual([]);
+    expect(plan.insertions).toEqual([]);
+    // Should have highlight indices for the letters that move
+    expect(plan.highlightIndices.length).toBeGreaterThan(0);
+  });
 });

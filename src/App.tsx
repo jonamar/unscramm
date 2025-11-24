@@ -95,6 +95,9 @@ function App() {
     setRunning(false);
     setStage('suggestions');
     setUnderlineActive(true);
+    // Reset animation signals so the next animation starts fresh
+    setAnimateSignal(0);
+    setResetSignal(0);
     await fetchSuggestions(firstWord);
   };
 
@@ -114,9 +117,8 @@ function App() {
 
   const onSelectSuggestion = (suggestion: Suggestion) => {
     setTarget(suggestion.word);
-    setTimeout(() => {
-      triggerAnimation();
-    }, 0);
+    setStage('animation');
+    setUnderlineActive(true);
   };
 
   const onSubmitInput = async () => {
