@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { ClipboardPaste, CornerDownLeft, Play, RotateCcw, Check } from 'lucide-react';
+import { ClipboardPaste, CornerDownLeft, Play, RotateCcw, Check, ChevronDown, Rabbit, Turtle, Snail } from 'lucide-react';
 import DiffVisualizer from './components/DiffVisualizer';
 import logoUrl from './assets/unscramm-icon.png';
 import { spellService, type Suggestion } from './services/spell-suggestions';
 import { CircleButton, InputField, RectButton } from './components/DesignSystem';
 
 type Stage = 'intro' | 'suggestions' | 'animation';
+type AnimationSpeed = 'snail' | 'turtle' | 'rabbit';
+
+const SPEED_CONFIG = {
+  snail: { multiplier: 4, icon: Snail, label: 'Snail' },      // 4x slower (0.25x speed)
+  turtle: { multiplier: 2, icon: Turtle, label: 'Turtle' },   // 2x slower (0.5x speed)
+  rabbit: { multiplier: 1, icon: Rabbit, label: 'Rabbit' },   // 1x normal speed
+};
 
 function App() {
   const [stage, setStage] = useState<Stage>('intro');
@@ -23,8 +30,12 @@ function App() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [underlineActive, setUnderlineActive] = useState(false);
   const [copiedWord, setCopiedWord] = useState<string | null>(null);
+  const [copyDots, setCopyDots] = useState(0);
+  const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeed>('turtle');
+  const [speedDropdownOpen, setSpeedDropdownOpen] = useState(false);
   const copyTimeoutRef = useRef<number | null>(null);
   const transitionTimeoutRef = useRef<number | null>(null);
+  const dotIntervalRef = useRef<number | null>(null);
   const runTokenRef = useRef(0);
 
   // Initialize spell service on mount
@@ -139,7 +150,12 @@ function App() {
       window.clearTimeout(copyTimeoutRef.current);
       copyTimeoutRef.current = null;
     }
+    if (dotIntervalRef.current) {
+      window.clearInterval(dotIntervalRef.current);
+      dotIntervalRef.current = null;
+    }
     setCopiedWord(null);
+    setCopyDots(0);
   };
 
   const clearTransitionTimer = () => {
@@ -152,6 +168,22 @@ function App() {
 
   const scheduleAnimationTransition = (word: string) => {
     clearTransitionTimer();
+    
+    // Start dot animation
+    setCopyDots(0);
+    dotIntervalRef.current = window.setInterval(() => {
+      setCopyDots(prev => {
+        if (prev >= 3) {
+          if (dotIntervalRef.current) {
+            window.clearInterval(dotIntervalRef.current);
+            dotIntervalRef.current = null;
+          }
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 250); // Update every 250ms for 1 second total
+    
     transitionTimeoutRef.current = window.setTimeout(() => {
       setTarget(word);
       setStage('animation');
@@ -186,6 +218,39 @@ function App() {
     };
   }, []);
 
+  // Close speed dropdown when clicking outside
+  useEffect(() => {
+    if (!speedDropdownOpen) return;
+    
+    const handleClickOutside = () => setSpeedDropdownOpen(false);
+    document.addEventListener('click', handleClickOutside);
+    
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [speedDropdownOpen]);
+
+  const renderFooterBar = () => (
+    <>
+      <div className="footer-bar">
+        <RectButton onClick={onPasteFromClipboard}>
+          <ClipboardPaste size={14} strokeWidth={1.5} />
+        </RectButton>
+        <InputField
+          value={inputValue}
+          onChange={setInputValue}
+          onAction={onSubmitInput}
+          actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
+          actionDisabled={serviceLoading}
+        />
+      </div>
+      <div className="footer-credit">
+        Made with care by{' '}
+        <a href="https://scrappykin.com" target="_blank" rel="noopener noreferrer">
+          Scrappy Kin
+        </a>
+      </div>
+    </>
+  );
+
   const renderIntroStage = () => (
     <div className="stage-intro">
       <img src={logoUrl} alt="Unscramm" className="intro-logo" />
@@ -203,6 +268,12 @@ function App() {
         actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
         disabled={serviceLoading}
       />
+      <div className="footer-credit absolute-bottom">
+        Made with care by{' '}
+        <a href="https://scrappykin.com" target="_blank" rel="noopener noreferrer">
+          Scrappy Kin
+        </a>
+      </div>
     </div>
   );
 
@@ -231,7 +302,7 @@ function App() {
               </RectButton>
               {copiedWord === suggestion.word && (
                 <span className="copy-hint-success">
-                  <Check size={12} strokeWidth={2} /> Copied
+                  <Check size={12} strokeWidth={2} /> Copied{'.'.repeat(copyDots)}
                 </span>
               )}
             </div>
@@ -240,18 +311,7 @@ function App() {
       ) : (
         <div className="text-light">Already spelled correctly</div>
       )}
-      <div className="footer-bar">
-        <RectButton onClick={onPasteFromClipboard}>
-          <ClipboardPaste size={14} strokeWidth={1.5} />
-        </RectButton>
-        <InputField
-          value={inputValue}
-          onChange={setInputValue}
-          onAction={onSubmitInput}
-          actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
-          actionDisabled={serviceLoading}
-        />
-      </div>
+      {renderFooterBar()}
     </div>
   );
 
@@ -275,6 +335,7 @@ function App() {
             resetSignal={resetSignal}
             onAnimationStart={() => {}}
             onAnimationComplete={onComplete}
+            speedMultiplier={2.5 * SPEED_CONFIG[animationSpeed].multiplier}
           />
         </div>
       </div>
@@ -290,19 +351,44 @@ function App() {
             />
           )}
         </CircleButton>
+        <div className="speed-selector">
+          <button
+            className="ds-rect-button speed-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSpeedDropdownOpen(!speedDropdownOpen);
+            }}
+            disabled={running}
+          >
+            {(() => {
+              const SpeedIcon = SPEED_CONFIG[animationSpeed].icon;
+              return <SpeedIcon size={14} strokeWidth={1.5} />;
+            })()}
+            <ChevronDown size={14} strokeWidth={1.5} />
+          </button>
+          {speedDropdownOpen && (
+            <div className="speed-dropdown">
+              {(Object.keys(SPEED_CONFIG) as AnimationSpeed[]).map((speed) => {
+                const config = SPEED_CONFIG[speed];
+                const SpeedIcon = config.icon;
+                return (
+                  <button
+                    key={speed}
+                    className="speed-option"
+                    onClick={() => {
+                      setAnimationSpeed(speed);
+                      setSpeedDropdownOpen(false);
+                    }}
+                  >
+                    <SpeedIcon size={14} strokeWidth={1.5} />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
-      <div className="footer-bar">
-        <RectButton onClick={onPasteFromClipboard}>
-          <ClipboardPaste size={14} strokeWidth={1.5} />
-        </RectButton>
-        <InputField
-          value={inputValue}
-          onChange={setInputValue}
-          onAction={onSubmitInput}
-          actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
-          actionDisabled={serviceLoading}
-        />
-      </div>
+      {renderFooterBar()}
     </div>
   );
 

@@ -43,6 +43,8 @@ export interface DiffVisualizerProps {
   onAnimationComplete?: () => void;
   /** Optional callback for phase changes (useful for status indicators) */
   onPhaseChange?: (phase: Phase) => void;
+  /** Optional speed multiplier for animation (default: 2.5) */
+  speedMultiplier?: number;
 }
 
 const DURATIONS: PhaseDurations = {
@@ -57,7 +59,7 @@ const DELETION_EXIT_DELAY = 150;
 
 // Debug/inspection: slow down all timings (phase delays and per-letter transitions)
 // Set to 1 for normal speed. Current debugging value halved to 2.5 to run 2x faster than before.
-const SPEED_MULTIPLIER = 2.5;
+const DEFAULT_SPEED_MULTIPLIER = 2.5;
 
 /**
  * Checks if the animation has been aborted.
@@ -126,6 +128,7 @@ export default function DiffVisualizer({
   onAnimationStart,
   onAnimationComplete,
   onPhaseChange,
+  speedMultiplier = DEFAULT_SPEED_MULTIPLIER,
 }: DiffVisualizerProps) {
   const prefersReduced = usePrefersReducedMotion();
   const plan = useMemo(() => computeEditPlan(source, target), [source, target]);
@@ -135,8 +138,8 @@ export default function DiffVisualizer({
   );
   const baseMotionDurationMs = 250;
   const motionTransitionSeconds = useMemo(
-    () => (clampDuration(baseMotionDurationMs) / 1000) * SPEED_MULTIPLIER,
-    [clampDuration]
+    () => (clampDuration(baseMotionDurationMs) / 1000) * speedMultiplier,
+    [clampDuration, speedMultiplier]
   );
 
   const animationFrames = useMemo(() => {
@@ -200,7 +203,7 @@ export default function DiffVisualizer({
       // Helper to delay with speed multiplier and reduced motion support
       const wait = (ms: number) =>
         delay(ms, {
-          speedMultiplier: SPEED_MULTIPLIER,
+          speedMultiplier,
           maxDuration: clampDuration(ms),
         });
 
