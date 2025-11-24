@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ClipboardPaste, CornerDownLeft, Play, RotateCcw } from 'lucide-react';
+import { ClipboardPaste, CornerDownLeft, Play, RotateCcw, Check } from 'lucide-react';
 import DiffVisualizer from './components/DiffVisualizer';
 import logoUrl from './assets/unscramm-icon.png';
 import { spellService, type Suggestion } from './services/spell-suggestions';
@@ -22,6 +22,9 @@ function App() {
   const [clipboardError, setClipboardError] = useState<string | null>(null);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [underlineActive, setUnderlineActive] = useState(false);
+  const [copiedWord, setCopiedWord] = useState<string | null>(null);
+  const copyTimeoutRef = useRef<number | null>(null);
+  const transitionTimeoutRef = useRef<number | null>(null);
   const runTokenRef = useRef(0);
 
   // Initialize spell service on mount
@@ -107,6 +110,7 @@ function App() {
     setAnimateSignal(0);
     setResetSignal(0);
     setHasCompletedRun(false);
+    setCopiedWord(null);
     await fetchSuggestions(firstWord);
   };
 
@@ -124,18 +128,61 @@ function App() {
     }
   };
 
-  const onSelectSuggestion = (suggestion: Suggestion) => {
-    setTarget(suggestion.word);
-    setStage('animation');
-    setUnderlineActive(true);
-    setHasCompletedRun(false);
-  };
-
   const onSubmitInput = async () => {
     if (!inputValue) return;
     await goToSuggestions(inputValue);
     setInputValue('');
   };
+
+  const clearCopyIndicator = () => {
+    if (copyTimeoutRef.current) {
+      window.clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = null;
+    }
+    setCopiedWord(null);
+  };
+
+  const clearTransitionTimer = () => {
+    if (transitionTimeoutRef.current) {
+      window.clearTimeout(transitionTimeoutRef.current);
+      transitionTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleAnimationTransition = (word: string) => {
+    clearTransitionTimer();
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      setTarget(word);
+      setStage('animation');
+      setUnderlineActive(true);
+      setHasCompletedRun(false);
+      clearCopyIndicator();
+      transitionTimeoutRef.current = null;
+    }, 1000);
+  };
+
+  const onSuggestionClick = async (word: string) => {
+    if (running) return;
+    setClipboardError(null);
+    try {
+      await navigator.clipboard.writeText(word);
+      setCopiedWord(word);
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = window.setTimeout(() => setCopiedWord(null), 2000);
+      scheduleAnimationTransition(word);
+    } catch (error) {
+      setClipboardError('Unable to copy to clipboard');
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      clearCopyIndicator();
+      clearTransitionTimer();
+    };
+  }, []);
 
   const renderIntroStage = () => (
     <div className="stage-intro">
@@ -172,14 +219,20 @@ function App() {
       ) : suggestions.length > 0 ? (
         <div className="suggestion-group">
           {suggestions.map((suggestion) => (
-            <RectButton
-              key={suggestion.word}
-              className="w-full justify-center"
-              onClick={() => onSelectSuggestion(suggestion)}
-              disabled={running}
-            >
-              {suggestion.word}
-            </RectButton>
+            <div className="suggestion-row" key={suggestion.word}>
+              <RectButton
+                className="justify-start"
+                onClick={() => onSuggestionClick(suggestion.word)}
+                disabled={running}
+              >
+                {suggestion.word}
+              </RectButton>
+              {copiedWord === suggestion.word && (
+                <span className="copy-hint-success">
+                  <Check size={12} strokeWidth={2} /> Copied
+                </span>
+              )}
+            </div>
           ))}
         </div>
       ) : (

@@ -43,6 +43,13 @@ body {
   position: relative;
 }
 
+#root {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 /* Single container with explicit 20px padding on all sides */
 .app-shell {
   width: 100%;
@@ -67,6 +74,8 @@ body {
   flex-direction: column;
   gap: var(--space-medium);
   align-items: flex-start;
+  align-self: flex-start;
+  width: fit-content;
   text-align: left;
 }
 
@@ -179,6 +188,39 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-small);
+}
+
+.suggestion-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+}
+
+.suggestion-row .ds-rect-button {
+  justify-content: flex-start;
+  width: auto;
+}
+
+.copy-hint {
+  background: transparent;
+  border: none;
+  color: var(--color-light-gray);
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+}
+
+.copy-hint-success {
+  color: #22c55e;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 12px;
+  white-space: nowrap;
 }
 
 .footer-bar {
