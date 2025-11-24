@@ -15,6 +15,7 @@ function App() {
   const [animateSignal, setAnimateSignal] = useState(0);
   const [resetSignal, setResetSignal] = useState(0);
   const [running, setRunning] = useState(false);
+  const [hasCompletedRun, setHasCompletedRun] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [serviceLoading, setServiceLoading] = useState(true);
   const [serviceError, setServiceError] = useState<string | null>(null);
@@ -39,26 +40,33 @@ function App() {
 
   const triggerAnimation = () => {
     setRunning(true);
+    setHasCompletedRun(false);
     runTokenRef.current += 1;
     setAnimateSignal((n) => n + 1);
     setUnderlineActive(true);
     setStage('animation');
   };
 
-  const onAnimate = () => {
-    if (running || !target) return;
-    triggerAnimation();
-  };
-
   const onComplete = () => {
     setRunning(false);
     setUnderlineActive(false);
+    setHasCompletedRun(true);
   };
 
   const onReset = () => {
     // Reset the view to the initial state without starting animation (even if running)
     setRunning(false); // unlock Play immediately in a single source of truth
     setResetSignal((n) => n + 1);
+    setHasCompletedRun(false);
+  };
+
+  const onPrimaryAction = () => {
+    if (running || !target) return;
+    if (hasCompletedRun) {
+      onReset();
+      return;
+    }
+    triggerAnimation();
   };
 
   const extractWord = (text: string) => text.trim().split(/\s+/)[0] ?? '';
@@ -98,6 +106,7 @@ function App() {
     // Reset animation signals so the next animation starts fresh
     setAnimateSignal(0);
     setResetSignal(0);
+    setHasCompletedRun(false);
     await fetchSuggestions(firstWord);
   };
 
@@ -119,6 +128,7 @@ function App() {
     setTarget(suggestion.word);
     setStage('animation');
     setUnderlineActive(true);
+    setHasCompletedRun(false);
   };
 
   const onSubmitInput = async () => {
@@ -200,11 +210,16 @@ function App() {
         {source} → {target}
       </div>
       <div className="flex items-center justify-center gap-4">
-        <CircleButton onClick={onAnimate} disabled={running}>
-          <Play size={14} strokeWidth={1.5} />
-        </CircleButton>
-        <CircleButton onClick={onReset}>
-          <RotateCcw size={14} strokeWidth={1.5} />
+        <CircleButton onClick={onPrimaryAction} disabled={running || !target}>
+          {hasCompletedRun && !running ? (
+            <RotateCcw size={14} strokeWidth={1.5} />
+          ) : (
+            <Play
+              size={14}
+              strokeWidth={1.5}
+              className={running || !target ? 'text-gray-500' : undefined}
+            />
+          )}
         </CircleButton>
       </div>
       <div className="footer-bar">
