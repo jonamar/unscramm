@@ -1,3 +1,13 @@
+<!-- 
+AUTO-SYNCED FILE — DO NOT EDIT HERE.
+
+Canonical source of truth:
+- Package: @your-scope/agentic-guides
+- Repo:    <FILL IN GITHUB URL LATER>
+
+Any edits must be made in the canonical repo and propagated via the sync script.
+-->
+
 # Agentic Refactoring Guide
 
 ## Core Principle
@@ -212,6 +222,10 @@ keyword-analyzer.ts   // Analyzes keywords
 - Adding configuration for things that never change
 - Creating abstractions to "future-proof" the code
 - Building frameworks when simple functions would work
+
+### Risk Asymmetry Blindness
+
+Treating code aesthetics as equivalent to functional reliability. Verbose code that works is cheaper than elegant code that breaks production paths. When in doubt, weight "does it work" over "is it pretty."
 
 ### 🚨 Language Red Flags:
 - "This will make it easier to..."
