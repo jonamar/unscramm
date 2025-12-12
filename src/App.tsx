@@ -6,10 +6,15 @@ import { IntroStage } from './components/IntroStage';
 import { SuggestionsStage } from './components/SuggestionsStage';
 import { AnimationStage } from './components/AnimationStage';
 import { useAnimationSpeed } from './hooks/useAnimationSpeed';
+import type { Platform } from './platform/types';
 
 type Stage = 'intro' | 'suggestions' | 'animation';
 
-function App() {
+interface AppProps {
+  platform: Platform;
+}
+
+function App({ platform }: AppProps) {
   const [stage, setStage] = useState<Stage>('intro');
   const [source, setSource] = useState('');
   const [target, setTarget] = useState('');
@@ -26,7 +31,7 @@ function App() {
   const [underlineActive, setUnderlineActive] = useState(false);
   const [copiedWord, setCopiedWord] = useState<string | null>(null);
   const [copyDots, setCopyDots] = useState(0);
-  const [animationSpeed, setAnimationSpeed] = useAnimationSpeed();
+  const [animationSpeed, setAnimationSpeed] = useAnimationSpeed(platform);
   const copyTimeoutRef = useRef<number | null>(null);
   const transitionTimeoutRef = useRef<number | null>(null);
   const dotIntervalRef = useRef<number | null>(null);
@@ -122,7 +127,7 @@ function App() {
   const onPasteFromClipboard = async () => {
     setClipboardError(null);
     try {
-      const text = await navigator.clipboard.readText();
+      const text = await platform.clipboard.readText();
       if (!text) {
         setClipboardError('Clipboard empty or inaccessible');
         return;
@@ -193,7 +198,7 @@ function App() {
     setClipboardError(null);
     const normalizedWord = word.toLowerCase();
     try {
-      await navigator.clipboard.writeText(normalizedWord);
+      await platform.clipboard.writeText(normalizedWord);
       setCopiedWord(normalizedWord);
       if (copyTimeoutRef.current) {
         window.clearTimeout(copyTimeoutRef.current);

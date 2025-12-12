@@ -16,11 +16,33 @@ Unscramm is an interactive "animated spellcheck" that shows how a misspelled wor
 - Accessibility-focused visualization for dyslexic readers, or anyone learning to read, to see how letters change through deletion, movement, and insertion.
 - A process experiment in rigorous, modular development where the majority of implementation is driven through AI-assisted workflows with clear specs and tests.
 
+## Multi-Platform Support
+
+**Unscramm runs on multiple platforms from a single codebase:**
+
+- 🌐 **Chrome Extension** - Browser popup with spell-checking
+- 🖥️ **Mac Menu Bar App** - Native macOS app via Tauri
+
+See **[PLATFORM-GUIDE.md](./PLATFORM-GUIDE.md)** for architecture details and platform-specific development.
+
+### Quick Start
+
+```bash
+# Chrome Extension
+npm install
+npm run dev:chrome          # Development
+npm run build:chrome        # Production build
+
+# Mac Menu Bar App (macOS only)
+npm run tauri:dev          # Development
+npm run tauri:build        # Production build
+```
+
 ## Getting Started
 
 - Install: `npm install`
-- Dev: `npm run dev`
-- Build: `npm run build`
+- Dev: `npm run dev` (defaults to Chrome extension)
+- Build: `npm run build` (defaults to Chrome extension)
 - Test (CI): `npm test`
 
 ## Chrome Extension
