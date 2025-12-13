@@ -14,6 +14,8 @@
   <string>UnscrammMenubar</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
+  <key>CFBundleIconFile</key>
+  <string>icon</string>
   <key>CFBundleShortVersionString</key>
   <string>0.0.0</string>
   <key>CFBundleVersion</key>

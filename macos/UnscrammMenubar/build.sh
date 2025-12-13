@@ -5,6 +5,7 @@ BUILD_DIR="$ROOT_DIR/.build"
 APP_DIR="$BUILD_DIR/UnscrammMenubar.app"
 WEB_SRC_DIR="$ROOT_DIR/../../dist-macos"
 WEB_DST_DIR="$APP_DIR/Contents/Resources/web"
+ICON_SRC="$ROOT_DIR/icon.icns"
 
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS"
@@ -12,6 +13,10 @@ mkdir -p "$APP_DIR/Contents/Resources"
 
 swiftc "$ROOT_DIR/main.swift" -O -o "$APP_DIR/Contents/MacOS/UnscrammMenubar" -framework AppKit -framework WebKit
 cp "$ROOT_DIR/Info.plist" "$APP_DIR/Contents/Info.plist"
+
+if [ -f "$ICON_SRC" ]; then
+  cp "$ICON_SRC" "$APP_DIR/Contents/Resources/icon.icns"
+fi
 
 rm -rf "$WEB_DST_DIR"
 mkdir -p "$WEB_DST_DIR"
