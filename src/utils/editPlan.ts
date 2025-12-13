@@ -40,6 +40,21 @@ interface PlanLetters {
 }
 
 /**
+ * Represents a replacement operation where a deletion and insertion occur at the same position.
+ * These should hold their space open during animation to show the positional relationship.
+ */
+export interface Replacement {
+  /** The source index of the deleted character */
+  sourceIndex: number;
+  /** The target index where the new character will be inserted */
+  targetIndex: number;
+  /** The character being deleted */
+  deletedChar: string;
+  /** The character being inserted */
+  insertedChar: string;
+}
+
+/**
  * The complete edit plan between two words
  */
 export interface EditPlan {
@@ -55,12 +70,54 @@ export interface EditPlan {
   survivorPairs: SurvivorPair[];
   /** Mapping of target index -> source index for surviving letters */
   targetToSourceMap: Record<number, number>;
+  /** Replacement pairs where a deletion and insertion occur at the same position */
+  replacements: Replacement[];
   /** Precomputed letter snapshots per phase */
   letters: PlanLetters;
   /** Whether each animation phase should execute */
   shouldDelete: boolean;
   shouldMove: boolean;
   shouldInsert: boolean;
+}
+
+/**
+ * Finds the minimum-cost matching between source and target indices for a single character.
+ * Uses a greedy approach that iteratively picks the pair with minimum distance.
+ * This minimizes total movement distance for characters of the same type.
+ * 
+ * @param srcIndices - Source positions of this character
+ * @param tgtIndices - Target positions where this character should go
+ * @returns Array of [sourceIndex, targetIndex] pairs
+ */
+function findMinCostMatching(
+  srcIndices: number[],
+  tgtIndices: number[]
+): Array<[number, number]> {
+  const pairs: Array<[number, number]> = [];
+  const usedSrc = new Set<number>();
+  const usedTgt = new Set<number>();
+  
+  // Create all possible pairings with their costs (distances)
+  const candidates: Array<{ src: number; tgt: number; cost: number }> = [];
+  for (const src of srcIndices) {
+    for (const tgt of tgtIndices) {
+      candidates.push({ src, tgt, cost: Math.abs(tgt - src) });
+    }
+  }
+  
+  // Sort by cost (prefer minimal movement)
+  candidates.sort((a, b) => a.cost - b.cost);
+  
+  // Greedily pick pairs with minimum cost
+  for (const { src, tgt } of candidates) {
+    if (!usedSrc.has(src) && !usedTgt.has(tgt)) {
+      pairs.push([src, tgt]);
+      usedSrc.add(src);
+      usedTgt.add(tgt);
+    }
+  }
+  
+  return pairs;
 }
 
 /**
@@ -113,21 +170,37 @@ export function computeEditPlan(sourceWord: string, targetWord: string): EditPla
     }
   }
 
-  // Build survivor mapping (pairs) by greedily matching target positions to the next unused kept source occurrence
-  const used = new Set<number>();
-  const pairs: Array<[number, number]> = [];
+  // Build survivor mapping (pairs) using minimum-cost matching to minimize total movement distance
+  // Group kept source indices by character
+  const sourceByChar: Record<string, number[]> = {};
+  for (const sIdx of keptSourceIndices) {
+    const ch = source[sIdx];
+    if (!sourceByChar[ch]) sourceByChar[ch] = [];
+    sourceByChar[ch].push(sIdx);
+  }
+
+  // Group target positions by character
+  const targetByChar: Record<string, number[]> = {};
   for (let tIdx = 0; tIdx < target.length; tIdx++) {
     const ch = target[tIdx];
-    // find next kept source index with same char not used
-    let found = -1;
-    for (const sIdx of keptSourceIndices) {
-      if (!used.has(sIdx) && source[sIdx] === ch) { found = sIdx; break; }
-    }
-    if (found >= 0) {
-      used.add(found);
-      pairs.push([found, tIdx]);
-    }
+    if (!targetByChar[ch]) targetByChar[ch] = [];
+    targetByChar[ch].push(tIdx);
   }
+
+  // For each character, find the optimal matching that minimizes total movement
+  const pairs: Array<[number, number]> = [];
+  for (const ch of Object.keys(sourceByChar)) {
+    const srcIndices = sourceByChar[ch];
+    const tgtIndices = targetByChar[ch] || [];
+    
+    // Use minimum-cost matching for this character
+    // For small arrays, we can use a simple greedy approach that prefers minimal distance
+    const matchedPairs = findMinCostMatching(srcIndices, tgtIndices);
+    pairs.push(...matchedPairs);
+  }
+  
+  // Sort pairs by target index for consistent processing
+  pairs.sort((a, b) => a[1] - b[1]);
 
   // Moves are pairs that break monotonic order (same check as before but on survivor pairs)
   const moves: Move[] = [];
@@ -160,13 +233,89 @@ export function computeEditPlan(sourceWord: string, targetWord: string): EditPla
     targetToSourceMap[tIdx] = sIdx;
   }
 
-  const idleLetters: PlanLetter[] = source.map((char, i) => ({ id: `src-${i}`, char }));
+  // Identify replacements: deletions that have a corresponding insertion at the same target position
+  // For laber → labor: deletion at source index 3 ('e') pairs with insertion at target index 3 ('o')
+  const replacements: Replacement[] = [];
+  const insertionByPosition = new Map<number, Insertion>();
+  for (const ins of insertions) {
+    insertionByPosition.set(ins.position, ins);
+  }
+  
+  // Map source deletion indices to their effective target positions
+  // A deletion at source index i, after accounting for other deletions before it,
+  // corresponds to a target position. We need to find which insertions fill those gaps.
   const deletionSet = new Set(deletions);
-  const afterDelete: PlanLetter[] = idleLetters.filter((_, idx) => !deletionSet.has(idx));
-  const movingLetters: PlanLetter[] = survivorPairs
-    .slice()
-    .sort((a, b) => a.targetIndex - b.targetIndex)
-    .map(({ sourceIndex, char }) => ({ id: `src-${sourceIndex}`, char }));
+  const replacementSourceIndices = new Set<number>();
+  const replacementTargetIndices = new Set<number>();
+  
+  for (const delIdx of deletions) {
+    // Find the effective position in the target by looking at what's around this deletion
+    // The deletion at source[delIdx] leaves a gap. If there's an insertion at the same
+    // logical position in the target, it's a replacement.
+    
+    // Count survivors before this deletion to find the target position
+    let survivorsBefore = 0;
+    for (const [sIdx] of pairs) {
+      if (sIdx < delIdx) survivorsBefore++;
+    }
+    
+    // The gap is at target position = survivorsBefore (0-indexed)
+    // But we also need to account for insertions before this position
+    // Actually, simpler: check if there's an insertion at a position where
+    // the surrounding survivors suggest a replacement
+    
+    // Find the insertion that would fill this gap
+    const ins = insertionByPosition.get(survivorsBefore);
+    if (ins) {
+      replacements.push({
+        sourceIndex: delIdx,
+        targetIndex: ins.position,
+        deletedChar: source[delIdx],
+        insertedChar: ins.letter,
+      });
+      replacementSourceIndices.add(delIdx);
+      replacementTargetIndices.add(ins.position);
+    }
+  }
+
+  const idleLetters: PlanLetter[] = source.map((char, i) => ({ id: `src-${i}`, char }));
+  
+  // For afterDelete: keep placeholder spaces for replacements, remove pure deletions
+  // Replacements use a placeholder character to hold the space open
+  const afterDelete: PlanLetter[] = [];
+  for (let idx = 0; idx < source.length; idx++) {
+    if (deletionSet.has(idx)) {
+      // Check if this is a replacement (has corresponding insertion)
+      if (replacementSourceIndices.has(idx)) {
+        // Keep a placeholder space to show the position is being replaced
+        afterDelete.push({ id: `placeholder-${idx}`, char: '\u00A0' }); // non-breaking space
+      }
+      // Pure deletions are removed (not added to afterDelete)
+    } else {
+      afterDelete.push(idleLetters[idx]);
+    }
+  }
+  
+  // For moving phase: include placeholders for replacements in their target positions
+  const movingLetters: PlanLetter[] = [];
+  const sortedSurvivors = survivorPairs.slice().sort((a, b) => a.targetIndex - b.targetIndex);
+  
+  // Build the moving phase by interleaving survivors and replacement placeholders
+  let survivorIdx = 0;
+  for (let tIdx = 0; tIdx < target.length; tIdx++) {
+    if (replacementTargetIndices.has(tIdx)) {
+      // Find the replacement for this target position
+      const repl = replacements.find(r => r.targetIndex === tIdx);
+      if (repl) {
+        movingLetters.push({ id: `placeholder-${repl.sourceIndex}`, char: '\u00A0' });
+      }
+    } else if (survivorIdx < sortedSurvivors.length && sortedSurvivors[survivorIdx].targetIndex === tIdx) {
+      const { sourceIndex, char } = sortedSurvivors[survivorIdx];
+      movingLetters.push({ id: `src-${sourceIndex}`, char });
+      survivorIdx++;
+    }
+  }
+  
   const finalLetters: PlanLetter[] = target.map((char, idx) => {
     const sourceIndex = targetToSourceMap[idx];
     if (sourceIndex !== undefined) {
@@ -193,6 +342,7 @@ export function computeEditPlan(sourceWord: string, targetWord: string): EditPla
     highlightIndices,
     survivorPairs,
     targetToSourceMap,
+    replacements,
     letters,
     shouldDelete,
     shouldMove,
@@ -201,46 +351,32 @@ export function computeEditPlan(sourceWord: string, targetWord: string): EditPla
 }
 
 /**
- * Identifies "true movers" - characters that break formation relative to other characters.
+ * Identifies "true movers" - characters that move a short distance (adjacent swaps).
  * 
- * A true mover is a character whose individual shift (targetIndex - sourceIndex) doesn't
- * match the most common bulk shift. These characters typically need special highlighting
- * during animation.
+ * Only highlights characters that move 1-2 positions, making the animation feel like
+ * a clarification of the misspelling rather than a magic trick. For example:
+ * - recieve → receive: the 'i' and 'e' swap (distance 1) - HIGHLIGHT
+ * - repetative → repetitive: the second 'i' moves far - DON'T HIGHLIGHT
  * 
- * @param pairs - Array of [sourceIndex, targetIndex] pairs from the LCS result
- * @returns Array of source indices to highlight as true movers
+ * @param pairs - Array of [sourceIndex, targetIndex] pairs from the survivor mapping
+ * @param maxMoveDistance - Maximum distance to consider as a "local" move (default: 1)
+ * @returns Array of source indices to highlight as adjacent movers
  */
-export function identifyTrueMovers(pairs: Array<[number, number]>): number[] {
+export function identifyTrueMovers(
+  pairs: Array<[number, number]>,
+  maxMoveDistance: number = 1
+): number[] {
   // If we have 0-1 pairs, there are no true movers to identify
   if (pairs.length <= 1) {
     return [];
   }
 
-  // Count the frequency of each shift value
-  const shiftCounts: Record<number, number> = {};
-  
-  // Calculate shift for each pair and tally the counts
-  for (const [sIdx, tIdx] of pairs) {
-    const shift = tIdx - sIdx;
-    shiftCounts[shift] = (shiftCounts[shift] || 0) + 1;
-  }
-
-  // Find the most common shift value (the "bulk shift")
-  let bulkShift = 0;
-  let maxCount = 0;
-  
-  for (const [shift, count] of Object.entries(shiftCounts)) {
-    if (count > maxCount) {
-      maxCount = count;
-      bulkShift = parseInt(shift, 10);
-    }
-  }
-
-  // Collect source indices of characters whose shift doesn't match the bulk shift
   const highlightIndices: number[] = [];
   
   for (const [sIdx, tIdx] of pairs) {
-    if ((tIdx - sIdx) !== bulkShift) {
+    const moveDistance = Math.abs(tIdx - sIdx);
+    // Only highlight if the character actually moves AND moves a short distance
+    if (moveDistance > 0 && moveDistance <= maxMoveDistance) {
       highlightIndices.push(sIdx);
     }
   }
