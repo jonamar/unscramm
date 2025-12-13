@@ -166,10 +166,57 @@ final class AppSchemeHandler: NSObject, WKURLSchemeHandler {
   }
 }
 
+final class WebBridge: NSObject, WKScriptMessageHandler {
+  private weak var webView: WKWebView?
+
+  init(webView: WKWebView) {
+    self.webView = webView
+    super.init()
+  }
+
+  func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    _ = userContentController
+    guard message.name == "unscramm" else { return }
+    guard let body = message.body as? [String: Any] else { return }
+    guard let type = body["type"] as? String else { return }
+    guard let id = body["id"] as? Int else { return }
+
+    switch type {
+    case "clipboard.read":
+      let text = NSPasteboard.general.string(forType: .string) ?? ""
+      respond(id: id, ok: true, result: text)
+    case "clipboard.write":
+      let text = body["text"] as? String ?? ""
+      NSPasteboard.general.clearContents()
+      _ = NSPasteboard.general.setString(text, forType: .string)
+      respond(id: id, ok: true, result: true)
+    default:
+      respond(id: id, ok: false, error: "unknown message type")
+    }
+  }
+
+  private func respond(id: Int, ok: Bool, result: Any? = nil, error: String? = nil) {
+    guard let webView else { return }
+    var payload: [String: Any] = ["id": id, "ok": ok]
+    if let result { payload["result"] = result }
+    if let error { payload["error"] = error }
+
+    guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []),
+          let json = String(data: data, encoding: .utf8) else {
+      return
+    }
+
+    let js = "window.__unscrammNativeResponse && window.__unscrammNativeResponse(\(json));"
+    webView.evaluateJavaScript(js)
+  }
+}
+
 final class PanelController: NSObject, WKNavigationDelegate {
   private(set) var panel: NSPanel
   private let webView: WKWebView
   private let schemeHandler: AppSchemeHandler
+  private let bridge: WebBridge
+  private let debugWebView: Bool
   private var eventMonitor: Any?
 
   override init() {
@@ -178,71 +225,7 @@ final class PanelController: NSObject, WKNavigationDelegate {
     quitButton.translatesAutoresizingMaskIntoConstraints = false
 
     let contentController = WKUserContentController()
-    let errorScriptSource = """
-      (function(){
-        function renderError(title, message) {
-          try {
-            const existing = document.getElementById('__unscramm_error__');
-            if (existing) existing.remove();
-            const wrap = document.createElement('div');
-            wrap.id = '__unscramm_error__';
-            wrap.style.position = 'fixed';
-            wrap.style.left = '8px';
-            wrap.style.right = '8px';
-            wrap.style.bottom = '8px';
-            wrap.style.padding = '10px';
-            wrap.style.background = 'rgba(0,0,0,0.85)';
-            wrap.style.border = '1px solid rgba(255,255,255,0.15)';
-            wrap.style.borderRadius = '8px';
-            wrap.style.color = '#fff';
-            wrap.style.fontFamily = '-apple-system';
-            wrap.style.fontSize = '12px';
-            wrap.style.zIndex = '999999';
-            const header = document.createElement('div');
-            header.style.fontWeight = '700';
-            header.style.marginBottom = '6px';
-            header.textContent = String(title);
-
-            const pre = document.createElement('pre');
-            pre.style.whiteSpace = 'pre-wrap';
-            pre.style.margin = '0';
-            pre.textContent = String(message);
-
-            wrap.appendChild(header);
-            wrap.appendChild(pre);
-            document.body.appendChild(wrap);
-          } catch (_) {}
-        }
-
-        window.addEventListener('error', function(e) {
-          try {
-            const message = (e && e.message) || 'unknown error';
-            const filename = (e && e.filename) || '';
-            const lineno = (e && e.lineno) || '';
-            const colno = (e && e.colno) || '';
-            const stack = (e && e.error && e.error.stack) ? '\n\n' + e.error.stack : '';
-            const location = filename ? (filename + ':' + lineno + ':' + colno) : '';
-            renderError('JS error', message + (location ? ('\n' + location) : '') + stack);
-          } catch (_) {
-            const msg = (e && (e.message || (e.error && e.error.stack) || e.error)) || 'unknown error';
-            renderError('JS error', msg);
-          }
-        });
-
-        window.addEventListener('unhandledrejection', function(e) {
-          try {
-            const reason = (e && e.reason) || 'unknown rejection';
-            const msg = (reason && (reason.stack || reason.message)) || String(reason);
-            renderError('Unhandled promise rejection', msg);
-          } catch (_) {
-            const reason = (e && e.reason && (e.reason.stack || e.reason.message)) || (e && e.reason) || 'unknown rejection';
-            renderError('Unhandled promise rejection', reason);
-          }
-        });
-      })();
-    """
-    let errorScript = WKUserScript(source: errorScriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: true)
-    contentController.addUserScript(errorScript)
+    debugWebView = UserDefaults.standard.bool(forKey: "UnscrammWebDebug")
 
     let resourcesUrl = Bundle.main.resourceURL
     let webRootUrl = resourcesUrl?.appendingPathComponent("web", isDirectory: true)
@@ -256,6 +239,77 @@ final class PanelController: NSObject, WKNavigationDelegate {
     webView = WKWebView(frame: .zero, configuration: config)
     webView.translatesAutoresizingMaskIntoConstraints = false
     webView.setValue(false, forKey: "drawsBackground")
+
+    bridge = WebBridge(webView: webView)
+    contentController.add(bridge, name: "unscramm")
+
+    if debugWebView {
+      let errorScriptSource = """
+        (function(){
+          function renderError(title, message) {
+            try {
+              const existing = document.getElementById('__unscramm_error__');
+              if (existing) existing.remove();
+              const wrap = document.createElement('div');
+              wrap.id = '__unscramm_error__';
+              wrap.style.position = 'fixed';
+              wrap.style.left = '8px';
+              wrap.style.right = '8px';
+              wrap.style.bottom = '8px';
+              wrap.style.padding = '10px';
+              wrap.style.background = 'rgba(0,0,0,0.85)';
+              wrap.style.border = '1px solid rgba(255,255,255,0.15)';
+              wrap.style.borderRadius = '8px';
+              wrap.style.color = '#fff';
+              wrap.style.fontFamily = '-apple-system';
+              wrap.style.fontSize = '12px';
+              wrap.style.zIndex = '999999';
+              const header = document.createElement('div');
+              header.style.fontWeight = '700';
+              header.style.marginBottom = '6px';
+              header.textContent = String(title);
+
+              const pre = document.createElement('pre');
+              pre.style.whiteSpace = 'pre-wrap';
+              pre.style.margin = '0';
+              pre.textContent = String(message);
+
+              wrap.appendChild(header);
+              wrap.appendChild(pre);
+              document.body.appendChild(wrap);
+            } catch (_) {}
+          }
+
+          window.addEventListener('error', function(e) {
+            try {
+              const message = (e && e.message) || 'unknown error';
+              const filename = (e && e.filename) || '';
+              const lineno = (e && e.lineno) || '';
+              const colno = (e && e.colno) || '';
+              const stack = (e && e.error && e.error.stack) ? '\n\n' + e.error.stack : '';
+              const location = filename ? (filename + ':' + lineno + ':' + colno) : '';
+              renderError('JS error', message + (location ? ('\n' + location) : '') + stack);
+            } catch (_) {
+              const msg = (e && (e.message || (e.error && e.error.stack) || e.error)) || 'unknown error';
+              renderError('JS error', msg);
+            }
+          });
+
+          window.addEventListener('unhandledrejection', function(e) {
+            try {
+              const reason = (e && e.reason) || 'unknown rejection';
+              const msg = (reason && (reason.stack || reason.message)) || String(reason);
+              renderError('Unhandled promise rejection', msg);
+            } catch (_) {
+              const reason = (e && e.reason && (e.reason.stack || e.reason.message)) || (e && e.reason) || 'unknown rejection';
+              renderError('Unhandled promise rejection', reason);
+            }
+          });
+        })();
+      """ + "\n//# sourceURL=unscramm-debug-user-script.js\n"
+      let errorScript = WKUserScript(source: errorScriptSource, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+      contentController.addUserScript(errorScript)
+    }
 
     let container = NSVisualEffectView()
     container.material = .hudWindow
@@ -317,6 +371,7 @@ final class PanelController: NSObject, WKNavigationDelegate {
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    if !debugWebView { return }
     let js = """
       (async function(){
         const existing = document.getElementById('__unscramm_loaded__');
@@ -375,7 +430,7 @@ final class PanelController: NSObject, WKNavigationDelegate {
           document.head.appendChild(probe);
         }
       })();
-    """
+    """ + "\n//# sourceURL=unscramm-debug-didFinish.js\n"
     webView.evaluateJavaScript(js)
   }
 
