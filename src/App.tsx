@@ -36,6 +36,7 @@ function App({ platform }: AppProps) {
   const transitionTimeoutRef = useRef<number | null>(null);
   const dotIntervalRef = useRef<number | null>(null);
   const runTokenRef = useRef(0);
+  const hasAttemptedAutoPaste = useRef(false);
 
   // Initialize spell service on mount
   useEffect(() => {
@@ -50,6 +51,26 @@ function App({ platform }: AppProps) {
     };
     init();
   }, []);
+
+  // Auto-paste from clipboard on app load - always try
+  useEffect(() => {
+    if (hasAttemptedAutoPaste.current) return;
+    hasAttemptedAutoPaste.current = true;
+
+    const attemptAutoPaste = async () => {
+      try {
+        const text = await platform.clipboard.readText();
+        if (text && text.trim()) {
+          await goToSuggestions(text);
+        }
+      } catch (error) {
+        // Clipboard access failed, stay on intro screen silently
+        console.debug('Auto-paste failed:', error);
+      }
+    };
+
+    attemptAutoPaste();
+  }, [platform]);
 
   const triggerAnimation = () => {
     setRunning(true);
