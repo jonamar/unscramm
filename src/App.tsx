@@ -37,6 +37,7 @@ function App({ platform }: AppProps) {
   const dotIntervalRef = useRef<number | null>(null);
   const runTokenRef = useRef(0);
   const hasAttemptedAutoPaste = useRef(false);
+  const goToSuggestionsRef = useRef<(text: string) => void>(() => {});
 
   // Initialize spell service on mount
   useEffect(() => {
@@ -144,6 +145,24 @@ function App({ platform }: AppProps) {
     setCopiedWord(null);
     await fetchSuggestions(firstWord);
   };
+
+  useEffect(() => {
+    goToSuggestionsRef.current = (text: string) => {
+      void goToSuggestions(text);
+    };
+  }, [goToSuggestions]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const custom = event as CustomEvent<string>;
+      const text = typeof custom.detail === 'string' ? custom.detail : '';
+      if (!text || !text.trim()) return;
+      goToSuggestionsRef.current(text);
+    };
+
+    window.addEventListener('unscrammClipboard', handler as EventListener);
+    return () => window.removeEventListener('unscrammClipboard', handler as EventListener);
+  }, []);
 
   const onPasteFromClipboard = async () => {
     setClipboardError(null);

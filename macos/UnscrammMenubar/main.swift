@@ -217,6 +217,8 @@ final class PanelController: NSObject, WKNavigationDelegate {
   private let schemeHandler: AppSchemeHandler
   private let bridge: WebBridge
   private let debugWebView: Bool
+  private var isWebViewLoaded = false
+  private var pendingClipboardText: String?
   private var eventMonitor: Any?
 
   override init() {
@@ -371,6 +373,13 @@ final class PanelController: NSObject, WKNavigationDelegate {
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    _ = navigation
+    isWebViewLoaded = true
+    if let pendingClipboardText {
+      self.pendingClipboardText = nil
+      sendClipboardToWeb(pendingClipboardText)
+    }
+
     if !debugWebView { return }
     let js = """
       (async function(){
@@ -440,8 +449,26 @@ final class PanelController: NSObject, WKNavigationDelegate {
   }
 
   func updateClipboard(text: String) {
-    // Milestone 4 will wire this through a native↔web bridge.
-    _ = text
+    if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      return
+    }
+
+    if isWebViewLoaded {
+      sendClipboardToWeb(text)
+      return
+    }
+
+    pendingClipboardText = text
+  }
+
+  private func sendClipboardToWeb(_ text: String) {
+    let payload: [String: Any] = ["detail": text]
+    guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []),
+          let json = String(data: data, encoding: .utf8) else {
+      return
+    }
+    let js = "window.dispatchEvent(new CustomEvent('unscrammClipboard', \(json)));"
+    webView.evaluateJavaScript(js)
   }
 
   private func loadBundledWebUI() {
