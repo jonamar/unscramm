@@ -32,7 +32,7 @@
       "id": "main-tray",
       "iconPath": "icons/icon.png",
       "iconAsTemplate": true,
-      "menuOnLeftClick": false,
+      "showMenuOnLeftClick": false,
       "tooltip": "Unscramm - Spell Check Visualizer"
     }
   },
@@ -48,9 +48,7 @@
     ]
   },
   "plugins": {
-    "clipboard-manager": {},
-    "store": {
-      "default": "settings.json"
-    }
+    "clipboard-manager": null,
+    "store": null
   }
 }
