@@ -36,10 +36,10 @@ Use this for debugging, feature work, investigation, or unexpected behavior.
 
 1. Clarify the target (1–2 sentences)
 2. Generate hypotheses (2–4 likely causes or paths)
-3. Build a harness
+3. Build a harness *(need to understand the problem first? see Research Guide)*
 4. Iterate rapidly (change → run → observe → adjust)
 5. Validate against real data
-6. Apply the minimal fix
+6. Apply the minimal fix *(structural changes? see Refactoring Guide)*
 7. Delete all temporary work
 8. Summarize in <10 lines
 
