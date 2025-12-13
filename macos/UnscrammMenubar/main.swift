@@ -542,7 +542,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     self.statusItem = item
 
     if let button = item.button {
-      button.title = "U"
+      button.title = ""
+      if let base = Bundle.main.resourceURL {
+        let iconUrl = base
+          .appendingPathComponent("web", isDirectory: true)
+          .appendingPathComponent("assets", isDirectory: true)
+          .appendingPathComponent("unscramm-icon.png", isDirectory: false)
+        if let image = NSImage(contentsOf: iconUrl) {
+          image.isTemplate = true
+          image.size = NSSize(width: 18, height: 18)
+          button.image = image
+          button.imagePosition = .imageOnly
+        }
+      }
       button.target = self
       button.action = #selector(togglePanel)
       button.sendAction(on: [.leftMouseUp])
