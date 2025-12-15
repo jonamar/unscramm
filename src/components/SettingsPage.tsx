@@ -38,10 +38,10 @@ export function SettingsPage({
       <div className="settings-section-divider" />
 
       <RectButton className="settings-reset-button" onClick={onResetOnboarding}>
-        Show Onboarding Again
+        Reset App
       </RectButton>
       <div className="settings-hint">
-        Re-displays the privacy notice and resets auto-paste to off.
+        Clears all saved preferences and shows the welcome screen.
       </div>
     </div>
   );

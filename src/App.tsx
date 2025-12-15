@@ -360,6 +360,7 @@ function App({ platform }: AppProps) {
   };
 
   const onResetOnboarding = async () => {
+    localStorage.clear();
     await setAutoPasteEnabled(false);
     await setHasSeenOnboarding(false);
     setShowOnboarding(true);
