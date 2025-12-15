@@ -48,12 +48,37 @@
 }
 
 /* Logo positioned relative to .app-shell with 20px padding */
-.logo-top-right {
+.logo-top-left {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  height: 32px;
+  cursor: pointer;
+}
+
+/* Settings cog icon - top right */
+.settings-cog {
   position: absolute;
   top: 20px;
   right: 20px;
-  height: 32px;
+  background: transparent;
+  border: none;
+  color: var(--color-light-gray);
   cursor: pointer;
+  padding: 4px;
+}
+
+.settings-cog:hover {
+  color: var(--color-white);
+}
+
+/* Settings page layout */
+.stage-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-medium);
+  align-items: flex-start;
+  width: 100%;
 }
 
 .footer-bar {

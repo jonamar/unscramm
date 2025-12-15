@@ -5,6 +5,7 @@
   border-radius: 4px;
   padding: 6px 10px;
   font-size: var(--font-medium);
+  font-weight: 700;
   background: transparent;
   color: var(--color-white);
   display: inline-flex;

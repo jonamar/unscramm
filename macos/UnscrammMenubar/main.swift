@@ -333,7 +333,7 @@ final class PanelController: NSObject, WKNavigationDelegate {
     ])
 
     panel = KeyablePanel(
-      contentRect: NSRect(x: 0, y: 0, width: 420, height: 640),
+      contentRect: NSRect(x: 0, y: 0, width: 360, height: 640),
       styleMask: [.borderless],
       backing: .buffered,
       defer: false
@@ -343,7 +343,7 @@ final class PanelController: NSObject, WKNavigationDelegate {
     panel.backgroundColor = .clear
     panel.hasShadow = true
     panel.level = .statusBar
-    panel.hidesOnDeactivate = false
+    panel.hidesOnDeactivate = true
     panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
     panel.isReleasedWhenClosed = false
     panel.becomesKeyOnlyIfNeeded = false
@@ -516,10 +516,7 @@ final class PanelController: NSObject, WKNavigationDelegate {
   }
 
   private func shouldDismissOnClickOutside() -> Bool {
-    // Dev toggle: set to true to keep the panel open while you click Safari's Develop menu.
-    // Usage:
-    // defaults write com.scrappykin.unscramm.menubar-harness UnscrammDisableAutoDismiss -bool true
-    !UserDefaults.standard.bool(forKey: "UnscrammDisableAutoDismiss")
+    !debugWebView || !UserDefaults.standard.bool(forKey: "UnscrammDisableAutoDismiss")
   }
 
   private func stopEventMonitor() {

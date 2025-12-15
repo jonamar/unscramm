@@ -7,6 +7,8 @@ interface IntroStageProps {
   onInputChange: (value: string) => void;
   onSubmit: () => void;
   onPasteFromClipboard: () => void;
+  autoPasteEnabled: boolean;
+  onAutoPasteChange: (enabled: boolean) => void;
   disabled?: boolean;
 }
 
@@ -15,11 +17,14 @@ export function IntroStage({
   onInputChange,
   onSubmit,
   onPasteFromClipboard,
+  autoPasteEnabled,
+  onAutoPasteChange,
   disabled = false,
 }: IntroStageProps) {
+  console.log('[IntroStage] render, autoPasteEnabled=', autoPasteEnabled);
   return (
     <div className="stage-intro">
-      <img src={logoUrl} alt="Unscramm" className="intro-logo" />
+      <img src={logoUrl} alt="Unscramm" className="logo-top-left" />
       <div className="heading-large">Give me a word to unscramble</div>
       <RectButton className="intro-button" onClick={onPasteFromClipboard} disabled={disabled}>
         <ClipboardPaste size={14} strokeWidth={1.5} />
@@ -34,6 +39,18 @@ export function IntroStage({
         actionIcon={<CornerDownLeft size={14} strokeWidth={1.5} />}
         disabled={disabled}
       />
+      <label className="intro-autopaste-checkbox">
+        <input
+          type="checkbox"
+          checked={autoPasteEnabled}
+          onChange={(e) => {
+            e.stopPropagation();
+            console.log('[IntroStage] checkbox onChange, checked=', e.target.checked);
+            onAutoPasteChange(e.target.checked);
+          }}
+        />
+        <span>Auto-paste on opening window</span>
+      </label>
       <div className="footer-credit absolute-bottom">
         Made with care by{' '}
         <a href="https://scrappykin.com" target="_blank" rel="noopener noreferrer">

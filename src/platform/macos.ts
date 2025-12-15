@@ -98,9 +98,30 @@ export const macosPlatform: Platform = {
     },
   },
   storage: {
-    get: async <T,>(_key: string): Promise<T | null> => {
-      return null;
+    get: async <T,>(key: string): Promise<T | null> => {
+      try {
+        const item = localStorage.getItem(key);
+        console.log(`[storage.get] key="${key}" raw="${item}"`);
+        if (item === null) return null;
+        const parsed = JSON.parse(item) as T;
+        console.log(`[storage.get] key="${key}" parsed=`, parsed);
+        return parsed;
+      } catch (e) {
+        console.error(`[storage.get] key="${key}" error:`, e);
+        return null;
+      }
     },
-    set: async <T,>(_key: string, _value: T): Promise<void> => {},
+    set: async <T,>(key: string, value: T): Promise<void> => {
+      try {
+        const json = JSON.stringify(value);
+        console.log(`[storage.set] key="${key}" value=`, value, `json="${json}"`);
+        localStorage.setItem(key, json);
+        // Verify it was saved
+        const verify = localStorage.getItem(key);
+        console.log(`[storage.set] verify key="${key}" stored="${verify}"`);
+      } catch (e) {
+        console.error(`[storage.set] key="${key}" error:`, e);
+      }
+    },
   },
 };

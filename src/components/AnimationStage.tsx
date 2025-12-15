@@ -40,14 +40,14 @@ export function AnimationStage({
       <img 
         src={logoUrl} 
         alt="Unscramm" 
-        className="logo-top-right" 
+        className="logo-top-left" 
         onClick={onLogoClick}
       />
       <div className="transformation-summary text-light">
         {source} → {target}
       </div>
       <div className="animation-display">
-        <div className={underlineActive ? 'spell-underline' : undefined}>
+        <div className={underlineActive ? 'spell-underline' : 'spell-underline spell-underline-hidden'}>
           <DiffVisualizer
             source={source}
             target={target}
