@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, ClipboardPaste, CornerDownLeft, Settings } from 'lucide-react';
 import { spellService, type Suggestion } from './services/spell-suggestions';
 import { InputField, RectButton } from './components/DesignSystem';
@@ -150,13 +150,55 @@ function App({ platform }: AppProps) {
     postCompleteTimeoutRef.current = null;
   };
 
+  const extractWord = useCallback((text: string) => text.trim().split(/\s+/)[0]?.toLowerCase() ?? '', []);
+
+  const fetchSuggestions = useCallback(async (word: string) => {
+    if (!spellService.isReady()) {
+      setServiceLoading(true);
+      try {
+        await spellService.initialize();
+        setServiceLoading(false);
+      } catch {
+        setServiceError('Failed to load dictionary');
+        setServiceLoading(false);
+        return;
+      }
+    }
+
+    setSuggestionsLoading(true);
+    const results = await spellService.getSuggestions(word);
+    setSuggestions(results);
+    setSuggestionsLoading(false);
+  }, []);
+
+  const goToSuggestions = useCallback(async (wordInput: string) => {
+    setClipboardError(null);
+    setBlockedClipboardText(null);
+    const firstWord = extractWord(wordInput);
+    if (!firstWord) {
+      setClipboardError('Enter a word to begin');
+      return;
+    }
+    setSource(firstWord.toLowerCase());
+    setTarget('');
+    setSuggestions([]);
+    setRunning(false);
+    setStage('suggestions');
+    setUnderlineActive(true);
+    // Reset animation signals so the next animation starts fresh
+    setAnimateSignal(0);
+    setResetSignal(0);
+    setHasCompletedRun(false);
+    await fetchSuggestions(firstWord);
+  }, [extractWord, fetchSuggestions]);
+
   // Initialize spell service on mount
   useEffect(() => {
     const init = async () => {
       try {
         await spellService.initialize();
         setServiceLoading(false);
-      } catch (error) {
+      } catch {
         setServiceError('Failed to load dictionary');
         setServiceLoading(false);
       }
@@ -199,7 +241,7 @@ function App({ platform }: AppProps) {
     };
 
     attemptAutoPaste();
-  }, [platform, settingsLoaded, settings.hasSeenOnboarding, settings.autoPasteEnabled]);
+  }, [platform, settingsLoaded, settings.hasSeenOnboarding, settings.autoPasteEnabled, goToSuggestions]);
 
   const triggerAnimation = () => {
     setRunning(true);
@@ -230,7 +272,7 @@ function App({ platform }: AppProps) {
         try {
           await platform.clipboard.writeText(target);
           showToast('Copied');
-        } catch (error) {
+        } catch {
           setClipboardError('Unable to copy to clipboard');
         }
       })();
@@ -252,48 +294,6 @@ function App({ platform }: AppProps) {
       return;
     }
     triggerAnimation();
-  };
-
-  const extractWord = (text: string) => text.trim().split(/\s+/)[0]?.toLowerCase() ?? '';
-
-  const fetchSuggestions = async (word: string) => {
-    if (!spellService.isReady()) {
-      setServiceLoading(true);
-      try {
-        await spellService.initialize();
-        setServiceLoading(false);
-      } catch (error) {
-        setServiceError('Failed to load dictionary');
-        setServiceLoading(false);
-        return;
-      }
-    }
-
-    setSuggestionsLoading(true);
-    const results = await spellService.getSuggestions(word);
-    setSuggestions(results);
-    setSuggestionsLoading(false);
-  };
-
-  const goToSuggestions = async (wordInput: string) => {
-    setClipboardError(null);
-    setBlockedClipboardText(null);
-    const firstWord = extractWord(wordInput);
-    if (!firstWord) {
-      setClipboardError('Enter a word to begin');
-      return;
-    }
-    setSource(firstWord.toLowerCase());
-    setTarget('');
-    setSuggestions([]);
-    setRunning(false);
-    setStage('suggestions');
-    setUnderlineActive(true);
-    // Reset animation signals so the next animation starts fresh
-    setAnimateSignal(0);
-    setResetSignal(0);
-    setHasCompletedRun(false);
-    await fetchSuggestions(firstWord);
   };
 
   useEffect(() => {
@@ -333,7 +333,7 @@ function App({ platform }: AppProps) {
         return;
       }
       await goToSuggestions(text);
-    } catch (error) {
+    } catch {
       setClipboardError('Clipboard empty or inaccessible');
     }
   };

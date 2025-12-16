@@ -254,8 +254,7 @@ export default function DiffVisualizer({
       abortControllerRef.current?.abort();
       runningRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [animateSignal, animationFrames, clampDuration]);
+  }, [animateSignal, animationFrames, clampDuration, onAnimationComplete, onAnimationStart, speedMultiplier]);
 
   // Handle external reset without animating
   useEffect(() => {
@@ -270,7 +269,6 @@ export default function DiffVisualizer({
       deletingIds: new Set(firstFrame?.deletingIds ?? []),
     });
     // do not call onAnimationStart/Complete
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal, plan, animationFrames]);
 
   // Notify parent when phase changes

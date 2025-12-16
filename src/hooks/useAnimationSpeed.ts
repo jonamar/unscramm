@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { AnimationSpeed } from '../components/SpeedSelector';
+import type { AnimationSpeed } from '../utils/animationSpeed';
 import type { Platform } from '../platform/types';
 
 const STORAGE_KEY = 'animationSpeed';

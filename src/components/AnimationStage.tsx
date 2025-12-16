@@ -1,8 +1,10 @@
 import { Play, RotateCcw } from 'lucide-react';
 import { CircleButton } from './DesignSystem';
 import DiffVisualizer from './DiffVisualizer';
-import { SpeedSelector, getSpeedMultiplier, type AnimationSpeed } from './SpeedSelector';
+import { SpeedSelector } from './SpeedSelector';
+import { getSpeedMultiplier, type AnimationSpeed } from '../utils/animationSpeed';
 import logoUrl from '../assets/unscramm-icon.png';
+import { DEFAULT_SPEED_MULTIPLIER } from '../utils/animationTiming';
 
 interface AnimationStageProps {
   source: string;
@@ -55,7 +57,7 @@ export function AnimationStage({
             resetSignal={resetSignal}
             onAnimationStart={() => {}}
             onAnimationComplete={onAnimationComplete}
-            speedMultiplier={2.5 * getSpeedMultiplier(animationSpeed)}
+            speedMultiplier={DEFAULT_SPEED_MULTIPLIER * getSpeedMultiplier(animationSpeed)}
           />
         </div>
       </div>

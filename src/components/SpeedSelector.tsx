@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, Rabbit, Turtle, Snail } from 'lucide-react';
 
-export type AnimationSpeed = 'snail' | 'turtle' | 'rabbit';
+import type { AnimationSpeed } from '../utils/animationSpeed';
 
-const SPEED_CONFIG = {
-  snail: { multiplier: 4, icon: Snail, label: 'Snail' },      // 4x slower (0.25x speed)
-  turtle: { multiplier: 2, icon: Turtle, label: 'Turtle' },   // 2x slower (0.5x speed)
-  rabbit: { multiplier: 1, icon: Rabbit, label: 'Rabbit' },   // 1x normal speed
+const SPEED_CONFIG: Record<AnimationSpeed, { icon: typeof Snail; label: string }> = {
+  snail: { icon: Snail, label: 'Snail' },
+  turtle: { icon: Turtle, label: 'Turtle' },
+  rabbit: { icon: Rabbit, label: 'Rabbit' },
 };
 
 interface SpeedSelectorProps {
@@ -65,8 +65,4 @@ export function SpeedSelector({ value, onChange, disabled = false }: SpeedSelect
       )}
     </div>
   );
-}
-
-export function getSpeedMultiplier(speed: AnimationSpeed): number {
-  return SPEED_CONFIG[speed].multiplier;
 }
