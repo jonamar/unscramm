@@ -2,7 +2,6 @@ import { ArrowLeft, FlaskConical } from 'lucide-react';
 import { RectButton } from './DesignSystem';
 import logoUrl from '../assets/unscramm-icon.png';
 
-const IS_DEV = import.meta.env.DEV;
 const LAB_URL = 'http://localhost:5175';
 
 interface SettingsPageProps {
@@ -59,20 +58,18 @@ export function SettingsPage({
         Clears all saved preferences and shows the welcome screen.
       </div>
 
-      {IS_DEV && (
-        <>
-          <div className="settings-section-divider" />
-          <RectButton className="settings-dev-button" onClick={handleOpenLab}>
-            <FlaskConical size={16} />
-            Open Animation Lab
-          </RectButton>
-          <div className="settings-hint">
-            {currentSource && currentTarget
-              ? `Opens lab with "${currentSource}" → "${currentTarget}"`
-              : 'Opens the animation testing environment'}
-          </div>
-        </>
-      )}
+      <>
+        <div className="settings-section-divider" />
+        <RectButton className="settings-dev-button" onClick={handleOpenLab}>
+          <FlaskConical size={16} />
+          Open Animation Lab
+        </RectButton>
+        <div className="settings-hint">
+          {currentSource && currentTarget
+            ? `Opens lab with "${currentSource}" → "${currentTarget}"`
+            : 'Opens the animation testing environment'}
+        </div>
+      </>
     </div>
   );
 }

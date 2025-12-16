@@ -324,6 +324,24 @@ export default function AnimationLab() {
           </button>
         </div>
 
+        <div className="lab-custom-inputs">
+          <input
+            type="text"
+            placeholder="Custom source"
+            value={customSource}
+            onChange={e => setCustomSource(e.target.value)}
+            className="lab-input"
+          />
+          <span className="lab-arrow">→</span>
+          <input
+            type="text"
+            placeholder="Custom target"
+            value={customTarget}
+            onChange={e => setCustomTarget(e.target.value)}
+            className="lab-input"
+          />
+        </div>
+
         {/* Letter operation table - flipped: chars as columns, type/from/to as rows */}
         {(() => {
           // Build unified character list from all operations (computed once, used for all rows)
