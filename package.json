@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --config vite.config.macos.ts",
     "dev:macos": "vite --config vite.config.macos.ts",
+    "dev:lab": "vite --config vite.config.lab.ts",
     "build": "npm run build:macos",
     "build:macos": "vite build --config vite.config.macos.ts",
     "lint": "eslint .",

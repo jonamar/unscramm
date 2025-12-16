@@ -1,0 +1,214 @@
+.scrub-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: background 0.1s;
+}
+
+.scrub-input:hover {
+  background: #333;
+}
+
+.scrub-input--dragging {
+  background: #3a3a3a;
+}
+
+.scrub-input__handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  cursor: ew-resize;
+  padding: 2px;
+  border-radius: 2px;
+  transition: color 0.1s, background 0.1s;
+}
+
+.scrub-input__handle:hover {
+  color: #999;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.scrub-input--dragging .scrub-input__handle {
+  color: #4a9eff;
+  background: rgba(74, 158, 255, 0.15);
+}
+
+.scrub-input__label {
+  color: #888;
+  min-width: 45px;
+  user-select: none;
+}
+
+.scrub-input__field {
+  width: 45px;
+  padding: 4px 6px;
+  background: #1a1a1a;
+  border: 1px solid #444;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 12px;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  text-align: right;
+}
+
+.scrub-input__field:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.scrub-input__unit {
+  color: #555;
+  font-size: 11px;
+  min-width: 20px;
+}
+
+/* Timing config panel styles */
+.timing-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 2D Table Layout */
+.timing-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.timing-table__header,
+.timing-table__row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px;
+  align-items: center;
+}
+
+.timing-table__label {
+  font-size: 11px;
+  color: #888;
+  text-align: right;
+  padding-right: 8px;
+}
+
+.timing-table__col {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+  padding: 6px 0;
+  border-radius: 4px;
+}
+
+.timing-table__col--delete {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.timing-table__col--move {
+  color: #eab308;
+  background: rgba(234, 179, 8, 0.1);
+}
+
+.timing-table__col--insert {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.timing-table__cell {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.timing-table__cell .scrub-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.timing-table__cell .scrub-input__label {
+  display: none;
+}
+
+/* Global settings */
+.timing-globals {
+  border-top: 1px solid #333;
+  padding-top: 12px;
+}
+
+.timing-globals__title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.timing-globals__row {
+  display: flex;
+  gap: 8px;
+}
+
+.timing-globals__row .scrub-input {
+  flex: 1;
+}
+
+.timing-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.timing-panel__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.timing-panel__reset {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #888;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.timing-panel__reset:hover {
+  background: #333;
+  border-color: #555;
+  color: #fff;
+}
+
+.timing-export {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #333;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.timing-export .lab-copy-btn {
+  padding: 6px 12px;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.timing-export .lab-copy-btn:hover {
+  background: #4a4a4a;
+}

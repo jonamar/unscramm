@@ -1,12 +1,17 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FlaskConical } from 'lucide-react';
 import { RectButton } from './DesignSystem';
 import logoUrl from '../assets/unscramm-icon.png';
+
+const IS_DEV = import.meta.env.DEV;
+const LAB_URL = 'http://localhost:5175';
 
 interface SettingsPageProps {
   autoPasteEnabled: boolean;
   onAutoPasteChange: (enabled: boolean) => void;
   onResetOnboarding: () => void;
   onBack: () => void;
+  currentSource?: string;
+  currentTarget?: string;
 }
 
 export function SettingsPage({
@@ -14,7 +19,17 @@ export function SettingsPage({
   onAutoPasteChange,
   onResetOnboarding,
   onBack,
+  currentSource,
+  currentTarget,
 }: SettingsPageProps) {
+  const handleOpenLab = () => {
+    const params = new URLSearchParams();
+    if (currentSource) params.set('source', currentSource);
+    if (currentTarget) params.set('target', currentTarget);
+    const url = params.toString() ? `${LAB_URL}?${params}` : LAB_URL;
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="stage-settings">
       <img src={logoUrl} alt="Unscramm" className="logo-top-left" />
@@ -43,6 +58,21 @@ export function SettingsPage({
       <div className="settings-hint">
         Clears all saved preferences and shows the welcome screen.
       </div>
+
+      {IS_DEV && (
+        <>
+          <div className="settings-section-divider" />
+          <RectButton className="settings-dev-button" onClick={handleOpenLab}>
+            <FlaskConical size={16} />
+            Open Animation Lab
+          </RectButton>
+          <div className="settings-hint">
+            {currentSource && currentTarget
+              ? `Opens lab with "${currentSource}" → "${currentTarget}"`
+              : 'Opens the animation testing environment'}
+          </div>
+        </>
+      )}
     </div>
   );
 }

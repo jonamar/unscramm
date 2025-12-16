@@ -4,7 +4,8 @@ import { computeEditPlan, type PlanLetter } from '../utils/editPlan';
 import { buildAnimationScript, type AnimationFrame } from '../utils/animationScript';
 import { usePrefersReducedMotion } from '../hooks/usePrefersReducedMotion';
 import { delay } from '../utils/delay';
-import type { Phase, PhaseDurations } from '../types/animation';
+import { TIMING, DEFAULT_SPEED_MULTIPLIER } from '../utils/animationTiming';
+import type { Phase } from '../types/animation';
 
 type LetterItem = PlanLetter;
 
@@ -28,6 +29,20 @@ interface AnimationState {
  * - Educational tools showing text transformations
  * - Browser extension content highlighting
  */
+export interface TimingConfig {
+  deletePerOp: number;
+  deleteMin: number;
+  deleteBuffer: number;
+  movePerOp: number;
+  moveMin: number;
+  moveBuffer: number;
+  insertPerOp: number;
+  insertMin: number;
+  insertBuffer: number;
+  motionPerLetter: number;
+  deletionExitDelay: number;
+}
+
 export interface DiffVisualizerProps {
   /** The source text (e.g., misspelled word) */
   source: string;
@@ -45,21 +60,10 @@ export interface DiffVisualizerProps {
   onPhaseChange?: (phase: Phase) => void;
   /** Optional speed multiplier for animation (default: 2.5) */
   speedMultiplier?: number;
+  /** Optional timing config overrides for dev/testing */
+  timingOverrides?: TimingConfig;
 }
 
-const DURATIONS: PhaseDurations = {
-  idle: 0,
-  deleting: 400,
-  moving: 1000,
-  inserting: 300,
-  final: 0,
-};
-
-const DELETION_EXIT_DELAY = 150;
-
-// Debug/inspection: slow down all timings (phase delays and per-letter transitions)
-// Set to 1 for normal speed. Current debugging value halved to 2.5 to run 2x faster than before.
-const DEFAULT_SPEED_MULTIPLIER = 2.5;
 
 /**
  * Checks if the animation has been aborted.
@@ -129,32 +133,51 @@ export default function DiffVisualizer({
   onAnimationComplete,
   onPhaseChange,
   speedMultiplier = DEFAULT_SPEED_MULTIPLIER,
+  timingOverrides,
 }: DiffVisualizerProps) {
   const prefersReduced = usePrefersReducedMotion();
   const plan = useMemo(() => computeEditPlan(source, target), [source, target]);
+  const timing = timingOverrides ?? TIMING;
   const clampDuration = useMemo(
     () => (ms: number) => (prefersReduced ? Math.min(ms, 50) : ms),
     [prefersReduced]
   );
-  const baseMotionDurationMs = 250;
   const motionTransitionSeconds = useMemo(
-    () => (clampDuration(baseMotionDurationMs) / 1000) * speedMultiplier,
-    [clampDuration, speedMultiplier]
+    () => (clampDuration(timing.motionPerLetter) / 1000) * speedMultiplier,
+    [clampDuration, speedMultiplier, timing.motionPerLetter]
   );
 
   const animationFrames = useMemo(() => {
-    const clampedDurations: PhaseDurations = {
-      idle: clampDuration(DURATIONS.idle),
-      deleting: clampDuration(DURATIONS.deleting),
-      moving: clampDuration(DURATIONS.moving),
-      inserting: clampDuration(DURATIONS.inserting),
-      final: clampDuration(DURATIONS.final),
+    const deleteCount = plan.deletions.length;
+    const moveCount = plan.moves.length;
+    const insertCount = plan.insertions.length;
+
+    const baseDurations = {
+      idle: 0,
+      deleting: deleteCount > 0
+        ? Math.max(timing.deleteMin, timing.deletePerOp * deleteCount) + timing.deleteBuffer
+        : 0,
+      moving: moveCount > 0
+        ? Math.max(timing.moveMin, timing.movePerOp * moveCount) + timing.moveBuffer
+        : timing.moveMin,
+      inserting: insertCount > 0
+        ? Math.max(timing.insertMin, timing.insertPerOp * insertCount) + timing.insertBuffer
+        : 0,
+      final: 0,
+    };
+
+    const clampedDurations = {
+      idle: clampDuration(baseDurations.idle),
+      deleting: clampDuration(baseDurations.deleting),
+      moving: clampDuration(baseDurations.moving),
+      inserting: clampDuration(baseDurations.inserting),
+      final: clampDuration(baseDurations.final),
     };
     return buildAnimationScript(plan, {
       durations: clampedDurations,
-      deletionHoldMs: clampDuration(DELETION_EXIT_DELAY),
+      deletionHoldMs: clampDuration(timing.deletionExitDelay),
     });
-  }, [plan, clampDuration]);
+  }, [plan, clampDuration, timing]);
 
   const moverIds = useMemo(() => {
     const ids = new Set<string>();

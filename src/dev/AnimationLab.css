@@ -1,0 +1,304 @@
+/* Override menubar app constraints */
+html, body {
+  width: 100% !important;
+  min-width: 320px;
+  min-height: 100vh !important;
+}
+
+.lab-container {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  min-height: 100vh;
+  padding: 24px;
+  margin: 0;
+  background: #1a1a1a;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-sizing: border-box;
+}
+
+@media (max-width: 875px) {
+  .lab-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .lab-right {
+    max-height: none;
+  }
+}
+
+.lab-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lab-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: calc(100vh - 48px);
+  min-width: 0;
+  max-width: 400px;
+}
+
+.lab-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.lab-nav-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.lab-nav-btn:hover {
+  background: #333;
+  color: #fff;
+  border-color: #555;
+}
+
+/* Center the real app's animation-controls inside the visualizer container */
+.lab-visualizer-container .animation-controls {
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.lab-select {
+  flex: 1;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.lab-select optgroup {
+  font-weight: 600;
+  font-style: normal;
+  padding: 4px 0;
+}
+
+.lab-select option {
+  padding: 4px 8px;
+}
+
+
+.lab-custom-inputs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.lab-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.lab-input::placeholder {
+  color: #666;
+}
+
+.lab-arrow {
+  color: #888;
+  font-size: 16px;
+}
+
+.lab-visualizer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  background: #000;
+  border-radius: 8px;
+  min-height: 120px;
+}
+
+.lab-visualizer {
+  font-size: 2rem;
+}
+
+.lab-letter-table {
+  width: auto;
+  min-width: 240px;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 12px;
+  border-collapse: collapse;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 12px;
+  background: #1a1a1a;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.lab-letter-table-container {
+  overflow-x: auto;
+  margin: 8px 0;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.lab-letter-table--horizontal {
+  width: auto;
+  flex-shrink: 1;
+}
+
+.lab-letter-table--horizontal th,
+.lab-letter-table--horizontal td {
+  padding: 4px 8px;
+  border-bottom: 1px solid #2f2f2f;
+  border-right: 1px solid #2f2f2f;
+  text-align: center;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.lab-letter-table--horizontal th:first-child,
+.lab-letter-table--horizontal td:first-child {
+  text-align: right;
+  color: #666;
+  font-size: 10px;
+  padding: 4px 6px;
+}
+
+.lab-letter-table--horizontal th:last-child,
+.lab-letter-table--horizontal td:last-child {
+  border-right: none;
+}
+
+.lab-letter-table--horizontal tr:last-child th,
+.lab-letter-table--horizontal tr:last-child td {
+  border-bottom: none;
+}
+
+.lab-table-row-chars th {
+  font-weight: 700;
+  font-size: 16px;
+  padding: 8px 12px;
+}
+
+.lab-phase-indicator {
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.lab-section {
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+.lab-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lab-copy-btn {
+  padding: 2px 8px;
+  background: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 3px;
+  color: #888;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.lab-copy-btn:hover {
+  background: #4a4a4a;
+  color: #fff;
+}
+
+.lab-pre {
+  margin: 0;
+  padding: 12px;
+  background: #1a1a1a;
+  border-radius: 4px;
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.lab-pre-small {
+  font-size: 10px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.lab-durations {
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lab-durations strong {
+  color: #6cf;
+}
+
+.lab-log {
+  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  font-size: 11px;
+  background: #1a1a1a;
+  border-radius: 4px;
+  padding: 8px 12px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.lab-log-empty {
+  color: #666;
+  font-style: italic;
+}
+
+.lab-timing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  font-size: 12px;
+  font-family: monospace;
+}
+
+/* Animation color classes (matching production) */
+.text-deletion {
+  color: #ef4444;
+}
+
+.text-insertion {
+  color: #22c55e;
+}
+
+.text-move {
+  color: #facc15;
+}

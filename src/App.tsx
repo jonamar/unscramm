@@ -448,6 +448,8 @@ function App({ platform }: AppProps) {
           onAutoPasteChange={onAutoPasteSettingChange}
           onResetOnboarding={onResetOnboarding}
           onBack={onCloseSettings}
+          currentSource={source}
+          currentTarget={target}
         />
       )}
 
