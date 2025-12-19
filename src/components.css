@@ -78,7 +78,7 @@
   right: 0;
   height: 2px;
   bottom: 4px;
-  background: #ef4444;
+  /* background: #ef4444; */
   opacity: 1;
 }
 
@@ -98,7 +98,7 @@
   right: 0;
   height: 2px;
   bottom: 4px;
-  background: #ef4444;
+  /* background: #ef4444; */
 }
 
 .suggestions-label {
@@ -241,6 +241,36 @@
 
 .settings-reset-button {
   margin-top: var(--space-small);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+}
+
+.history-day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.history-date {
+  font-size: var(--font-medium);
+  color: var(--color-light-gray);
+}
+
+.history-words {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.history-word {
+  font-size: var(--font-large);
+  font-weight: 700;
+  color: var(--color-white);
 }
 
 .suggestion-group {

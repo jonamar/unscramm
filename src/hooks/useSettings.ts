@@ -3,16 +3,19 @@ import type { Platform } from '../platform/types';
 
 const STORAGE_KEY_AUTOPASTE = 'autoPasteEnabled';
 const STORAGE_KEY_ONBOARDED = 'hasSeenOnboarding';
+const STORAGE_KEY_HISTORY_ENABLED = 'historyEnabled';
 
 export interface Settings {
   autoPasteEnabled: boolean;
   hasSeenOnboarding: boolean;
+  historyEnabled: boolean;
 }
 
 export function useSettings(platform: Platform) {
   const [settings, setSettings] = useState<Settings>({
     autoPasteEnabled: false,
     hasSeenOnboarding: false,
+    historyEnabled: false,
   });
   const [loaded, setLoaded] = useState(false);
   const hasLoadedRef = useRef(false);
@@ -28,14 +31,16 @@ export function useSettings(platform: Platform) {
     const loadSettings = async () => {
       try {
         console.log('[useSettings] loading settings from storage...');
-        const [autoPaste, onboarded] = await Promise.all([
+        const [autoPaste, onboarded, historyEnabled] = await Promise.all([
           platform.storage.get<boolean>(STORAGE_KEY_AUTOPASTE),
           platform.storage.get<boolean>(STORAGE_KEY_ONBOARDED),
+          platform.storage.get<boolean>(STORAGE_KEY_HISTORY_ENABLED),
         ]);
-        console.log('[useSettings] loaded:', { autoPaste, onboarded });
+        console.log('[useSettings] loaded:', { autoPaste, onboarded, historyEnabled });
         setSettings({
           autoPasteEnabled: autoPaste ?? false,
           hasSeenOnboarding: onboarded ?? false,
+          historyEnabled: historyEnabled ?? false,
         });
         setLoaded(true);
         hasLoadedRef.current = true;
@@ -71,10 +76,20 @@ export function useSettings(platform: Platform) {
     }
   };
 
+  const setHistoryEnabled = async (enabled: boolean) => {
+    setSettings((prev) => ({ ...prev, historyEnabled: enabled }));
+    try {
+      await platform.storage.set(STORAGE_KEY_HISTORY_ENABLED, enabled);
+    } catch (error) {
+      console.error('Failed to save history setting:', error);
+    }
+  };
+
   return {
     settings,
     loaded,
     setAutoPasteEnabled,
     setHasSeenOnboarding,
+    setHistoryEnabled,
   };
 }

@@ -7,11 +7,13 @@ import { SuggestionsStage } from './components/SuggestionsStage';
 import { AnimationStage } from './components/AnimationStage';
 import { PrivacyWarning } from './components/PrivacyWarning';
 import { SettingsPage } from './components/SettingsPage';
+import { HistoryPage } from './components/HistoryPage';
 import { useAnimationSpeed } from './hooks/useAnimationSpeed';
 import { useSettings } from './hooks/useSettings';
+import { useHistory } from './hooks/useHistory';
 import type { Platform } from './platform/types';
 
-type Stage = 'intro' | 'suggestions' | 'animation' | 'settings';
+type Stage = 'intro' | 'suggestions' | 'animation' | 'settings' | 'history';
 
 interface AppProps {
   platform: Platform;
@@ -123,7 +125,14 @@ function App({ platform }: AppProps) {
   const [blockedClipboardText, setBlockedClipboardText] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [animationSpeed, setAnimationSpeed] = useAnimationSpeed(platform);
-  const { settings, loaded: settingsLoaded, setAutoPasteEnabled, setHasSeenOnboarding } = useSettings(platform);
+  const {
+    settings,
+    loaded: settingsLoaded,
+    setAutoPasteEnabled,
+    setHasSeenOnboarding,
+    setHistoryEnabled,
+  } = useSettings(platform);
+  const { items: historyItems, addItem: addHistoryItem, clear: clearHistory } = useHistory(platform);
   const previousStageRef = useRef<Stage>('intro');
   const toastTimeoutRef = useRef<number | null>(null);
   const postCompleteTimeoutRef = useRef<number | null>(null);
@@ -244,6 +253,9 @@ function App({ platform }: AppProps) {
   }, [platform, settingsLoaded, settings.hasSeenOnboarding, settings.autoPasteEnabled, goToSuggestions]);
 
   const triggerAnimation = () => {
+    if (settings.historyEnabled && target) {
+      addHistoryItem(target);
+    }
     setRunning(true);
     setHasCompletedRun(false);
     runTokenRef.current += 1;
@@ -359,10 +371,24 @@ function App({ platform }: AppProps) {
     await setAutoPasteEnabled(enabled);
   };
 
+  const onHistoryEnabledSettingChange = async (enabled: boolean) => {
+    await setHistoryEnabled(enabled);
+  };
+
+  const onOpenHistory = () => {
+    setStage('history');
+  };
+
+  const onCloseHistory = () => {
+    setStage('settings');
+  };
+
   const onResetOnboarding = async () => {
     localStorage.clear();
     await setAutoPasteEnabled(false);
     await setHasSeenOnboarding(false);
+    await setHistoryEnabled(false);
+    clearHistory();
     setShowOnboarding(true);
     setStage('intro');
   };
@@ -430,7 +456,7 @@ function App({ platform }: AppProps) {
       )}
 
       {/* Settings cog - always visible except on onboarding screens */}
-      {!isOnboardingScreen && stage !== 'settings' && (
+      {!isOnboardingScreen && stage !== 'settings' && stage !== 'history' && (
         <button type="button" className="settings-cog" onClick={onOpenSettings}>
           <Settings size={20} strokeWidth={1.5} />
         </button>
@@ -446,11 +472,18 @@ function App({ platform }: AppProps) {
         <SettingsPage
           autoPasteEnabled={settings.autoPasteEnabled}
           onAutoPasteChange={onAutoPasteSettingChange}
+          historyEnabled={settings.historyEnabled}
+          onHistoryEnabledChange={onHistoryEnabledSettingChange}
+          onOpenHistory={onOpenHistory}
           onResetOnboarding={onResetOnboarding}
           onBack={onCloseSettings}
           currentSource={source}
           currentTarget={target}
         />
+      )}
+
+      {stage === 'history' && (
+        <HistoryPage items={historyItems} onBack={onCloseHistory} />
       )}
 
       {/* Normal flow - only show if not onboarding and not settings */}

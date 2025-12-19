@@ -7,6 +7,9 @@ const LAB_URL = 'http://localhost:5175';
 interface SettingsPageProps {
   autoPasteEnabled: boolean;
   onAutoPasteChange: (enabled: boolean) => void;
+  historyEnabled: boolean;
+  onHistoryEnabledChange: (enabled: boolean) => void;
+  onOpenHistory: () => void;
   onResetOnboarding: () => void;
   onBack: () => void;
   currentSource?: string;
@@ -16,6 +19,9 @@ interface SettingsPageProps {
 export function SettingsPage({
   autoPasteEnabled,
   onAutoPasteChange,
+  historyEnabled,
+  onHistoryEnabledChange,
+  onOpenHistory,
   onResetOnboarding,
   onBack,
   currentSource,
@@ -48,6 +54,28 @@ export function SettingsPage({
       <div className="settings-hint">
         When enabled, clipboard contents will be automatically pasted when you open Unscramm.
       </div>
+
+      <div className="settings-section-divider" />
+
+      <label className="settings-toggle">
+        <input
+          type="checkbox"
+          checked={historyEnabled}
+          onChange={(e) => onHistoryEnabledChange(e.target.checked)}
+        />
+        <span className="settings-toggle-label">History</span>
+      </label>
+      <div className="settings-hint">
+        When enabled, Unscramm will save a local list of words you actually animate.
+      </div>
+
+      <RectButton
+        className="settings-reset-button"
+        onClick={onOpenHistory}
+        disabled={!historyEnabled}
+      >
+        View History
+      </RectButton>
 
       <div className="settings-section-divider" />
 
