@@ -98,6 +98,11 @@ export function SettingsPage({
             : 'Opens the animation testing environment'}
         </div>
       </>
+
+      <div className="settings-section-divider" />
+      <div className="settings-hint">
+        All data is saved locally on your machine.
+      </div>
     </div>
   );
 }
