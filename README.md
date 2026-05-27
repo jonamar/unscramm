@@ -1,176 +1,77 @@
-# Unscramm v3 (Vite + React + TypeScript)
+# Unscramm
 
-Radically simple rewrite of Unscramm with a minimal stack:
+Unscramm is a macOS-first animated spellcheck prototype. It takes a source word, suggests a correction, and visualizes the transition from one to the other with explicit deletion, move, and insertion phases.
 
-- Vite + React + TypeScript
-- Tailwind CSS v4 (tokens via `@theme` in CSS)
-- Framer Motion for animations
-- Vitest + Testing Library for tests
+The repo currently supports two development surfaces:
+- the main macOS webview build
+- an animation lab for tuning motion, timings, and edit-plan behavior
 
-See PRD: `docs/unscramm-v3-prd-spec.md` and style guide: `docs/design_guidelines/styleguide.md`.
+Canonical product/design docs:
+- PRD: `docs/unscramm-v3-prd-spec.md`
+- Design guide: `docs/design_guidelines/styleguide.md`
+- Platform notes: `PLATFORM-GUIDE.md`
 
-## Purpose & Intent
-
-Unscramm is an interactive "animated spellcheck" that shows how a misspelled word transforms into the correct word via clear, accessible character transitions. It serves two goals:
-
-- Accessibility-focused visualization for dyslexic readers, or anyone learning to read, to see how letters change through deletion, movement, and insertion.
-- A process experiment in rigorous, modular development where the majority of implementation is driven through AI-assisted workflows with clear specs and tests.
-
-## Multi-Platform Support
-
-**Unscramm runs on multiple platforms from a single codebase:**
-
-- 🌐 **Chrome Extension** - Browser popup with spell-checking
-- 🖥️ **Mac Menu Bar App** - Native macOS app via Tauri
-
-See **[PLATFORM-GUIDE.md](./PLATFORM-GUIDE.md)** for architecture details and platform-specific development.
-
-### Quick Start
+## Quick Start
 
 ```bash
-# Chrome Extension
 npm install
-npm run dev:chrome          # Development
-npm run build:chrome        # Production build
-
-# Mac Menu Bar App (macOS only)
-npm run tauri:dev          # Development
-npm run tauri:build        # Production build
+npm run dev:macos
 ```
 
-## Getting Started
-
-- Install: `npm install`
-- Dev: `npm run dev` (defaults to Chrome extension)
-- Build: `npm run build` (defaults to Chrome extension)
-- Test (CI): `npm test`
-
-## Chrome Extension
-
-The app is packaged as a Manifest V3 Chrome extension with a popup UI and built-in spell-checking capabilities.
-
-### Features
-
-- **Built-in Dictionary**: Includes a frequency-based English dictionary (~370k words) for offline spell suggestions
-- **Smart Suggestions**: Uses Damerau-Levenshtein distance to find the best corrections for misspelled words
-- **Three-Stage Flow**:
-  1. **Input**: Paste from clipboard or type a word
-  2. **Suggestions**: View ranked spelling suggestions
-  3. **Animation**: Watch the transformation from misspelled to correct word
-- **Animated Visualization**: Color-coded character transitions (red=deletions, green=insertions, yellow=moves)
-
-### Building the Extension
+Other useful commands:
 
 ```bash
-npm run build
+npm run build:macos
+npm run dev:lab
+npm test
 ```
 
-This builds the extension to the `dist/` folder, including:
-- `manifest.json` - Chrome extension manifest
-- `index.html` - Popup UI
-- `assets/` - Bundled JS, CSS, and images
-- `icon*.svg` - Extension icons
-- `frequency-dictionary.txt` - Built-in word frequency dictionary
+## Runtime Shape
 
-### Loading in Chrome
+### macOS build
+- Entry HTML: `index-macos.html`
+- Entry TS: `src/main-macos.tsx`
+- Vite config: `vite.config.macos.ts`
+- Output directory: `dist-macos/`
+- Native bridge: `src/platform/macos.ts`
 
-1. Build the extension: `npm run build`
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" (toggle in top-right)
-4. Click "Load unpacked"
-5. Select the `dist/` folder
-6. The Unscramm extension icon will appear in your toolbar
-7. Click the icon to open the popup and use the app
+### Animation lab
+- Entry TS: `src/dev/main-lab.tsx`
+- Vite config: `vite.config.lab.ts`
+- Purpose: inspect timing, edit-plan output, and animation behavior without the full app flow
 
-## Design Tokens
+## Product Notes
 
-Source of truth: `src/index.css` under the `@theme` block. These CSS variables define colors, typography, and semantic states used across the app.
+- The app is designed around clear character-level transformations rather than generic spellcheck UI.
+- Motion semantics matter: deletions, true movers, and insertions should stay visually distinct.
+- Reduced motion should remain respected throughout the stack.
 
-- Colors: `--color-bg`, `--color-panel`, `--color-button`, `--color-button-hover`, `--color-text`, `--color-text-secondary`
-- Semantic colors: `--color-deletion` (red), `--color-move` (yellow), `--color-insertion` (green)
-- Typography: `--font-sans`
-
-Usage:
-
-- Tailwind with variables: `bg-[--color-panel] text-[--color-text]`
-- Utilities from `src/index.css`: `.text-deletion`, `.text-move`, `.text-insertion`
-
-Benefits: consistency, easy theming, maintainability, and accessible contrast tuning from a single place.
-
-## Testing Stack
-
-- __Runner__: Vitest (v2)
-- __Environment__: jsdom
-- __Library__: `@testing-library/react` + `@testing-library/jest-dom`
-- __Setup__: `src/test/setup.ts`
-
-The setup file does two things:
-
-1. __jest-dom matchers__ via `@testing-library/jest-dom/vitest` so you can use matchers like `toBeInTheDocument()`.
-2. __matchMedia polyfill__ for jsdom so components using reduced-motion queries work in tests.
-
-### matchMedia polyfill
-In `src/test/setup.ts`, we define a minimal `matchMedia` on `globalThis` and mirror it to `window`:
-
-```ts
-import '@testing-library/jest-dom/vitest'
-
-if (typeof (globalThis as any).matchMedia !== 'function') {
-  const reduced = (globalThis as any).__TEST_MATCH_MEDIA_REDUCED__ ?? true
-  ;(globalThis as any).matchMedia = (query: string) => ({
-    matches: reduced && query.includes('prefers-reduced-motion: reduce'),
-    media: query,
-    onchange: null,
-    addListener() {},
-    removeListener() {},
-    addEventListener() {},
-    removeEventListener() {},
-    dispatchEvent() { return false },
-  })
-}
-if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
-  // @ts-ignore
-  window.matchMedia = (globalThis as any).matchMedia
-}
-```
-
-Tip: set `(globalThis as any).__TEST_MATCH_MEDIA_REDUCED__ = false` if you need to simulate non-reduced motion in specific tests.
-
-### Running tests
+## Testing
 
 ```bash
 npm test
 ```
 
-There are unit tests for `computeEditPlan()` and a smoke test for `WordUnscrambler` that asserts the final DOM equals the target word after animation.
+The repo includes:
+- unit tests for edit-plan logic
+- animation-script coverage
+- smoke coverage around the diff visualizer flow
 
-## Tailwind CSS
+## Runtime Hazards
 
-This project uses Tailwind CSS v4 with tokens defined directly in CSS (no `tailwind.config.js` required). See `src/index.css`:
+- `dist-macos/` must be built before the macOS webview can load the app (`npm run build:macos`). The directory is gitignored; a fresh clone has no build output.
+- `dev:macos` runs Vite in serve mode — the webview hot-reloads from localhost. Do not confuse the dev server URL with the production build path.
 
-```css
-@import "tailwindcss";
-@theme {
-  --color-bg: #111;
-  --color-panel: #181818;
-  --color-button: #333;
-  --color-button-hover: #222;
-  --color-text: #ffffff;
-  --color-text-secondary: #777777;
-  --color-deletion: #ef4444;
-  --color-insertion: #22c55e;
-  --color-move: #eab308;
-  --font-sans: "Istok Web", system-ui, Avenir, Helvetica, Arial, sans-serif;
-}
-```
+## Agent Notes
 
-These map 1:1 to the semantic tokens in `docs/design_guidelines/styleguide.md`.
+- Shared agent tooling lives in `.agents/` (propagated from product-ops). Do not edit those surfaces directly.
+- Workflow guides: `.agents/skills/`, shared tools: `.agents/tools/`, risk modes: `.agents/meta/`.
 
-## Component: WordUnscrambler
+## Repo Contract
 
-The core component lives at `src/components/WordUnscrambler.tsx` and follows the PRD phases:
+`unscramm` is a `code-first + local workflow` repo.
 
-- __idle__ → __deleting__ → __moving__ → __inserting__ → __final__
-
-It uses `computeEditPlan()` to determine deletions/insertions and performs a FLIP-style reorder for survivors. Reduced motion is respected via `matchMedia('(prefers-reduced-motion: reduce)')`.
-
+That means:
+- product code and stable product/design docs stay in git
+- mayor/workstream/planning surfaces stay local-only
+- the local-only layer is backed up off-box and is not part of the public repo contract
